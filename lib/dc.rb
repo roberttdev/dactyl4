@@ -15,7 +15,7 @@ module DC
   # The canonical server root, including SSL, if requested.
   def self.server_root(options={:ssl => true, :agnostic => false, })
     root = case
-           when options[:force_ssl] || (options[:ssl] && Thread.current[:ssl]) then 'https://'
+           when DC::CONFIG['ssl_on'] && (options[:force_ssl] || (options[:ssl] && Thread.current[:ssl])) then 'https://'
            when options[:agnostic] then '//'
            else
              'http://'

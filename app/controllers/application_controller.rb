@@ -122,19 +122,19 @@ class ApplicationController < ActionController::Base
   end
 
   def secure_only
-    if !request.ssl? && (request.format.html? || request.format.nil?)
+    if !request.ssl? && (request.format.html? || request.format.nil?) && DC::CONFIG['ssl_on']
       redirect_to DC.server_root(:force_ssl => true) + request.original_fullpath
     end
   end
 
   def current_account
-    return nil unless request.ssl?
+    return nil if (DC::CONFIG['ssl_on'] && !request.ssl?)
     @current_account ||=
       session['account_id'] ? Account.active.find_by_id(session['account_id']) : nil
   end
 
   def current_organization
-    return nil unless request.ssl?
+#    return nil unless request.ssl?
     @current_organization ||=
       session['organization_id'] ? Organization.find_by_id(session['organization_id']) : nil
   end

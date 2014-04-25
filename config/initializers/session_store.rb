@@ -3,5 +3,5 @@
 DC::Application.config.session_store :cookie_store,
   :key          => 'document_cloud_session',
   :expire_after => 1.month,
-  :httponly     => true,
-  :secure       => true
+  :httponly     => true
+#  :secure       => true
