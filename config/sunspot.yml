@@ -9,7 +9,6 @@ production:
     min_memory: 200M
     max_memory: 3G
     pid_dir: tmp/pids
-    solr_home: solr
 
 development:
   solr:
