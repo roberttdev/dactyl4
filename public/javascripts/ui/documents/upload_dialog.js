@@ -216,7 +216,7 @@ dc.ui.UploadDialog = dc.ui.Dialog.extend({
     
     this.title( _.t('uploaded_x_documents',num) );
 
-    this.$('.upload_public_count').text( _.t('make_documents_public', num ) );
+    this.$('.upload_public_count').text( _.t('x_documents', num ) );
     this.$('.upload_email_count').text( _.t('uploaded_x_document_has', num ) );
   },
 
@@ -300,11 +300,12 @@ dc.ui.UploadDocumentTile = Backbone.View.extend({
   // Serialize user-submitted form data for the document's various attributes.
   serialize : function() {
     return {
-      title       : this._title.val(),
-      description : this.$('textarea[name=description]').val(),
-      source      : this.$('input[name=source]').val(),
-      access      : this.$('select[name=access]').val(),
-      language    : this.$('select[name=language]').val()
+      title             : this._title.val(),
+      study             : this.$('input[name=study]').val(),
+      description       : this.$('textarea[name=description]').val(),
+      source            : this.$('input[name=source]').val(),
+      related_article   : this.$('input[name=source_ref]').val(),
+      language          : this.$('select[name=language]').val()
     };
   },
 
@@ -321,9 +322,10 @@ dc.ui.UploadDocumentTile = Backbone.View.extend({
   applyAll : function() {
     var dialog = dc.app.uploader.el;
     var attrs  = this.serialize();
-    $('textarea[name=description]', dialog).val(attrs.description);
+    $('input[name=study]',          dialog).val(attrs.study);
     $('input[name=source]',         dialog).val(attrs.source);
-    $('select[name=access]',        dialog).val(attrs.access);
+    $('input[name=source_ref]',     dialog).val(attrs.related_article);
+    $('textarea[name=description]', dialog).val(attrs.description);
     $('select[name=language]',      dialog).val(attrs.language);
     dc.app.uploader.info( _.t('update_applied_all') );
   },

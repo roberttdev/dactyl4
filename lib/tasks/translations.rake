@@ -1,7 +1,7 @@
 namespace :translations do
 
   desc "Build download packs of translation strings"
-  task :compile => 'translations:download' do
+  task :compile do
     require 'dc/language'
     DC::Language::SUPPORTED.each do | language_code |
       path =  Rails.root.join('config','locales', "#{language_code}.yml" )

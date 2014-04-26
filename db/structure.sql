@@ -3,6 +3,7 @@
 --
 
 SET statement_timeout = 0;
+SET lock_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
@@ -243,7 +244,13 @@ CREATE TABLE documents (
     file_size integer DEFAULT 0 NOT NULL,
     char_count integer DEFAULT 0 NOT NULL,
     original_extension character varying(255),
-    file_hash text
+    file_hash text,
+    study text,
+    status integer,
+    de_one_id integer,
+    de_two_id integer,
+    qc_id integer,
+    qa_id integer
 );
 
 
@@ -1193,6 +1200,13 @@ CREATE INDEX index_sections_on_document_id ON sections USING btree (document_id)
 
 
 --
+-- Name: index_status; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_status ON documents USING btree (status);
+
+
+--
 -- Name: unique_schema_migrations; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -1332,3 +1346,6 @@ INSERT INTO schema_migrations (version) VALUES ('20130109194211');
 INSERT INTO schema_migrations (version) VALUES ('20130327170939');
 
 INSERT INTO schema_migrations (version) VALUES ('20130716200416');
+
+INSERT INTO schema_migrations (version) VALUES ('20140226151713');
+

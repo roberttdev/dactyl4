@@ -1,10 +1,12 @@
-<% if (docAccess != dc.access.PUBLIC) { %>
-<div class="access_info">
-  <span>
-    <%= docAccess == dc.access.ORGANIZATION ? _.t('private_to', orgName ) : _.t('private_access') %>
-  </span>
+<div class="control_panel_title gradient_light">
+    <div class="button_panel">
+        <div class="new_group">+ New Group</div>
+    </div>
 </div>
-<% } %>
+<div class="control_panel_title gradient_light">
+      <span class="group_title">Test</span>&nbsp;&gt;&nbsp;
+      <span class="group_title">Test2</span>
+</div>
 
 <div class="control_panel_title gradient_light">
   <span class=""><%= _.t('document_tools') %></span>
@@ -21,61 +23,10 @@
     <span class="warn"><%= _.t('add_public_note_warn') %></span>
   </div>
 <% } %>
-<div class="private_annotation button">
-  <div class="icon mini_note_private"></div>
-  <div class="icon cancel_search"></div>
-  <span><%= _.t('add_private_note') %></span>
-</div>
-<div id="private_note_guide" class="note_guide" style="display:none;">
-  <%= _.t('add_note_instructions') %>
-  <br /><br />
-  <span class="warn"><%= _.t('add_private_note_warn') %></span>
-</div>
-<% if (isOwner || isReviewer) { %>
-  <div class="redact_annotation button">
-    <div class="icon mini_redaction"></div>
-    <div class="icon cancel_search"></div>
-    <span><%= _.t('redact_document') %></span>
-  </div>
-  <div id="redact_note_guide" class="note_guide" style="display:none;">
-  <% red = _.t('red'); black = _.t('black') %>
-  <%= _.t('redact_instructions', '<span class="when_black">' + black + '</span><span class="when_red">' + red + '</span>' ) %>
-    <br /><br />
-    <%= _.t('notes_hidden_while_redacting') %>
-    <br /><br />
-    <div class="minibutton cancel_redactions"><%= _.t('cancel') %></div>
-    <div class="minibutton default save_redactions"><%= _.t('save_redactions') %></div>
-  </div> 
-<% } %> 
+
 <% if (isOwner) { %>
   <div class="set_sections button"><span><%= _.t('edit_sections') %></span></div>
-  <div class="document_fields_container">
-    <div class="edit_document_info button">
-      <div class="icon toggle toggle_document_info"></div>
-      <span><%= _.t('edit_document_info') %></span>
-    </div>
-    <div class="edit_document_fields">
-      <div class="edit_title button"><span class="dash">–</span>&nbsp; <span><%= _.t('edit_title') %></span></div>
-      <div class="edit_source button"><span class="dash">–</span>&nbsp; <span><%= _.t('edit_source') %></span></div>
-      <div class="edit_description button"><span class="dash">–</span>&nbsp; <span><%= _.t('edit_description') %></span></div>
-      <div class="edit_access button"><span class="dash">–</span>&nbsp; <span><%= _.t('edit_access') %></span></div>
-      <div class="edit_related_article button"><span class="dash">–</span>&nbsp; <span><%= _.t('edit_related_url') %></span></div>
-      <div class="edit_document_url button"><span class="dash">–</span>&nbsp; <span><%= _.t('edit_published_url') %></span></div>
-    </div>
-  </div>
-  
-  <div class="edit_data button"><span><%= _.t('edit_document_data') %></span></div>
-  
-  <div class="control_panel_title gradient_light">
-    <span class=""><%= _.t('embed_tools') %></span>
-  </div>
-  <div class="embed_document button">
-    <span><%= _.t('embed_document') %></span>
-  </div>
-  <div class="embed_note button">
-    <span><%= _.t('embed_note')%></span>
-  </div>
-  
+
   <div class="control_panel_title gradient_light">
     <span class=""><%= _.t('page_tools') %></span>
   </div>

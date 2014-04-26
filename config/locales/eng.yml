@@ -16,7 +16,7 @@
   - contents: Contents
   - contributed_by: Contributed by
   - delete: Delete
-  - description: Description
+  - description: Notes
   - dl_as_pdf: Download this document as a PDF
   - document: Document
   - document_tools: Document Tools
@@ -130,6 +130,7 @@
   - bad_data_key: "%s cannot be used as a key"
   - before_continue: Before continuing, you can take a moment to %s
   - black: black
+  - blank_field_error: A template field is blank.  Please enter a name or delete it.
   - broken_document: Broken document
   - by_date: by date
   - by_length: by length
@@ -157,6 +158,7 @@
   - contributed_by: Contributed by
   - contributor: Contributor
   - country: " Countries"
+  - create_group: Create Group
   - create_new_project: Create a New Project
   - date: " Dates"
   - date_uploaded: Date Uploaded
@@ -203,6 +205,7 @@
   - documents_are_ready: Your documents are ready
   - documents_per_page: Documents per page
   - double_check_disable: Really disable %s's account?
+  - download_original: Download Original File
   - download_pdf: Download Original PDF
   - download_text: Download Full Text
   - download_viewer: Download Document Viewer
@@ -233,6 +236,8 @@
   - edit_related_url: Edit Related Article URL
   - edit_sections: Edit Sections
   - edit_source: Edit Source
+  - edit_subtemplate: Edit Subtemplate
+  - edit_template: Edit Template
   - edit_text_any_page: Edit the text of any page.
   - edit_title: Edit Title
   - edit_x: Edit %s
@@ -309,6 +314,8 @@
   - full_page: Full Page
   - future_documents_w_appear: Future documents %s will appear in your embed.
   - group: Group
+  - group_name: Group Name
+  - group_name_explanation: A name that will distinctly identify this group.
   - guided_tour: Guided Tour
   - guides_howtos: Guides & Howto's
   - has_no_entities: "%s has no entities to display."
@@ -330,7 +337,7 @@
       at once. When you're ready, click the "Upload Pages" button.
   - insert_replace_pages: Insert/Replace Pages
   - introduction: Introduction
-  - language: language
+  - language: Language
   - language_defaults: Language Defaults
   - last_name: Last name
   - length: Length
@@ -362,9 +369,13 @@
     - Please enter a title for all documents.
   - must_have_title: Please enter a title.
   - must_upload_something: You must upload at least one document.
+  - name_explanation: The name that users will use to reference the template.
+  - new: New
   - new_account: New Account
   - new_documents: New Documents
   - new_project: New Project
+  - new_subtemplate: New Subtemplate
+  - new_template: New Template
   - next: Next
   - no_appear_until_publish: will not appear until published.
   - no_dates_for_timeline:
@@ -416,7 +427,7 @@
   - page_ellipsis: Page ...
   - page_tools: Page Tools
   - pages_are_being_removed: The pages are being removed. Please close this document.
-  - paragraph_description_of_document: Paragraph description of this document
+  - paragraph_description_of_document: Notes regarding this document
   - password_no_blank: Your password can't be blank
   - password_reset: DocumentCloud password reset
   - password_updated: Password updated
@@ -489,12 +500,12 @@
     - You've redacted %d passages. This document will close while it's being rebuilt.
       Are you sure you're ready to proceed?
   - reenable: Re-enable
-  - related_article_url: Related article URL
+  - related_article_url: Source Reference
   - related_article_url_help: Providing the URL of the article that references this
       document will enable a "Related Article" link within the document viewer. Many
       readers arrive at a document from a web search &mdash; the link guides them
       back to the document's original context.
-  - related_url_of_document: URL of the web article that refers to this document
+  - related_url_of_document: Reference for this source (usually a URL)
   - relevance: Relevance
   - remove: Remove
   - remove_all: Remove All
@@ -598,10 +609,16 @@
   - sort_by_source: Sort by Source
   - sort_by_title: Sort by Title
   - sort_documents_by: Sort Documents By
-  - source: Source
-  - source_of_document: The source from which you obtained this document
+  - source: Source Type
+  - source_of_document: The type of source that classifies this document
   - state: " States"
   - step_x_of_x: Step %d of %d
+  - study: Study
+  - study_of_document: The study this file pertains to
+  - template_fields: Template Fields
+  - template_name: Template Name
+  - template_name_required: The template name is required.
+  - templates: Templates
   - term: " Terms"
   - terms: Terms
   - text: Text

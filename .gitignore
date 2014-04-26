@@ -19,6 +19,7 @@ public/document-viewer/images/*.psd
 solr/data
 solr/collection1
 *.swp
+*.pid
 *~
 .#*
 cloud_crowd.db

@@ -8,13 +8,13 @@ module DC
   # lib/dc/language.js
   module Language
     NAMES = {
-      'eng' => 'English',
-      'spa' => 'Spanish',
-      'fra' => 'French',
-      'deu' => 'German',
-      'dan'=> 'Danish',
-      'rus'=> 'Russian',
-      'ukr'=> 'Ukrainian'
+      'eng' => 'English'
+      #'spa' => 'Spanish',
+      #'fra' => 'French',
+      #'deu' => 'German',
+      #'dan'=> 'Danish',
+      #'rus'=> 'Russian',
+      #'ukr'=> 'Ukrainian'
     }
 
     SUPPORTED = NAMES.keys

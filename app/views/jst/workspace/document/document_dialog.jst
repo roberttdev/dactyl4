@@ -11,20 +11,22 @@
 <% } %>
 
 <div class="row">
+  <label for="document_edit_study" title="<%= _.t('study_of_document') %>">
+      <%= _.t('study') %>:
+  </label>
+  <div class="text_input dark small">
+    <input name="study" id="document_edit_study" class="attribute" type="text" />
+  </div>
+  <br class="clear" />
+</div>
+
+<div class="row">
   <label for="document_edit_source" title="<%= _.t('source_of_document') %>">
     <%= _.t('source') %>:
   </label>
   <div class="text_input dark small">
     <input name="source" id="document_edit_source" class="attribute" type="text" />
   </div>
-  <br class="clear" />
-</div>
-
-<div class="row tall">
-  <label for="document_edit_description" title="<%= _.t('paragraph_description_of_document') %>">
-    <%= _.t('description') %>:
-  </label>
-  <textarea name="description" id="document_edit_description" class="text_area dark small content attribute"></textarea>
   <br class="clear" />
 </div>
 
@@ -39,13 +41,11 @@
 </div>
 
 <% if (!multiple) { %>
-<div class="row">
-  <label for="document_edit_remote_url" title="<%= _.t('embed_url_of_document') %>">
-      <%= _.t('published_url') %>:
+<div class="row tall">
+  <label for="document_edit_description" title="<%= _.t('paragraph_description_of_document') %>">
+    <%= _.t('description') %>:
   </label>
-  <div class="text_input dark small">
-    <input name="remote_url" id="document_edit_remote_url" class="attribute" type="text" />
-  </div>
+  <textarea name="description" id="document_edit_description" class="text_area dark small content attribute"></textarea>
   <br class="clear" />
 </div>
 <% } %>

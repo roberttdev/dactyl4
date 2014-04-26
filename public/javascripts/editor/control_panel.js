@@ -5,28 +5,12 @@ dc.ui.ViewerControlPanel = Backbone.View.extend({
   events : {
     'click .set_sections':          'openSectionEditor',
     'click .public_annotation':     'togglePublicAnnotation',
-    'click .private_annotation':    'togglePrivateAnnotation',
-    'click .redact_annotation':     'toggleRedaction',
-    'click .cancel_redactions':     'toggleRedaction',
-    'click .save_redactions':       'saveRedactions',
-    'click a.when_black':           'toggleRedactionColor',
-    'click a.when_red':             'toggleRedactionColor',
-    'click .edit_document_info':    'editDocumentInfo',
-    'click .edit_description':      'editDescription',
-    'click .edit_title':            'editTitle',
-    'click .edit_source':           'editSource',
-    'click .edit_access':           'editAccess',
-    'click .edit_related_article':  'editRelatedArticle',
-    'click .edit_document_url':     'editPublishedUrl',
-    'click .edit_data':             'editData',
     'click .edit_remove_pages':     'editRemovePages',
     'click .edit_reorder_pages':    'editReorderPages',
     'click .edit_page_text':        'editPageText',
     'click .reprocess_text':        'reprocessText',
     'click .edit_replace_pages':    'editReplacePages',
     'click .toggle_document_info':  'toggleDocumentInfo',
-    'click .embed_document':        'embedDocument',
-    'click .embed_note':            'embedNote',
     'click .access_info':           'editAccess'
   },
 
@@ -79,68 +63,8 @@ dc.ui.ViewerControlPanel = Backbone.View.extend({
     }, options);
   },
 
-  editDocumentInfo : function(e) {
-    if ($(e.target).is('.toggle_document_info')) return;
-    var doc = this._getDocumentModel();
-    new dc.ui.DocumentDialog([doc]);
-  },
-
-  editTitle : function() {
-    this.prompt(_.t('title'), this.viewer.api.getTitle(), _.bind(function(title) {
-      this.viewer.api.setTitle(title);
-      this._updateDocument({title : title});
-      return true;
-    }, this), {mode : 'short_prompt'});
-  },
-
-  editSource : function() {
-    this.prompt(_.t('source'), this.viewer.api.getSource(), _.bind(function(source) {
-      this.viewer.api.setSource(source);
-      this._updateDocument({source : source});
-      return true;
-    }, this), {mode: 'short_prompt'});
-  },
-
-  editRelatedArticle : function() {
-    this.prompt(_.t('related_article_url'), this.viewer.api.getRelatedArticle(), _.bind(function(url, dialog) {
-      url = dc.inflector.normalizeUrl(url);
-      if (url && !dialog.validateUrl(url)) return false;
-      this.viewer.api.setRelatedArticle(url);
-      this._updateDocument({related_article : url});
-      return true;
-    }, this), {
-      mode : 'short_prompt',
-      description : _.t('related_url_of_document')
-    });
-  },
-
-  editPublishedUrl : function() {
-    this.prompt( _.t('published_url'), this.viewer.api.getPublishedUrl(), _.bind(function(url, dialog) {
-      url = dc.inflector.normalizeUrl(url);
-      if (url && !dialog.validateUrl(url)) return false;
-      this.viewer.api.setPublishedUrl(url);
-      this._updateDocument({remote_url : url});
-      return true;
-    }, this), {
-      mode        : 'short_prompt',
-      description : _.t('embed_url_of_document')
-    });
-  },
-
-  editDescription : function() {
-    this.prompt(_.t('description'), this.viewer.api.getDescription(), _.bind(function(desc) {
-      this.viewer.api.setDescription(desc);
-      this._updateDocument({description : desc});
-      return true;
-    }, this));
-  },
-
   editAccess : function() {
     Documents.editAccess([this.docModel], this.closeDocumentOnAccessChange);
-  },
-
-  editData : function() {
-    new dc.ui.DocumentDataDialog([this.docModel]);
   },
 
   closeDocumentOnAccessChange : function() {
@@ -234,58 +158,10 @@ dc.ui.ViewerControlPanel = Backbone.View.extend({
     dc.app.editor.annotationEditor.toggle('public');
   },
 
-  togglePrivateAnnotation : function() {
-    this.openDocumentTab();
-    dc.app.editor.annotationEditor.toggle('private');
-  },
-
-  toggleRedaction : function() {
-    this.openDocumentTab();
-    dc.app.editor.annotationEditor.toggle('redact');
-  },
-
-  toggleRedactionColor : function() {
-    var el = this.viewer.elements.viewer;
-    this.redactionColor = this.redactionColor == 'black' ? 'red' : 'black';
-    $(el).toggleClass('DV-redRedactions', this.redactionColor == 'red');
-  },
-
   toggleDocumentInfo : function() {
     var showing = $('.edit_document_fields').is(':visible');
     $('.document_fields_container').setMode(showing ? 'hide' : 'show', 'document_fields');
     $('.document_fields_container .toggle').setMode(showing ? 'not' : 'is', 'enabled');
-  },
-
-  embedDocument : function() {
-    var doc = this._getDocumentModel();
-    (new dc.ui.DocumentEmbedDialog(doc)).render();
-  },
-
-  embedNote : function() {
-    var doc = this._getDocumentModel();
-    Documents.reset([doc]);
-    dc.app.noteEmbedDialog = new dc.ui.NoteEmbedDialog(doc);
-  },
-
-  saveRedactions : function() {
-    var modelId = this.viewer.api.getModelId();
-    var redactions = dc.app.editor.annotationEditor.redactions;
-    if (!redactions.length) return dc.app.editor.annotationEditor.close();
-    var message = _.t('redaction_close_while_processing');
-    dc.ui.Dialog.confirm(message, _.bind(function() {
-      $.ajax({
-        url       : '/documents/' + modelId + '/redact_pages',
-        type      : 'POST',
-        data      : {redactions : JSON.stringify(redactions), color: this.redactionColor},
-        dataType  : 'json',
-        success   : _.bind(function(resp) {
-          this.setOnParent(modelId, resp);
-          window.close();
-          _.defer(dc.ui.Dialog.alert, _.t('close_while_redacting') );
-        }, this)
-      });
-      return true;
-    }, this));
   },
 
   setOnParent : function(doc, attrs) {

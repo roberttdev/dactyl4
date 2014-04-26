@@ -302,16 +302,11 @@ dc.ui.Toolbar = Backbone.View.extend({
   },
 
   _createPublishMenu : function() {
-    var accountItems = [
-      {title : _.t('embed_document_viewer'), onClick : this.openDocumentEmbedDialog,    attrs: {'class': 'singular'}},
-      {title : _.t('embed_document_list'),   onClick : this.openSearchEmbedDialog,      attrs: {'class': 'always'}},
-      {title : _.t('embed_a_note'),          onClick : this.openNoteEmbedDialog,        attrs: {'class': 'singular'}},
-      {title : _.t('set_publication_date'),  onClick : this.openPublicationDateDialog,  attrs: {'class': 'private_only'}},
-      {title : _.t('download_viewer'),       onClick : this.requestDownloadViewers}
-    ];
+    var accountItems = [];
     var publicItems = [
       {title : _.t('download_pdf'),  onClick : Documents.downloadSelectedPDF},
       {title : _.t('download_text'), onClick : Documents.downloadSelectedFullText},
+      {title : _.t('download_original'), onClick : Documents.downloadOriginalFile},
       {title : _.t('print_notes'),   onClick : Documents.printNotes}
     ];
     var items = dc.account ? accountItems.concat(publicItems) : publicItems;
@@ -342,12 +337,6 @@ dc.ui.Toolbar = Backbone.View.extend({
       onOpen  : this._enableMenuItems,
       items   : [
         {title : _.t('edit_document_info'),       attrs: {'class' : 'multiple'},        onClick : function(){ dc.ui.DocumentDialog.open(); }},
-        {title : _.t('title'),                    attrs: {'class' : 'singular indent'}, onClick : this.editTitle},
-        {title : _.t('source'),                   attrs: {'class' : 'multiple indent'}, onClick : this.editSource},
-        {title : _.t('description'),              attrs: {'class' : 'multiple indent'}, onClick : this.editDescription},
-        {title : _.t('access_level'),             attrs: {'class' : 'multiple indent'}, onClick : this.editAccess},
-        {title : _.t('related_article_url'),      attrs: {'class' : 'multiple indent'}, onClick : this.editRelatedArticle},
-        {title : _.t('published_url'),            attrs: {'class' : 'multiple indent'}, onClick : this.editPublishedUrl},
         {title : _.t('edit_document_data'),       attrs: {'class' : 'multiple'},        onClick : this.editData},
         {title : _.t('modify_original_document'), attrs: {'class' : 'multiple'},        onClick : _.bind(this.openViewers, this, true, '#pages', null)},
         {title : _.t('remove_from_project'),      attrs: {'class' : 'multiple project'},onClick : this._removeFromSelectedProject},

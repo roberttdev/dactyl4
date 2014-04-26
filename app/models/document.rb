@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 class Document < ActiveRecord::Base
   include DC::Access
+  include DC::DocumentStatus
   include ActionView::Helpers::TextHelper
 
   # Accessors and constants:
@@ -33,6 +34,7 @@ class Document < ActiveRecord::Base
   belongs_to :account
   belongs_to :organization
 
+  has_one :document_status
   has_one  :docdata,              :dependent   => :destroy, :inverse_of=>:document
   has_many :pages,                :dependent   => :destroy, :inverse_of=>:document
   has_many :entities,             :dependent   => :destroy, :inverse_of=>:document
@@ -178,12 +180,14 @@ class Document < ActiveRecord::Base
       :access             => PENDING,
       :page_count         => 0,
       :title              => title,
+      :study              => params[:study],
       :description        => params[:description],
       :source             => params[:source],
       :related_article    => params[:related_article],
       :remote_url         => params[:published_url] || params[:remote_url],
       :language           => params[:language] || account.language,
-      :original_extension => file_ext
+      :original_extension => file_ext,
+      :status             => STATUS_NEW
     )
     import_options = {
       :access => access,
@@ -506,6 +510,20 @@ class Document < ActiveRecord::Base
     DC::Store::AssetStore.new.authorized_url(full_text_path)
   end
 
+  def public_original_url
+    File.join(DC::Store::AssetStore.web_root, original_file_path)
+  end
+
+  def private_original_url
+    File.join(DC.server_root, original_file_path)
+  end
+
+  def original_url(direct=false)
+    return public_original_url if public? || Rails.env.development?
+    return private_original_url unless direct
+    DC::Store::AssetStore.new.authorized_url(original_file_path)
+  end
+
   def document_viewer_url(opts={})
     suffix = ''
     suffix = "#document/p#{opts[:page]}" if opts[:page]
@@ -821,7 +839,7 @@ class Document < ActiveRecord::Base
       :document_viewer_url => document_viewer_url,
       :document_viewer_js  => canonical_url(:js),
       :reviewer_count      => reviewer_count,
-      :remote_url          => remote_url,
+      :study               => study,
       :detected_remote_url => detected_remote_url,
       :publish_at          => publish_at.as_json,
       :hits                => hits,
@@ -831,7 +849,8 @@ class Document < ActiveRecord::Base
       :char_count          => char_count,
       :data                => data,
       :language            => language,
-      :file_hash           => file_hash
+      :file_hash           => file_hash,
+      :original_file_path  => original_url
     }
     if opts[:annotations]
       json[:annotations_url] = annotations_url if commentable?(opts[:account])

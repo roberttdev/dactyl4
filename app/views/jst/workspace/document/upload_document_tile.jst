@@ -25,12 +25,12 @@
 
 <% if (editable) { %>
   <div class="upload_edit">
-    <div class="upload_description">
-      <div class="upload_description_row">
-        <label for="document_upload_description_<%= model.id %>">
-          <%= _.t('description') %>:
-        </label>
-        <textarea name="description" id="document_upload_description_<%= model.id %>" class="text_area content dark small interface"></textarea>
+    <div class="upload_study">
+      <label for="document_upload_study_<%= model.id %>">
+          <%= _.t('study') %>:
+      </label>
+      <div class="text_input small dark">
+        <input name="study" id="document_upload_study_<%= model.id %>" type="text">
       </div>
     </div>
 
@@ -43,15 +43,22 @@
       </div>
     </div>
 
-    <div class="upload_access">
-      <label for="document_upload_access_<%= model.id %>">
-      <%= _.t('access_level') %>:
+    <div class="upload_source_ref">
+      <label for="document_upload_source_ref_<%= model.id %>">
+          <%= _.t('related_article_url') %>:
       </label>
-      <select name="access" class="document_access" id="document_upload_access_<%= model.id %>">
-        <option value="public"><%= _.t('public_access') %></option>
-        <option value="private" selected="true"><%= _.t('private_access') %></option>
-        <option value="organization"><%= _.t('private_to', dc.account.organization().get('name') ) %></option>
-      </select>
+      <div class="text_input small dark">
+        <input name="source_ref" id="document_upload_source_ref_<%= model.id %>" type="text" />
+      </div>
+    </div>
+
+    <div class="upload_description">
+      <div class="upload_description_row">
+        <label for="document_upload_description_<%= model.id %>">
+          <%= _.t('description') %>:
+        </label>
+        <textarea name="description" id="document_upload_description_<%= model.id %>" class="text_area content dark small interface"></textarea>
+      </div>
     </div>
 
     <div class="language">

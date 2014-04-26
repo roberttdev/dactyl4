@@ -47,7 +47,7 @@ class DocumentsController < ApplicationController
   def update
     return not_found unless doc = current_document(true)
     attrs = pick(params, :access, :title, :description, :source,
-                         :related_article, :remote_url, :publish_at, :data, :language)
+                         :related_article, :study, :publish_at, :data, :language)
     success = doc.secure_update attrs, current_account
     return json(doc, 403) unless success
     if doc.cacheable?
@@ -192,6 +192,11 @@ class DocumentsController < ApplicationController
     json nil
   end
 
+  def send_original
+    return not_found unless current_document(true)
+    redirect_to current_document.orig_doc_url(:direct)
+  end
+
   def send_pdf
     return not_found unless current_document(true)
     redirect_to current_document.pdf_url(:direct)
@@ -245,6 +250,7 @@ class DocumentsController < ApplicationController
     @allowed_to_edit = current_account.allowed_to_edit?(current_document)
     @allowed_to_review = current_account.reviews?(current_document)
     @reviewer_inviter = @allowed_to_review && current_document.reviewer_inviter(current_account) || nil
+    @template_list =  GroupTemplate.all(:include => :subtemplates).to_json(:include => :subtemplates)
   end
 
   def date_requested?
