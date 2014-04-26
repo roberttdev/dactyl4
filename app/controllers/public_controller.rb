@@ -11,7 +11,7 @@ class PublicController < ApplicationController
     # will not be able to tell from the login links that they are
     # logged in.
     #@current_account = current_account
-    @include_analytics = true
+    #@include_analytics = true
     render :template => 'workspace/index', :layout => 'workspace'
   end
 
