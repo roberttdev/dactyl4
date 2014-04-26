@@ -132,6 +132,11 @@ dc.model.Document = Backbone.Model.extend({
       this.openPublishedViewer() : this.openViewer(suffix);
   },
 
+  openOriginal : function() {
+      if (this.checkBusy()) return;
+      window.open(this.get('original_file_path'));
+  },
+
   openText : function() {
     if (this.checkBusy()) return;
     window.open(this.get('full_text_url'));
@@ -233,7 +238,7 @@ dc.model.DocumentSet = Backbone.Collection.extend({
   constructor : function(options) {
     Backbone.Collection.call(this, options);
     this._polling = false;
-    _.bindAll(this, 'poll', 'downloadViewers', 'downloadSelectedPDF', 'downloadSelectedFullText', 'printNotes', '_onModelChanged');
+    _.bindAll(this, 'poll', 'downloadViewers', 'downloadSelectedPDF', 'downloadSelectedFullText', 'downloadOriginalFile', 'printNotes', '_onModelChanged');
     this.bind('change', this._onModelChanged);
   },
 
@@ -308,12 +313,17 @@ dc.model.DocumentSet = Backbone.Collection.extend({
 
   downloadSelectedPDF : function() {
     if (this.selectedCount <= 1) return this.selected()[0].openPDF();
-    dc.app.download('/download/' + this.selectedIds().join('/') + '/original_documents.zip');
+    dc.app.download('/download/' + this.selectedIds().join('/') + '/document_pdf.zip');
   },
 
   downloadSelectedFullText : function() {
     if (this.selectedCount <= 1) return this.selected()[0].openText();
     dc.app.download('/download/' + this.selectedIds().join('/') + '/document_text.zip');
+  },
+
+  downloadOriginalFile : function() {
+     if (this.selectedCount <= 1) return this.selected()[0].openOriginal();
+     dc.app.download('/download/' + this.selectedIds().join('/') + '/original_docs.zip');
   },
 
   printNotes : function() {
