@@ -146,6 +146,17 @@ DC::Application.routes.draw do
     resources :collaborators, :only=>[:create,:destroy]
   end
 
+  #Templates
+  get '/templates/index.json' => 'templates#index'
+  put '/templates/:template_id/template_fields' => 'template_fields#bulk_update'
+  resources :templates do
+    resources :template_fields
+    resources :subtemplates
+  end
+
+  #Subtemplate fields
+  resources :subtemplate_fields, path: '/subtemplates/:subtemplate_id/subtemplate_fields'
+
   # Home pages.
   get '/contributors' => 'home#contributors', :as => :contributors
   get '/faq' => 'home#faq'

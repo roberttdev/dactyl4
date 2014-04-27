@@ -1,0 +1,100 @@
+/*--------------------------- Template Manager --------------------------------*/
+#template_manager_container {
+    margin: 0px 25px;
+}
+
+#template_manager_container h3 {
+    font-weight: bold;
+    margin-bottom: 1em;
+    font: bold 14px Arial;
+}
+
+#template_toolbar {
+    height: 26px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 5;
+}
+
+#new_field {
+    width: 40px;
+    margin-right: 250px;
+}
+
+#field_listing {
+    margin-left: 32px;
+    width: 256px;
+    height: 24px;
+}
+
+#field_listing.text_input {
+    position: relative;
+    height: 32px;
+}
+
+#field_listing .title {
+    display: inline-block;
+    width: 200px;
+    font-size: 11px;
+}
+
+#field_listing .checkbox {
+    display: inline-block;
+}
+
+.template_list {
+    padding-left: 120px;
+}
+
+.template_row {
+    padding: 8px;
+    width: 600px;
+    height: 25px;
+    margin-top: 10px;
+    background-color: lightgray;
+    border-style: solid;
+    border-width: 1px;
+    border-color: gray;
+}
+
+.template_row.sub {
+    margin-top: 0px;
+    height: 20px;
+    background-color: white;
+    border-width: 0px;
+}
+
+.template_row .title {
+    color: #000;
+    font: bold 16px/20px Helvetica, Arial;
+    padding-left: 64px;
+    display: inline-block;
+    width: 250px;
+    position: relative;
+    top: -5px;
+}
+
+.template_row .title.subtemplate {
+    padding-left: 96px;
+    width: 218px;
+}
+
+.button_cell {
+    padding-left: 24px;
+    width: 250px;
+    display: inline-block;
+}
+
+.minibutton {
+    margin-left: 8px;
+}
+
+.minibutton.delete {
+    position: relative;
+    bottom  : 24px;
+    left   : 280px;
+}
+
+
+
+

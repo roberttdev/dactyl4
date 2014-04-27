@@ -37,3 +37,35 @@
   };
 
 })();
+
+
+// BulkSubmitCollection: An extension of Collection that easily allows groups of models
+//          to be sent to the server as one request.
+Backbone.BulkSubmitCollection = Backbone.Collection.extend({
+
+    //Pushes all models to the collection's base URL in one request.
+    //Options:
+    //'success' : success function
+    //'error'   : error function
+    pushAll: function(options){
+        _thisColl = this;
+        _bulkJSON = {bulkData: this.toJSON()};
+        $.ajax({
+            url         : this.url,
+            contentType : 'application/json; charset=utf-8',
+            type        : 'put',
+            data        : JSON.stringify(_bulkJSON),
+            success     : function(responseData) {
+                _thisColl.parseBulkResponse(responseData, options['success']);
+            },
+            error       : options['error']
+        })
+    },
+
+
+    //Parses bulk response to update collection (currently just does a full replace)
+    parseBulkResponse: function(responseData, success) {
+        this.reset(responseData);
+        success.call();
+    }
+});

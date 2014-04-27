@@ -381,6 +381,37 @@ ALTER SEQUENCE featured_reports_id_seq OWNED BY featured_reports.id;
 
 
 --
+-- Name: group_templates; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE group_templates (
+    id integer NOT NULL,
+    name text NOT NULL,
+    created_at timestamp without time zone,
+    updated_at timestamp without time zone
+);
+
+
+--
+-- Name: group_templates_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE group_templates_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: group_templates_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE group_templates_id_seq OWNED BY group_templates.id;
+
+
+--
 -- Name: memberships; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -725,6 +756,102 @@ ALTER SEQUENCE security_keys_id_seq OWNED BY security_keys.id;
 
 
 --
+-- Name: subtemplate_fields; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE subtemplate_fields (
+    id integer NOT NULL,
+    subtemplate_id integer NOT NULL,
+    field_id integer NOT NULL,
+    created_at timestamp without time zone,
+    updated_at timestamp without time zone
+);
+
+
+--
+-- Name: subtemplate_fields_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE subtemplate_fields_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: subtemplate_fields_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE subtemplate_fields_id_seq OWNED BY subtemplate_fields.id;
+
+
+--
+-- Name: subtemplates; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE subtemplates (
+    id integer NOT NULL,
+    template_id integer NOT NULL,
+    sub_name text NOT NULL,
+    created_at timestamp without time zone,
+    updated_at timestamp without time zone
+);
+
+
+--
+-- Name: subtemplates_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE subtemplates_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: subtemplates_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE subtemplates_id_seq OWNED BY subtemplates.id;
+
+
+--
+-- Name: template_fields; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE template_fields (
+    id integer NOT NULL,
+    template_id integer NOT NULL,
+    field_name text NOT NULL,
+    created_at timestamp without time zone,
+    updated_at timestamp without time zone
+);
+
+
+--
+-- Name: template_fields_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE template_fields_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: template_fields_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE template_fields_id_seq OWNED BY template_fields.id;
+
+
+--
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -798,6 +925,13 @@ ALTER TABLE ONLY featured_reports ALTER COLUMN id SET DEFAULT nextval('featured_
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
+ALTER TABLE ONLY group_templates ALTER COLUMN id SET DEFAULT nextval('group_templates_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
 ALTER TABLE ONLY memberships ALTER COLUMN id SET DEFAULT nextval('memberships_id_seq'::regclass);
 
 
@@ -862,6 +996,27 @@ ALTER TABLE ONLY sections ALTER COLUMN id SET DEFAULT nextval('sections_id_seq':
 --
 
 ALTER TABLE ONLY security_keys ALTER COLUMN id SET DEFAULT nextval('security_keys_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY subtemplate_fields ALTER COLUMN id SET DEFAULT nextval('subtemplate_fields_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY subtemplates ALTER COLUMN id SET DEFAULT nextval('subtemplates_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY template_fields ALTER COLUMN id SET DEFAULT nextval('template_fields_id_seq'::regclass);
 
 
 --
@@ -945,6 +1100,14 @@ ALTER TABLE ONLY featured_reports
 
 
 --
+-- Name: group_templates_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY group_templates
+    ADD CONSTRAINT group_templates_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: memberships_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -1022,6 +1185,30 @@ ALTER TABLE ONLY sections
 
 ALTER TABLE ONLY security_keys
     ADD CONSTRAINT security_keys_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: subtemplate_fields_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY subtemplate_fields
+    ADD CONSTRAINT subtemplate_fields_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: subtemplates_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY subtemplates
+    ADD CONSTRAINT subtemplates_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: template_fields_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY template_fields
+    ADD CONSTRAINT template_fields_pkey PRIMARY KEY (id);
 
 
 --
@@ -1348,4 +1535,12 @@ INSERT INTO schema_migrations (version) VALUES ('20130327170939');
 INSERT INTO schema_migrations (version) VALUES ('20130716200416');
 
 INSERT INTO schema_migrations (version) VALUES ('20140226151713');
+
+INSERT INTO schema_migrations (version) VALUES ('20140301191427');
+
+INSERT INTO schema_migrations (version) VALUES ('20140301191704');
+
+INSERT INTO schema_migrations (version) VALUES ('20140301192243');
+
+INSERT INTO schema_migrations (version) VALUES ('20140301192400');
 
