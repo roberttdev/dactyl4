@@ -1,0 +1,25 @@
+
+<div class="row">
+  <label for="group_name" title="<%= _.t('group_name_explanation') %>">
+      <%= _.t('group_name') %>:
+  </label>
+  <div class="text_input dark small">
+    <input name="group_name" id="group_name" class="attribute" type="text" value="<%=name%>"/>
+  </div>
+</div>
+
+<%if( mode == 'create' ) {%>
+<div class="row">
+     <label for="template_name" title="<%= _.t('name_explanation') %>">
+          <%= _.t('template_name') %>:
+      </label>
+      <div class="dark small">
+        <select name="template_name" id="template_name" class="attribute"/>
+      </div>
+</div>
+<%}%>
+
+
+
+
+

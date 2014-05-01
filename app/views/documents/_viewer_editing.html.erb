@@ -15,6 +15,9 @@
           email    : "<%=raw @reviewer_inviter.email %>"
         }
       <% end %>
+
+      opts['templateList'] = <%= raw @template_list %>;
+
       dc.app.editor.initialize(docId, opts);
     <% end %>
     currentDocument.$('.DV-logoLink, .DV-footerLogoLink').attr({

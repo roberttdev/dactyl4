@@ -130,7 +130,7 @@
   - bad_data_key: "%s cannot be used as a key"
   - before_continue: Before continuing, you can take a moment to %s
   - black: black
-  - blank_field_error: A template field is blank.  Please enter a name or delete it.
+  - blank_field_error: A field is blank.  Please enter a value or delete it.
   - broken_document: Broken document
   - by_date: by date
   - by_length: by length
@@ -150,7 +150,9 @@
   - close_while_text_reprocess: The text is being processed. Please close this document.
   - collaboration: Collaboration
   - collaborators: Collaborator
+  - confirm_group_delete: Are you sure you want to delete this group?  Your subgroups and data points will be lost.
   - confirm_remove_all_data: Are you sure you want to remove all data from %s?
+  - confirm_template_delete: Are you sure you want to delete this template?
   - contact_documentcloud: Contact DocumentCloud
   - contact_reviewer: Contact %s at %s if you need any help, or visit %s for more
       information about DocumentCloud.
@@ -158,7 +160,7 @@
   - contributed_by: Contributed by
   - contributor: Contributor
   - country: " Countries"
-  - create_group: Create Group
+  - create_group: Edit Group
   - create_new_project: Create a New Project
   - date: " Dates"
   - date_uploaded: Date Uploaded

@@ -250,7 +250,8 @@ class DocumentsController < ApplicationController
     @allowed_to_edit = current_account.allowed_to_edit?(current_document)
     @allowed_to_review = current_account.reviews?(current_document)
     @reviewer_inviter = @allowed_to_review && current_document.reviewer_inviter(current_account) || nil
-    @template_list =  GroupTemplate.all(:include => :subtemplates).to_json(:include => :subtemplates)
+    @template_list =  GroupTemplate.includes(:subtemplates).order(:name).all()
+    @template_list = @template_list.to_json(:include => :subtemplates)
   end
 
   def date_requested?

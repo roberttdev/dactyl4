@@ -11,6 +11,27 @@ SET client_min_messages = warning;
 
 SET search_path = public, pg_catalog;
 
+--
+-- Name: get_ancestry(integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION get_ancestry(root_id integer) RETURNS TABLE(id integer, parent_id integer, name character varying)
+    LANGUAGE sql
+    AS $_$
+      WITH RECURSIVE ancestry(id, parent_id, name) AS (
+        SELECT id, parent_id, name
+        FROM groups
+        WHERE id = $1
+        UNION ALL
+        SELECT C.id, C.parent_id, C.name
+        FROM ancestry P
+        INNER JOIN groups C on P.parent_id = C.id
+      )
+
+      SELECT * from ancestry ORDER BY id ASC
+      $_$;
+
+
 SET default_tablespace = '';
 
 SET default_with_oids = false;
@@ -58,17 +79,19 @@ ALTER SEQUENCE accounts_id_seq OWNED BY accounts.id;
 
 CREATE TABLE annotations (
     id integer NOT NULL,
-    organization_id integer NOT NULL,
+    organization_id integer,
     account_id integer NOT NULL,
     document_id integer NOT NULL,
-    page_number integer NOT NULL,
-    access integer NOT NULL,
+    page_number integer,
+    access integer,
     title text NOT NULL,
     content text,
     location character varying(40),
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
-    moderation_approval boolean
+    moderation_approval boolean,
+    group_id integer,
+    templated boolean DEFAULT false
 );
 
 
@@ -409,6 +432,40 @@ CREATE SEQUENCE group_templates_id_seq
 --
 
 ALTER SEQUENCE group_templates_id_seq OWNED BY group_templates.id;
+
+
+--
+-- Name: groups; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE groups (
+    id integer NOT NULL,
+    name text NOT NULL,
+    parent_id integer,
+    template_id integer,
+    document_id integer,
+    created_at timestamp without time zone,
+    updated_at timestamp without time zone
+);
+
+
+--
+-- Name: groups_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE groups_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: groups_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE groups_id_seq OWNED BY groups.id;
 
 
 --
@@ -932,6 +989,13 @@ ALTER TABLE ONLY group_templates ALTER COLUMN id SET DEFAULT nextval('group_temp
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
+ALTER TABLE ONLY groups ALTER COLUMN id SET DEFAULT nextval('groups_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
 ALTER TABLE ONLY memberships ALTER COLUMN id SET DEFAULT nextval('memberships_id_seq'::regclass);
 
 
@@ -1108,6 +1172,14 @@ ALTER TABLE ONLY group_templates
 
 
 --
+-- Name: groups_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY groups
+    ADD CONSTRAINT groups_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: memberships_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -1233,6 +1305,13 @@ CREATE INDEX index_accounts_on_identites ON accounts USING gin (identities);
 
 
 --
+-- Name: index_annotation_group; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_annotation_group ON annotations USING btree (group_id);
+
+
+--
 -- Name: index_annotations_on_document_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -1279,6 +1358,13 @@ CREATE INDEX index_documents_on_hit_count ON documents USING btree (hit_count);
 --
 
 CREATE INDEX index_documents_on_public_note_count ON documents USING btree (public_note_count);
+
+
+--
+-- Name: index_group_document; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_group_document ON groups USING btree (document_id);
 
 
 --
@@ -1359,6 +1445,13 @@ CREATE INDEX index_pages_on_start_offset_and_end_offset ON pages USING btree (st
 
 
 --
+-- Name: index_parent_group; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_parent_group ON groups USING btree (parent_id);
+
+
+--
 -- Name: index_processing_jobs_on_account_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -1391,6 +1484,13 @@ CREATE INDEX index_sections_on_document_id ON sections USING btree (document_id)
 --
 
 CREATE INDEX index_status ON documents USING btree (status);
+
+
+--
+-- Name: index_template_used; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_template_used ON groups USING btree (template_id);
 
 
 --
@@ -1543,4 +1643,12 @@ INSERT INTO schema_migrations (version) VALUES ('20140301191704');
 INSERT INTO schema_migrations (version) VALUES ('20140301192243');
 
 INSERT INTO schema_migrations (version) VALUES ('20140301192400');
+
+INSERT INTO schema_migrations (version) VALUES ('20140417132052');
+
+INSERT INTO schema_migrations (version) VALUES ('20140417171446');
+
+INSERT INTO schema_migrations (version) VALUES ('20140429184510');
+
+INSERT INTO schema_migrations (version) VALUES ('20140430200314');
 

@@ -54,7 +54,7 @@ dc.ui.TemplateListing = Backbone.View.extend({
 
     //Show popup confirming template delete
     confirmDelete: function(event) {
-        dc.ui.Dialog.confirm('Are you sure you want to delete this template?', this.deleteTemplate);
+        dc.ui.Dialog.confirm(_.t('confirm_template_delete'), this.deleteTemplate);
     },
 
 

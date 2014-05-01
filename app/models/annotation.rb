@@ -3,6 +3,7 @@ class Annotation < ActiveRecord::Base
   include DC::Store::DocumentResource
   include DC::Access
 
+  belongs_to :group
   belongs_to :document
   belongs_to :account # NB: This account is not the owner of the document.
                       #     Rather, it is the author of the annotation.
@@ -12,7 +13,7 @@ class Annotation < ActiveRecord::Base
 
   attr_accessor :author
 
-  validates :title, :page_number, :presence=>true
+  validates :title, :presence=>true
 
   before_validation :ensure_title
 

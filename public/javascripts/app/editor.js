@@ -2,12 +2,15 @@
 dc.app.editor = new Backbone.View();
 _.extend(dc.app.editor, {
 
+  templateList: null, //Reference list of all templates
+
   // Initializes the workspace, binding it to <body>.
   initialize : function(docId, options) {
     this.setElement('body');
     this.docId = docId;
     this.options = options;
     _.bindAll(this, 'closeAllEditors', 'confirmStateChange');
+    this.templateList = options.templateList;
     dc.app.hotkeys.initialize();
     this.createSubViews();
     this.renderSubViews();
@@ -30,7 +33,7 @@ _.extend(dc.app.editor, {
   // Create all of the requisite subviews.
   createSubViews : function() {
     dc.ui.notifier          = new dc.ui.Notifier();
-    this.controlPanel       = new dc.ui.ViewerControlPanel();
+    this.controlPanel       = new dc.ui.ViewerDEControlPanel();
     this.sectionEditor      = new dc.ui.SectionEditor();
     this.annotationEditor   = new dc.ui.AnnotationEditor();
     this.removePagesEditor  = new dc.ui.RemovePagesEditor({editor : this});
@@ -45,7 +48,7 @@ _.extend(dc.app.editor, {
     if (this.options.isReviewer) access = 'DV-isReviewer';
     if (this.options.isOwner) access = 'DV-isOwner';
     $('.DV-docViewer').addClass(access);
-    $('.DV-well').append(this.controlPanel.render().el);
+    $('.DV-well').append(this.controlPanel.el);
     $('.DV-logo').hide();
     $('.DV-thumbnailsView').show();
     currentDocument.api.roundTabCorners();

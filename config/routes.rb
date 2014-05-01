@@ -32,6 +32,7 @@ DC::Application.routes.draw do
     get '/auth/:provider/callback', :action => :callback
   end
 
+
   # Public search.
   get '/public/search' => 'public#index'
   get '/public/search/:query' => 'public#index', :query => /.*/
@@ -68,6 +69,9 @@ DC::Application.routes.draw do
 
 
   resources :documents do
+
+    #Groups
+    resources :groups
 
     resources :annotations do
       member {  match '(*all)', action: :cors_options, via: :options, allowed_methods: [:put,:delete,:post] }

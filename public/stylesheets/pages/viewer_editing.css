@@ -17,8 +17,7 @@
   #control_panel .control_panel_title {
     font-weight: bold;
     color: #000;
-    margin: 18px 0px 8px;
-    padding: 7px 24px;
+    padding: 4px 24px;
     text-shadow: 0 1px 0 #fff;
     border-top: 1px solid #ddd; border-bottom: 1px solid #ccc;
     font-size: 10px;
@@ -138,10 +137,96 @@
       display: block;
     }
 
+    #control_panel .new_group {
+        border: 1px solid #bbb;
+        border-top-color: #ccc;
+        border-bottom-color: #999;
+        background: -webkit-gradient(linear, left top, left bottom, from(#fcfcfc), to(#e0e0e0));
+        width: 80px;
+        height: 20px;
+        top: 0;
+        cursor: pointer;
+        -webkit-border-radius: 2px;
+        -moz-border-radius: 2px;
+        border-radius: 2px;
+        font-family: Arial,Helvetica,sans-serif;
+        color: black;
+        font-size: 12px;
+        font-weight: bold;
+        text-align: center;
+        margin-right: 18px;
+        padding-top: 5px;
+        text-transform: none;
+    }
+
+    #control_panel .group_title {
+        font-size: 14px;
+        color: #004276;
+        cursor: pointer;
+        text-decoration:underline;
+        text-transform: none;
+    }
+
+    #control_panel .header {
+        font-size: 14px;
+        font-weight: bold;
+        color: black;
+        text-transform: none;
+        margin-top: 10px;
+        margin-left: 10px;
+        margin-bottom: 10px;
+    }
+
+    .group_listing {
+        font-weight: bold;
+        margin-left: 40px;
+        font-size: 14px;
+        margin-top: 10px;
+        cursor: pointer;
+    }
+
+    .group_name {
+        display: inline-block;
+        width: 150px;
+    }
+
+    .edit_group {
+        display: inline-block;
+        margin-bottom: 7px;
+    }
+
+    .delete_group {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        background: url(/images/embed/icons/delete.png) no-repeat center center;
+    }
+
+    .annotation_listing {
+        margin-left: 40px;
+    }
+
+    .annotation_name, .annotation_value {
+        display: inline-block;
+        width: 150px;
+    }
+
+    .annotation_separator {
+        display: inline-block;
+        width: 10px;
+        text-align: center;
+    }
+
+.DV-newGroup:focus {
+    outline: 0;
+}
+
 #notifier {
   font-size: 10px;
   z-index: 10000000;
 }
+
+
 
 /*---------------------------- The Section Editor ----------------------------*/
 #section_editor, #annotation_editor, div.dialog {
