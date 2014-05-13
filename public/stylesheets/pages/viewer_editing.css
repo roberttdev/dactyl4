@@ -137,11 +137,12 @@
       display: block;
     }
 
-    #control_panel .new_group {
+    #control_panel .cp_button {
         border: 1px solid #bbb;
         border-top-color: #ccc;
         border-bottom-color: #999;
         background: -webkit-gradient(linear, left top, left bottom, from(#fcfcfc), to(#e0e0e0));
+        display: inline-block;
         width: 80px;
         height: 20px;
         top: 0;
@@ -154,9 +155,17 @@
         font-size: 12px;
         font-weight: bold;
         text-align: center;
-        margin-right: 18px;
+        margin-right: 5px;
         padding-top: 5px;
         text-transform: none;
+    }
+
+    #control_panel .new_group {
+        width: 80px;
+    }
+
+    #control_panel .new_data {
+        width: 70px;
     }
 
     #control_panel .group_title {
@@ -195,15 +204,44 @@
         margin-bottom: 7px;
     }
 
-    .delete_group {
+    .delete_item {
         display: inline-block;
         width: 16px;
         height: 16px;
         background: url(/images/embed/icons/delete.png) no-repeat center center;
+        cursor: pointer;
+    }
+
+    .create_annotation {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        background: url(/images/embed/icons/tag_yellow_16.png) no-repeat center center;
+        cursor: pointer;
+    }
+
+    .annotation_status {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        margin-right: 5px;
+    }
+
+    .highlighting {
+        background-color: yellow;
+    }
+
+    .annotation_status.incomplete {
+        background: url(/images/embed/icons/alert_yellow.png) no-repeat center center;
+    }
+
+    .annotation_status.complete {
+        background: url(/images/embed/icons/dark_check.png) no-repeat center center;
     }
 
     .annotation_listing {
         margin-left: 40px;
+        cursor: pointer;
     }
 
     .annotation_name, .annotation_value {
@@ -216,6 +254,10 @@
         width: 10px;
         text-align: center;
     }
+
+div input.error {
+    border-color: red;
+}
 
 .DV-newGroup:focus {
     outline: 0;

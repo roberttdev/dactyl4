@@ -2,16 +2,30 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
 
   id :                  'control_panel',
   template_listing:     null,
+  pointViewList:        null,
+  groupViewList:        null,
+  changed:             false,
 
   events : {
-    'click .new_group':     'openCreateGroupDialog',
-    'click .group_title':   'changeGroupView',
-    'click .group_name': 'changeGroupView'
+    'click .new_group':         'openCreateGroupDialog',
+    'click .new_data':          'createNewDataPoint',
+    'click .group_title':       'changeGroupView',
+    'click .group_name':        'changeGroupView'
   },
 
   initialize : function() {
     var docModel = this._getDocumentModel();
-    _.bindAll(this, 'openCreateGroupDialog', 'changeGroupView', 'render');
+    this.viewer         = currentDocument;
+    _.bindAll(this, 'openCreateGroupDialog', 'changeGroupView', 'createNewDataPoint', 'render', 'save', 'reloadPoints');
+
+    //Mark as changed when any update request is fired
+    this.listenTo(dc.app.editor.annotationEditor, 'updateAnnotation', this.markChanged);
+
+    //Delegate delete events
+    this.listenTo(dc.app.editor.annotationEditor, 'deleteAnnotation', this.delegateDelete);
+
+    //Listen for annotation selects and adjust UI accordingly
+    this.listenTo(dc.app.editor.annotationEditor, 'annotationSelected', this.handleAnnotationSelect);
 
     this._mainJST = JST['de_control_panel'];
 
@@ -19,11 +33,8 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
   },
 
 
-  render : function() {
-    _thisView           = this;
-    this.viewer         = currentDocument;
-    this._page          = this.viewer.$('.DV-textContents');
-    var doc             = this._getDocumentModel();
+  render : function(annoId) {
+    _deView           = this;
     var templateName    = this.model.get('group_template') == null ? null : this.model.get('group_template').name;
     $(this.el).html(this._mainJST({template_name: templateName}));
 
@@ -32,19 +43,60 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
 
     //Group Listings
     this.model.children.each(function(model, index){
-        _view = new dc.ui.GroupListing({model: model});
-        _view.render();
-        $('#group_section').append(_view.el);
+        _deView.addGroup(model);
     });
+    $('#group_section').html(_.pluck(this.groupViewList, 'el'));
 
     //Annotations
     this.model.annotations.each(function(model, index) {
-       _view = new dc.ui.AnnotationListing({model: model});
-       _view.render();
-       $('#annotation_section').append(_view.el);
+       _deView.addDataPoint(model, (model.id == annoId));
     });
+    $('#annotation_section').html(_.pluck(this.pointViewList,'el'));
 
     return this;
+  },
+
+
+  //Save: save all valid data point changes if no errors
+  save: function(success) {
+    _deView = this;
+
+    //Clear error class from all inputs
+    $('input').removeClass('error');
+    _hasErrors = false;
+
+    //If there are annotations on-screen, and data has changed, handle them..
+    if( this.changed && $('.annotation_listing').length > 0 ) {
+        this.clearChanged();
+        this.model.annotations.pushAll({success: function(){
+            _deView.syncDV(success)
+        }});
+    }
+    else {
+        //If not, just pass along to success function
+        success.call();
+    }
+  },
+
+
+  addGroup: function(model) {
+      _view = new dc.ui.GroupListing({model: model});
+      this.groupViewList.push(_view);
+      _view.render();
+      return _view;
+  },
+
+  //model: Annotation, highlight: boolean
+  addDataPoint: function(model, highlight) {
+      _view = new dc.ui.AnnotationListing({model: model});
+      this.pointViewList.push(_view);
+      _view.render();
+
+      if(highlight){ _view.highlight(); }
+
+      this.listenTo(_view, 'requestAnnotationClear', this.clearAnnotations);
+
+      return _view;
   },
 
 
@@ -93,18 +145,42 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
   },
 
 
+  createNewDataPoint: function() {
+      _point = new dc.model.Annotation({group_id: this.model.id, document_id: this.model.get('document_id'), templated: false});
+      this.model.annotations.add(_point);
+      _view = this.addDataPoint(_point);
+      _view.prepareForAnnotation();
+      $('#annotation_section').append(_view.$el);
+  },
+
+
   //reloadPoints: fetch data again and re-render. Expects group ID (null is no group)
-  reloadPoints: function(groupId) {
+  //annotationId is optional; will highlight that if exists
+  reloadPoints: function(groupId, annotationId) {
       _thisView = this;
+
+      //Clear
+      this.groupViewList = [];
+      this.pointViewList = [];
+      this.clearChanged();
+      this.stopListening(undefined, 'requestAnnotationClear');
+
       if( groupId == 0 ){ groupId = null; }
       this.model = new dc.model.Group({document_id: dc.app.editor.docId, id: groupId});
-      this.model.fetch({success: _thisView.render});
+      this.model.fetch({success: function(){
+          _thisView.render(annotationId);
+      }});
   },
 
 
   //changeGroup: reload navigation to display new group
   changeGroupView: function(event) {
-      this.reloadPoints((event.currentTarget.id).replace("group_", ""));
+      _thisView = this;
+      dc.app.editor.annotationEditor.hideActiveAnnotations();
+      dc.app.editor.annotationEditor.close();
+      this.save(function(){
+          _thisView.reloadPoints((event.currentTarget.id).replace("group_", ""));
+      });
   },
 
 
@@ -119,5 +195,59 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
       }
 
       return returnStr;
+  },
+
+
+  //Clear mid-annotation state for all annotations
+  clearAnnotations: function(){
+      $.each(this.pointViewList, function(index, view) {
+          view.clearAnnotation();
+      });
+  },
+
+
+  //delegateDelete: When request to delete received, find proper view and instruct it to delete
+  delegateDelete: function(id){
+      _view = _.find(this.pointViewList, function(view){ return view.model.id == id; });
+      _view.deletePoint();
+  },
+
+
+  //When annotation selected, display point in UI and select it as well
+  handleAnnotationSelect: function(anno){
+    _deView = this;
+    if( anno.id ){
+        _decpView = this;
+        _view = _.find(this.pointViewList, function(view){ return view.model.id == anno.id; });
+        if( _view ) {
+            _view.highlight();
+        }else{
+            //If not in current list, save any changes and reload proper group
+           this.save(function() {
+               _deView.reloadPoints(anno.group_id, anno.id);
+           });
+        }
+    }else{
+        _view = _.find(this.pointViewList, function(view){ return view.model.get('location') == anno.location; });
+        _view.highlight();
+    }
+  },
+
+
+  //Pass annotation data to DV, to sync
+  syncDV: function(success) {
+      dc.app.editor.annotationEditor.syncDV(this.model.annotations);
+      success.call();
+  },
+
+
+  //Set indicator that data has changed
+  markChanged: function() {
+      this.changed = true;
+  },
+
+
+  clearChanged: function() {
+      this.changed = false;
   }
 });

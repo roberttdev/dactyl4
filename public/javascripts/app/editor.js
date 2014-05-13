@@ -33,9 +33,9 @@ _.extend(dc.app.editor, {
   // Create all of the requisite subviews.
   createSubViews : function() {
     dc.ui.notifier          = new dc.ui.Notifier();
-    this.controlPanel       = new dc.ui.ViewerDEControlPanel();
     this.sectionEditor      = new dc.ui.SectionEditor();
     this.annotationEditor   = new dc.ui.AnnotationEditor();
+    this.controlPanel       = new dc.ui.ViewerDEControlPanel();
     this.removePagesEditor  = new dc.ui.RemovePagesEditor({editor : this});
     this.reorderPagesEditor = new dc.ui.ReorderPagesEditor({editor : this});
     this.editPageTextEditor = new dc.ui.EditPageTextEditor({editor : this});

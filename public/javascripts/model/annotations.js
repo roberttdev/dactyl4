@@ -14,9 +14,9 @@ dc.model.Annotation = Backbone.Model.extend({
 
 
 //*********************
-// Template Collection
+// Annotation Collection
 //*********************
-dc.model.Annotations = Backbone.Collection.extend({
+dc.model.Annotations = Backbone.BulkSubmitCollection.extend({
     model : dc.model.Annotation,
     url: null,
     comparator: 'title',

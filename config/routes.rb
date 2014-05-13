@@ -67,6 +67,8 @@ DC::Application.routes.draw do
     collection { post :present_order }
   end
 
+  #Bulk Annotation Submit
+  put '/documents/:document_id/annotations' => 'annotations#bulk_update'
 
   resources :documents do
 
@@ -74,7 +76,7 @@ DC::Application.routes.draw do
     resources :groups
 
     resources :annotations do
-      member {  match '(*all)', action: :cors_options, via: :options, allowed_methods: [:put,:delete,:post] }
+      member {  match '(*all)', action: :cors_options, via: :options, allowed_methods: [:delete,:post] }
     end
     resource :annotation do
       match '(*all)', action: :cors_options, via: :options, allowed_methods: [:get,:post]

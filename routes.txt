@@ -1,0 +1,208 @@
+[SKYLIGHT] [0.3.11] Running Skylight in development mode. No data will be reported until you deploy your app.
+                         Prefix Verb     URI Pattern                                                         Controller#Action
+                                GET      /                                                                   workspace#index
+                                GET      /search/documents.json(.:format)                                    search#documents
+                                GET      /search/embed/:q/:options.:format                                   search#embed {:q=>/[^\/;,?]*/, :options=>/p-(\d+)-per-(\d+)-order-(\w+)-org-(\d+)(-secure)?/}
+                                GET      /search/embed/:options.:format                                      search#embed {:options=>/p-(\d+)-per-(\d+)-order-(\w+)-org-(\d+)(-secure)?/}
+                         search GET      /search(.:format)                                                   workspace#index
+                        preview GET      /search/preview(.:format)                                           search#preview
+        search_restricted_count GET      /search/restricted_count(.:format)                                  search#restricted_count
+                                GET      /search/:query(.:format)                                            workspace#index {:query=>/.*/}
+                           help GET      /help(.:format)                                                     workspace#help
+                                GET      /help/:page(.:format)                                               workspace#help
+                        results GET      /results(.:format)                                                  workspace#index
+                         signup GET      /signup(.:format)                                                   authentication#signup_info
+                          login GET|POST /login(.:format)                                                    authentication#login
+                         logout GET      /logout(.:format)                                                   authentication#logout
+                                GET      /auth/remote_data/:document_id(.:format)                            authentication#remote_data
+                                GET|POST /auth/:action(.:format)                                             authentication#:action
+                                GET      /auth/:provider(.:format)                                           authentication#blank
+                                GET      /auth/:provider/callback(.:format)                                  authentication#callback
+                  public_search GET      /public/search(.:format)                                            public#index
+                                GET      /public/search/:query(.:format)                                     public#index {:query=>/.*/}
+                                OPTIONS  /api/documents/pending.:format                                      api#cors_options {:allowed_methods=>[:get]}
+                                OPTIONS  /api/documents/:id.:format                                          api#cors_options {:allowed_methods=>[:get, :put, :delete]}
+                                OPTIONS  /api/documents/:id/entities.:format                                 api#cors_options {:allowed_methods=>[:get]}
+                                OPTIONS  /api/documents/:id/note/:note_id.:format                            api#cors_options {:allowed_methods=>[:get]}
+                                OPTIONS  /api/documents/:id/notes/:note_id.:format                           api#cors_options {:allowed_methods=>[:get]}
+                                OPTIONS  /api/projects/:id.:format                                           api#cors_options {:allowed_methods=>[:get, :put, :delete]}
+                                OPTIONS  /api/projects.:format                                               api#cors_options {:allowed_methods=>[:get, :post]}
+                                OPTIONS  /api/search.:format                                                 api#cors_options {:allowed_methods=>[:get]}
+                                PUT      /api/documents/:id.:format                                          api#update
+                                DELETE   /api/documents/:id.:format                                          api#destroy
+                                GET      /api/documents/:id/entities.:format                                 api#entities
+                                GET      /api/documents/:id/note/:note_id.:format                            api#notes
+                                GET      /api/documents/:id/notes/:note_id.:format                           api#notes
+                                GET      /api/documents/pending.:format                                      api#pending
+                                GET      /api/projects/:id.:format                                           api#project
+                                GET      /api/projects.:format                                               api#projects
+                                POST     /api/projects.:format                                               api#create_project
+                                PUT      /api/projects/:id.:format                                           api#update_project
+                                DELETE   /api/projects/:id.:format                                           api#destroy_project
+   present_order_featured_index POST     /featured/present_order(.:format)                                   featured#present_order
+                 featured_index GET      /featured(.:format)                                                 featured#index
+                                POST     /featured(.:format)                                                 featured#create
+                   new_featured GET      /featured/new(.:format)                                             featured#new
+                  edit_featured GET      /featured/:id/edit(.:format)                                        featured#edit
+                       featured GET      /featured/:id(.:format)                                             featured#show
+                                PATCH    /featured/:id(.:format)                                             featured#update
+                                PUT      /featured/:id(.:format)                                             featured#update
+                                DELETE   /featured/:id(.:format)                                             featured#destroy
+                                PUT      /documents/:document_id/annotations(.:format)                       annotations#bulk_update
+                document_groups GET      /documents/:document_id/groups(.:format)                            groups#index
+                                POST     /documents/:document_id/groups(.:format)                            groups#create
+             new_document_group GET      /documents/:document_id/groups/new(.:format)                        groups#new
+            edit_document_group GET      /documents/:document_id/groups/:id/edit(.:format)                   groups#edit
+                 document_group GET      /documents/:document_id/groups/:id(.:format)                        groups#show
+                                PATCH    /documents/:document_id/groups/:id(.:format)                        groups#update
+                                PUT      /documents/:document_id/groups/:id(.:format)                        groups#update
+                                DELETE   /documents/:document_id/groups/:id(.:format)                        groups#destroy
+                                OPTIONS  /documents/:document_id/annotations/:id(/*all)(.:format)            annotations#cors_options {:allowed_methods=>[:delete, :post]}
+           document_annotations GET      /documents/:document_id/annotations(.:format)                       annotations#index
+                                POST     /documents/:document_id/annotations(.:format)                       annotations#create
+        new_document_annotation GET      /documents/:document_id/annotations/new(.:format)                   annotations#new
+       edit_document_annotation GET      /documents/:document_id/annotations/:id/edit(.:format)              annotations#edit
+            document_annotation GET      /documents/:document_id/annotations/:id(.:format)                   annotations#show
+                                PATCH    /documents/:document_id/annotations/:id(.:format)                   annotations#update
+                                PUT      /documents/:document_id/annotations/:id(.:format)                   annotations#update
+                                DELETE   /documents/:document_id/annotations/:id(.:format)                   annotations#destroy
+                                OPTIONS  /documents/:document_id/annotation(/*all)(.:format)                 annotations#cors_options {:allowed_methods=>[:get, :post]}
+                                POST     /documents/:document_id/annotation(.:format)                        annotations#create
+                                GET      /documents/:document_id/annotation/new(.:format)                    annotations#new
+                                GET      /documents/:document_id/annotation/edit(.:format)                   annotations#edit
+                                GET      /documents/:document_id/annotation(.:format)                        annotations#show
+                                PATCH    /documents/:document_id/annotation(.:format)                        annotations#update
+                                PUT      /documents/:document_id/annotation(.:format)                        annotations#update
+                                DELETE   /documents/:document_id/annotation(.:format)                        annotations#destroy
+               status_documents GET      /documents/status(.:format)                                         documents#status
+               loader_documents GET      /documents/loader(.:format)                                         documents#loader
+         queue_length_documents GET      /documents/queue_length(.:format)                                   documents#queue_length
+              preview_documents GET      /documents/preview(.:format)                                        documents#preview
+            published_documents GET      /documents/published(.:format)                                      documents#published
+               entity_documents GET      /documents/entity(.:format)                                         documents#entity
+          unpublished_documents GET      /documents/unpublished(.:format)                                    documents#unpublished
+             entities_documents GET      /documents/entities(.:format)                                       documents#entities
+                dates_documents GET      /documents/dates(.:format)                                          documents#dates
+           occurrence_documents GET      /documents/occurrence(.:format)                                     documents#occurrence
+upload_insert_document_document POST     /documents/:id/upload_insert_document(.:format)                     documents#upload_insert_document
+        reprocess_text_document POST     /documents/:id/reprocess_text(.:format)                             documents#reprocess_text
+          remove_pages_document POST     /documents/:id/remove_pages(.:format)                               documents#remove_pages
+                search_document GET      /documents/:id/search(.:format)                                     documents#search
+  per_page_note_counts_document GET      /documents/:id/per_page_note_counts(.:format)                       documents#per_page_note_counts
+          redact_pages_document POST     /documents/:id/redact_pages(.:format)                               documents#redact_pages
+              mentions_document GET      /documents/:id/mentions(.:format)                                   documents#mentions
+         reorder_pages_document POST     /documents/:id/reorder_pages(.:format)                              documents#reorder_pages
+        save_page_text_document POST     /documents/:id/save_page_text(.:format)                             documents#save_page_text
+               preview_document GET      /documents/:id/preview(.:format)                                    documents#preview
+                                GET      /documents/:id/pages/:page_name.txt(.:format)                       documents#send_page_text
+                                POST     /documents/:id/pages/:page_name.txt(.:format)                       documents#set_page_text
+                                GET      /documents/:id/pages/:page_name.gif(.:format)                       documents#send_page_image
+                                GET      /documents/:id/:slug.pdf(.:format)                                  documents#send_pdf
+                                GET      /documents/:id/:slug.txt(.:format)                                  documents#send_full_text
+                                GET      /documents/:id/:slug.:format                                        documents#send_original
+                      documents GET      /documents(.:format)                                                documents#index
+                                POST     /documents(.:format)                                                documents#create
+                   new_document GET      /documents/new(.:format)                                            documents#new
+                  edit_document GET      /documents/:id/edit(.:format)                                       documents#edit
+                       document GET      /documents/:id(.:format)                                            documents#show
+                                PATCH    /documents/:id(.:format)                                            documents#update
+                                PUT      /documents/:id(.:format)                                            documents#update
+                                DELETE   /documents/:id(.:format)                                            documents#destroy
+                    print_notes GET      /notes/print(.:format)                                              annotations#print
+           send_email_reviewers POST     /reviewers/send_email(.:format)                                     reviewers#send_email
+        preview_email_reviewers GET      /reviewers/preview_email(.:format)                                  reviewers#preview_email
+                      reviewers GET      /reviewers(.:format)                                                reviewers#index
+                                POST     /reviewers(.:format)                                                reviewers#create
+                   new_reviewer GET      /reviewers/new(.:format)                                            reviewers#new
+                  edit_reviewer GET      /reviewers/:id/edit(.:format)                                       reviewers#edit
+                       reviewer GET      /reviewers/:id(.:format)                                            reviewers#show
+                                PATCH    /reviewers/:id(.:format)                                            reviewers#update
+                                PUT      /reviewers/:id(.:format)                                            reviewers#update
+                                DELETE   /reviewers/:id(.:format)                                            reviewers#destroy
+                  bulk_download GET      /download/*args.zip(.:format)                                       download#bulk_download
+             logged_in_accounts GET      /accounts/logged_in(.:format)                                       accounts#logged_in
+         resend_welcome_account POST     /accounts/:id/resend_welcome(.:format)                              accounts#resend_welcome
+                       accounts GET      /accounts(.:format)                                                 accounts#index
+                                POST     /accounts(.:format)                                                 accounts#create
+                    new_account GET      /accounts/new(.:format)                                             accounts#new
+                   edit_account GET      /accounts/:id/edit(.:format)                                        accounts#edit
+                        account GET      /accounts/:id(.:format)                                             accounts#show
+                                PATCH    /accounts/:id(.:format)                                             accounts#update
+                                PUT      /accounts/:id(.:format)                                             accounts#update
+                                DELETE   /accounts/:id(.:format)                                             accounts#destroy
+                 enable_account GET|POST /accounts/enable/:key(.:format)                                     accounts#enable
+                 reset_password GET|POST /reset_password(.:format)                                           accounts#reset
+                   organization PATCH    /organizations/:id(.:format)                                        organizations#update
+                                PUT      /organizations/:id(.:format)                                        organizations#update
+          add_documents_project POST     /projects/:id/add_documents(.:format)                               projects#add_documents
+       remove_documents_project POST     /projects/:id/remove_documents(.:format)                            projects#remove_documents
+              documents_project GET      /projects/:id/documents(.:format)                                   projects#documents
+          project_collaborators POST     /projects/:project_id/collaborators(.:format)                       collaborators#create
+           project_collaborator DELETE   /projects/:project_id/collaborators/:id(.:format)                   collaborators#destroy
+                       projects GET      /projects(.:format)                                                 projects#index
+                                POST     /projects(.:format)                                                 projects#create
+                    new_project GET      /projects/new(.:format)                                             projects#new
+                   edit_project GET      /projects/:id/edit(.:format)                                        projects#edit
+                        project GET      /projects/:id(.:format)                                             projects#show
+                                PATCH    /projects/:id(.:format)                                             projects#update
+                                PUT      /projects/:id(.:format)                                             projects#update
+                                DELETE   /projects/:id(.:format)                                             projects#destroy
+                                GET      /templates/index.json(.:format)                                     templates#index
+                                PUT      /templates/:template_id/template_fields(.:format)                   template_fields#bulk_update
+       template_template_fields GET      /templates/:template_id/template_fields(.:format)                   template_fields#index
+                                POST     /templates/:template_id/template_fields(.:format)                   template_fields#create
+    new_template_template_field GET      /templates/:template_id/template_fields/new(.:format)               template_fields#new
+   edit_template_template_field GET      /templates/:template_id/template_fields/:id/edit(.:format)          template_fields#edit
+        template_template_field GET      /templates/:template_id/template_fields/:id(.:format)               template_fields#show
+                                PATCH    /templates/:template_id/template_fields/:id(.:format)               template_fields#update
+                                PUT      /templates/:template_id/template_fields/:id(.:format)               template_fields#update
+                                DELETE   /templates/:template_id/template_fields/:id(.:format)               template_fields#destroy
+          template_subtemplates GET      /templates/:template_id/subtemplates(.:format)                      subtemplates#index
+                                POST     /templates/:template_id/subtemplates(.:format)                      subtemplates#create
+       new_template_subtemplate GET      /templates/:template_id/subtemplates/new(.:format)                  subtemplates#new
+      edit_template_subtemplate GET      /templates/:template_id/subtemplates/:id/edit(.:format)             subtemplates#edit
+           template_subtemplate GET      /templates/:template_id/subtemplates/:id(.:format)                  subtemplates#show
+                                PATCH    /templates/:template_id/subtemplates/:id(.:format)                  subtemplates#update
+                                PUT      /templates/:template_id/subtemplates/:id(.:format)                  subtemplates#update
+                                DELETE   /templates/:template_id/subtemplates/:id(.:format)                  subtemplates#destroy
+                      templates GET      /templates(.:format)                                                templates#index
+                                POST     /templates(.:format)                                                templates#create
+                   new_template GET      /templates/new(.:format)                                            templates#new
+                  edit_template GET      /templates/:id/edit(.:format)                                       templates#edit
+                       template GET      /templates/:id(.:format)                                            templates#show
+                                PATCH    /templates/:id(.:format)                                            templates#update
+                                PUT      /templates/:id(.:format)                                            templates#update
+                                DELETE   /templates/:id(.:format)                                            templates#destroy
+             subtemplate_fields GET      /subtemplates/:subtemplate_id/subtemplate_fields(.:format)          subtemplate_fields#index
+                                POST     /subtemplates/:subtemplate_id/subtemplate_fields(.:format)          subtemplate_fields#create
+          new_subtemplate_field GET      /subtemplates/:subtemplate_id/subtemplate_fields/new(.:format)      subtemplate_fields#new
+         edit_subtemplate_field GET      /subtemplates/:subtemplate_id/subtemplate_fields/:id/edit(.:format) subtemplate_fields#edit
+              subtemplate_field GET      /subtemplates/:subtemplate_id/subtemplate_fields/:id(.:format)      subtemplate_fields#show
+                                PATCH    /subtemplates/:subtemplate_id/subtemplate_fields/:id(.:format)      subtemplate_fields#update
+                                PUT      /subtemplates/:subtemplate_id/subtemplate_fields/:id(.:format)      subtemplate_fields#update
+                                DELETE   /subtemplates/:subtemplate_id/subtemplate_fields/:id(.:format)      subtemplate_fields#destroy
+                   contributors GET      /contributors(.:format)                                             home#contributors
+                            faq GET      /faq(.:format)                                                      home#faq
+                          terms GET      /terms(.:format)                                                    home#terms
+                        privacy GET      /privacy(.:format)                                                  home#privacy
+                            p3p GET      /p3p.:format                                                        home#p3p
+                           home GET      /home(.:format)                                                     home#index
+                           news GET      /news(.:format)                                                     home#news
+                     opensource GET      /opensource(.:format)                                               home#opensource
+                          about GET      /about(.:format)                                                    home#about
+                        contact GET      /contact(.:format)                                                  home#contact
+                                GET      /help(.:format)                                                     home#help
+                                GET      /help/:page(.:format)                                               home#help
+                  multilanguage GET      /multilanguage(.:format)                                            home#multilanguage
+                                GET      /faq.php(.:format)                                                  redirect#index {:url=>"/faq"}
+                            who GET      /who.php(.:format)                                                  redirect#index {:url=>"/about"}
+                     who_we_are GET      /who-we-are(.:format)                                               redirect#index {:url=>"/about"}
+                        partner GET      /partner.php(.:format)                                              redirect#index {:url=>"/contributors"}
+                          clips GET      /clips.php(.:format)                                                redirect#index {:url=>"/news"}
+                           feed GET      /blog/feed(.:format)                                                redirect#index {:url=>"http://blog.documentcloud.org/feed"}
+                      root_feed GET      /feed(.:format)                                                     redirect#index {:url=>"http://blog.documentcloud.org/feed"}
+                           blog GET      /blog/*parts(.:format)                                              redirect#index {:url=>"http://blog.documentcloud.org/"}
+                          admin GET      /admin(.:format)                                                    admin#index
+                                GET|POST /:controller(/:action(/:id))(.:format)                              :controller#:action
+                                GET      /:controller/:action.:format                                        :controller#index
+                         jammit GET      /assets/:package.:extension(.:format)                               jammit#package {:extension=>/.+/}

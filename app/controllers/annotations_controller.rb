@@ -86,6 +86,23 @@ class AnnotationsController < ApplicationController
     render :nothing => true
   end
 
+  def bulk_update
+    group_id = nil #Grab group ID from arbitrary entry, so we can return annotations of that group
+    params[:bulkData].each do |field|
+      submitHash = pick(field, :document_id, :page_number, :title, :content, :location, :group_id, :templated)
+      submitHash[:access] = DC::Access::PUBLIC
+      submitHash[:location] = submitHash[:location][:image]
+      group_id = submitHash[:group_id]
+      if field[:id].nil?
+        submitHash[:account_id] = current_account.id
+        Annotation.create(submitHash)
+      else
+        Annotation.update(field[:id], submitHash)
+      end
+    end
+    json Annotation.where({'group_id' => group_id, 'document_id' => params[:document_id]})
+  end
+
   private
 
 

@@ -10,7 +10,9 @@ class GroupsController < ApplicationController
   end
 
   def show
-    json Group.includes(:children, :annotations, :group_template).find(params[:id]).as_json({include: [:children, :annotations, :group_template], ancestry: true})
+    responseJSON = Group.includes(:children, :group_template).find(params[:id]).as_json({include: [:children, :group_template], ancestry: true})
+    responseJSON[:annotations] = Annotation.where({:document_id => params[:document_id], :group_id => params[:id]})
+    json responseJSON
   end
 
   def create

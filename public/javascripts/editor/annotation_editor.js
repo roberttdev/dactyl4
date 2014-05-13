@@ -7,6 +7,7 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
   },
 
   initialize: function(options) {
+    this._kind = 'public';
     // track open/close state
     this._open    = false;
     // cache of button DOM elements
@@ -16,37 +17,45 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
     this._inserts = $('.DV-pageNoteInsert');
     // list of positions to redact.
     this.redactions = [];
+
+    // cache references to elements
+    this._buttons['public'] = $('#control_panel .public_annotation');
+    this.pages          = $('.DV-pages');
+    this.page           = $('.DV-page');
+    this._guide         = $('#public_note_guide');
+
     _.bindAll(this, 'open', 'close', 'drawAnnotation', 'saveAnnotation',
-      'deleteAnnotation', 'createPageNote');
+      'deleteAnnotation', 'selectAnnotationPoint', 'createPageNote');
     currentDocument.api.onAnnotationSave(this.saveAnnotation);
-    currentDocument.api.onAnnotationDelete(this.deleteAnnotation);
+    currentDocument.api.onAnnotationSelect(this.selectAnnotationPoint);
     this._inserts.click(this.createPageNote);
   },
 
-  open : function(kind) {
-    this._open          = true;
+  open : function(annotation) {
+    //If annotation already has location, just show it
+    if( annotation.get('location') ){ return this.showAnnotation(annotation); }
 
-    // cache references to elements
-    this._buttons[kind] = $('#control_panel .' + kind + '_annotation');
-    this.pages          = $('.DV-pages');
-    this.page           = $('.DV-page');
-    this._guide         = $('#' + kind + '_note_guide');
+    if( annotation != null ){ this._active_annotation = annotation; }
 
-    this.redactions     = [];
-    this.page.css({cursor : 'crosshair'});
-    if (kind != 'redact') this._inserts.filter('.visible').show().addClass('DV-' + kind);
+    this.hideActiveAnnotations();
+
+    this._open = true;
+    this.redactions = [];
+    this.page.css({cursor: 'crosshair'});
+    this._inserts.filter('.visible').show().addClass('DV-public');
 
     // Start drawing region when user mousesdown
     this.page.bind('mousedown', this.drawAnnotation);
     $(document).bind('keydown', this.close);
 
-    $(document.body).setMode(kind, 'editing');
-    this._buttons[kind].addClass('open');
+    $(document.body).setMode('public', 'editing');
+    this._buttons['public'].addClass('open');
     this._guide.fadeIn('fast');
   },
 
   close : function() {
     this._open = false;
+    this._active_annotation = null;
     this.page.css({cursor : ''});
     this.page.unbind('mousedown', this.drawAnnotation);
     $(document).unbind('keydown', this.close);
@@ -54,7 +63,7 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
     this.clearRedactions();
     this._inserts.hide().removeClass('DV-public DV-private');
     $(document.body).setMode(null, 'editing');
-    this._buttons[this._kind].removeClass('open');
+    this._buttons['public'].removeClass('open');
     this._guide.hide();
   },
 
@@ -90,6 +99,7 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
 
   // TODO: Clean up!
   drawAnnotation : function(e) {
+    _annotation = this._active_annotation;
     e.stopPropagation();
     e.preventDefault();
     this._activePage = $(e.currentTarget);
@@ -177,10 +187,15 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
         // Instruct the viewer to create a note, if the region is large enough.
         if (loc.width > 5 && loc.height > 5) {
           currentDocument.api.addAnnotation({
+            id              : _annotation.id,
+            title           : _annotation.get('title'),
+            content         : _annotation.get('content'),
+            document_id     : _annotation.get('document_id'),
+            group_id        : _annotation.get('group_id'),
             location        : {image : image},
             page            : this._activePageNumber,
             unsaved         : true,
-            access          : this._kind,
+            access          : 'public',
             owns_note       : true
           });
         }
@@ -188,6 +203,14 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
       return false;
     }, this);
     this.pages.bind('mouseup', dragEnd);
+  },
+
+  // Cause matching annotation in viewer to be selected
+  showAnnotation: function(anno) {
+      currentDocument.api.selectAnnotation({
+          id        : anno.id,
+          location  : anno.get('location')
+      });
   },
 
   saveAnnotation : function(anno) {
@@ -198,12 +221,14 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
   annotationToParams : function(anno, extra) {
     delete anno.unsaved;
     var params = {
+      id          : anno.server_id,
       page_number : anno.page,
       content     : anno.text,
       title       : anno.title,
-      access      : anno.access
+      access      : anno.access,
+      group_id    : anno.group_id,
+      location    : anno.location
     };
-    if (anno.location) params.location = anno.location.image;
     return _.extend(params, extra || {});
   },
 
@@ -216,17 +241,34 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
   },
 
   updateAnnotation : function(anno) {
-    var url     = this._baseURL + '/' + anno.server_id;
-    var params  = this.annotationToParams(anno, {_method : 'put'});
-    $.ajax({url : url, type : 'POST', data : params, dataType : 'json'});
+    var params  = this.annotationToParams(anno);
+    this.trigger('updateAnnotation', params);
   },
 
   deleteAnnotation : function(anno) {
-    if (!anno.server_id) return;
-    var url = this._baseURL + '/' + anno.server_id;
-    $.ajax({url : url, type : 'POST', data : {_method : 'delete'}, dataType : 'json', success : _.bind(function() {
-      this._adjustNoteCount(-1, (this._kind == 'public' || anno.access == 'public') ? -1 : 0);
-    }, this)});
+    currentDocument.api.deleteAnnotation({
+        id: anno.id,
+        location: anno.get('location')
+    });
+  },
+
+  // Fire event indicating which annotation was selected so DC-side can sync
+  selectAnnotationPoint: function(anno) {
+    var params = this.annotationToParams(anno);
+    this.trigger('annotationSelected', params);
+  },
+
+  //Hide any existing active annotations
+  hideActiveAnnotations: function() {
+      currentDocument.api.cleanUp();
+  },
+
+  //Pass annotation data to DV so it can update any missing IDs
+  syncDV: function(annos) {
+      locationIds = annos.map(function(model) {
+          return _.pick(model.toJSON(), ["id","location"]);
+      });
+      currentDocument.api.syncAnnotationIDs(locationIds);
   },
 
   // Lazily create the page-specific div for persistent elements.
