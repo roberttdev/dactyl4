@@ -19,10 +19,7 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
     _.bindAll(this, 'openCreateGroupDialog', 'changeGroupView', 'createNewDataPoint', 'render', 'save', 'reloadPoints');
 
     //Mark as changed when any update request is fired
-    this.listenTo(dc.app.editor.annotationEditor, 'updateAnnotation', this.markChanged);
-
-    //Delegate delete events
-    this.listenTo(dc.app.editor.annotationEditor, 'deleteAnnotation', this.delegateDelete);
+    this.listenTo(dc.app.editor.annotationEditor, 'updateAnnotation', this.delegateUpdate);
 
     //Listen for annotation selects and adjust UI accordingly
     this.listenTo(dc.app.editor.annotationEditor, 'annotationSelected', this.handleAnnotationSelect);
@@ -206,10 +203,11 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
   },
 
 
-  //delegateDelete: When request to delete received, find proper view and instruct it to delete
-  delegateDelete: function(id){
-      _view = _.find(this.pointViewList, function(view){ return view.model.id == id; });
-      _view.deletePoint();
+  //delegateUpdate: When request to update received, find proper view and instruct it to update
+  delegateUpdate: function(anno){
+      _view = _.find(this.pointViewList, function(view){ return view.$el.hasClass('highlighting'); });
+      _view.updateAnnotation(anno);
+      this.markChanged();
   },
 
 
