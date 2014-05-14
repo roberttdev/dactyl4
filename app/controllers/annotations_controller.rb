@@ -91,7 +91,7 @@ class AnnotationsController < ApplicationController
     params[:bulkData].each do |field|
       submitHash = pick(field, :document_id, :page_number, :title, :content, :location, :group_id, :templated)
       submitHash[:access] = DC::Access::PUBLIC
-      submitHash[:location] = submitHash[:location][:image]
+      submitHash[:location] = submitHash[:location] ? submitHash[:location][:image] : nil
       group_id = submitHash[:group_id]
       if field[:id].nil?
         submitHash[:account_id] = current_account.id
