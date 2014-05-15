@@ -24,7 +24,6 @@
 #field_listing {
     margin-left: 32px;
     width: 256px;
-    height: 24px;
 }
 
 #field_listing.text_input {
@@ -36,6 +35,7 @@
     display: inline-block;
     width: 200px;
     font-size: 11px;
+    margin-bottom: 5px;
 }
 
 #field_listing .checkbox {
@@ -49,7 +49,6 @@
 .template_row {
     padding: 8px;
     width: 600px;
-    height: 25px;
     margin-top: 10px;
     background-color: lightgray;
     border-style: solid;
@@ -59,7 +58,6 @@
 
 .template_row.sub {
     margin-top: 0px;
-    height: 20px;
     background-color: white;
     border-width: 0px;
 }
@@ -71,18 +69,17 @@
     display: inline-block;
     width: 250px;
     position: relative;
-    top: -5px;
 }
 
 .template_row .title.subtemplate {
     padding-left: 96px;
-    width: 218px;
 }
 
 .button_cell {
     padding-left: 24px;
-    width: 250px;
-    display: inline-block;
+    float: right;
+    position: relative;
+    top: -2px;
 }
 
 .minibutton {

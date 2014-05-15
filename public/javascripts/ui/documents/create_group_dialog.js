@@ -52,10 +52,10 @@ dc.ui.CreateGroupDialog = dc.ui.Dialog.extend({
     _thisView = this;
     _thisView.$('#template_name').append('<option value="0:0">-none-</option>') ;
     $(dc.app.editor.templateList).each(function(index, template) {
-        _thisView.$('#template_name').append('<option value="' + template.id + '">' + template.name + '</option>');
+        _thisView.$('#template_name').append('<option value="' + template.id + '">' + template.name.substring(0,70) + '</option>');
         $(template.subtemplates).each(function(index, subtemplate){
             _thisView.$('#template_name').append('<option value="' + template.id + ':0' + subtemplate.id +
-                '">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--' + subtemplate.sub_name + '</option>');
+                '">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--' + subtemplate.sub_name.substring(0,60) + '</option>');
         });
     });
   },

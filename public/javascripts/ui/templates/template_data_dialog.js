@@ -47,7 +47,7 @@ dc.ui.TemplateDataDialog = dc.ui.Dialog.extend({
 
     //Main template
     this._container.html(this._mainJST({
-      name          : this.template.get('name')
+      name          : this.template.get('name').replace(/\"/g,'&quot;')
     }));
 
     //Field listings

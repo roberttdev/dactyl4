@@ -16,8 +16,8 @@ dc.ui.AnnotationListing = Backbone.View.extend({
     _thisView           = this;
     $(this.el).html(this._mainJST({
         annotation_id:  this.model.id,
-        title:          this.model.get('title') || '(no title)',
-        content:        $.trim(this.model.get('content'))
+        title:          this.model.get('title') ? this.model.get('title').substring(0,49) : '(no title)',
+        content:        this.model.get('content') ? this.model.get('content').substring(0,49) : ''
     }));
 
     if( this.model.get('location') ){

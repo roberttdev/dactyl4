@@ -56,7 +56,7 @@ dc.ui.SubtemplateDataDialog = dc.ui.Dialog.extend({
 
     //Main template
     this._container.html(this._mainJST({
-      name          : this.template.get('sub_name')
+      name          : this.template.get('sub_name').replace(/\"/g,'&quot;')
     }));
 
     //Field listings

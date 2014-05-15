@@ -16,7 +16,7 @@ dc.ui.SubtemplateFieldListing = Backbone.View.extend({
 
     render: function(options) {
         this.$el.html(JST['template/subtemplate_field_listing']({
-            field_name: this.model.get('field_name'),
+            field_name: this.model.get('field_name').replace(/\"/g,'&quot;'),
             field_id  : this.model.get('id')
         }));
 

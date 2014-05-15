@@ -33,7 +33,7 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
   render : function(annoId) {
     _deView           = this;
     var templateName    = this.model.get('group_template') == null ? null : this.model.get('group_template').name;
-    $(this.el).html(this._mainJST({template_name: templateName}));
+    $(this.el).html(this._mainJST({template_name: templateName ? templateName.substring(0,39) : null}));
 
     //Group Navigation
     $('.group_navigation').html(this.generateGroupNav());
