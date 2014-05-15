@@ -138,10 +138,11 @@ dc.ui.AccountView = Backbone.View.extend({
   },
 
   _loadAvatar : function() {
-    var img = new Image();
-    var src = this.model.gravatarUrl(this.size());
-    img.onload = _.bind(function() { this.$('img.avatar').attr({src : src}); }, this);
-    img.src = src;
+    //GRAVATAR DISABLED
+    //var img = new Image();
+    //var src = this.model.gravatarUrl(this.size());
+    //img.onload = _.bind(function() { this.$('img.avatar').attr({src : src}); }, this);
+    //img.src = src;
   },
 
   _openAccounts : function(e) {
