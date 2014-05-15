@@ -190,7 +190,7 @@ class Document < ActiveRecord::Base
       :status             => STATUS_NEW
     )
     import_options = {
-      :access => aFselfccess,
+      :access => access,
       :email_me => email_me,
       :secure => params[:secure],
       :organization_id => organization.id,
