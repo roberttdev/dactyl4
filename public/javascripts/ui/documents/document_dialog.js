@@ -60,14 +60,25 @@ dc.ui.DocumentDialog = dc.ui.Dialog.extend({
       if (attr == 'related_article' || attr == 'remote_url') next = dc.inflector.normalizeUrl(next);
       if (next != original[attr] && el.hasClass('change')) changes[attr] = next;
     }, this));
-    var errors = _.any(['related_article', 'remote_url'], _.bind(function(attr) {
+
+      //URL validation
+      var errors = _.any(['related_article', 'remote_url'], _.bind(function(attr) {
       if (changes[attr] && !this.validateUrl(changes[attr])) {
         this.$('#document_edit_' + attr).addClass('error');
         return true;
       }
     }, this));
+
+    //Title validation
+    if( !changes['title'] || changes['title'] == ""){
+        this.$('#document_edit_title').addClass('error');
+        this.error(_.t('must_have_title'));
+        errors = true;
+    }
+
     if (errors) return false;
-    this.close();
+
+      this.close();
     if (!_.isEmpty(changes)) {
       _.each(this.docs, function(doc){ doc.save(changes); });
       if (!_.any(this.docs, function(doc) { return doc.suppressNotifier; })) {
