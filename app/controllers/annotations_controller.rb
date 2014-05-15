@@ -8,11 +8,11 @@ class AnnotationsController < ApplicationController
 
   # In the workspace, request a listing of annotations.
   def index
-    groupId = params[:group_id]
-    if groupId == ""
-      groupId = nil
+    searchParams = {:document_id => params[:document_id]}
+    if(params['all'] != 'true')
+      searchParams[:group_id] = params[:group_id] != "" ? params[:group_id] : nil
     end
-    annotations = Annotation.where({:document_id => params[:document_id], :group_id => groupId})
+    annotations = Annotation.where(searchParams)
     json annotations
   end
 

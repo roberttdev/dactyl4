@@ -80,8 +80,10 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
       _view = new dc.ui.GroupListing({model: model});
       this.groupViewList.push(_view);
       _view.render();
+      this.listenTo(_view, 'reloadAnnotationsRequest', this.reloadAnnotations);
       return _view;
   },
+
 
   //model: Annotation, highlight: boolean
   addDataPoint: function(model, highlight) {
@@ -236,6 +238,15 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
   syncDV: function(success) {
       dc.app.editor.annotationEditor.syncDV(this.model.annotations);
       success.call();
+  },
+
+
+  //Pull all annotations for the document and reload the DV with them
+  reloadAnnotations: function(){
+    annos = new dc.model.Annotations({document_id: this.model.get('document_id')});
+    annos.getAll({success: function(response){
+        dc.app.editor.annotationEditor.reloadAnnotations(response);
+    }});
   },
 
 
