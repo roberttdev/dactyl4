@@ -9,6 +9,7 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
   events : {
     'click .new_group':         'openCreateGroupDialog',
     'click .new_data':          'createNewDataPoint',
+    'click .save_exit':         'saveAndExit',
     'click .group_title':       'changeGroupView',
     'click .group_name':        'changeGroupView'
   },
@@ -73,6 +74,11 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
         //If not, just pass along to success function
         success.call();
     }
+  },
+
+
+  saveAndExit: function(){
+    this.save(window.close());
   },
 
 

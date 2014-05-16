@@ -168,6 +168,10 @@
         width: 70px;
     }
 
+    #control_panel .save_exit {
+        width: 70px;
+    }
+
     #control_panel .group_title {
         font-size: 14px;
         color: #004276;
