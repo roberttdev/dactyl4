@@ -8,26 +8,30 @@ class TemplatesController < ApplicationController
 
   #The index is a simple listing of templates.
   def index
-    respond_to do |format|
-      format.html do
-        if logged_in?
-          if current_account.real?
-            return render :layout => 'workspace'
+    if current_account.admin?
+      respond_to do |format|
+        format.html do
+          if logged_in?
+            if current_account.real?
+              return render :layout => 'workspace'
+            else
+              return redirect_to '/public/search'
+            end
+          end
+          redirect_to '/home'
+        end
+
+        format.json do
+          if params[:subtemplates] == 'true'
+            #Include subtemplates
+            json GroupTemplate.includes(:subtemplates).all().to_json(:include => :subtemplates)
           else
-            return redirect_to '/public/search'
+            json GroupTemplate.all()
           end
         end
-        redirect_to '/home'
       end
-
-      format.json do
-        if params[:subtemplates] == 'true'
-          #Include subtemplates
-          json GroupTemplate.includes(:subtemplates).all().to_json(:include => :subtemplates)
-        else
-          json GroupTemplate.all()
-        end
-      end
+    else
+      return redirect_to '/public/search'
     end
   end
 

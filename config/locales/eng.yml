@@ -163,6 +163,8 @@
   - country: " Countries"
   - create_group: Edit Group
   - create_new_project: Create a New Project
+  - data_entry: Data Entry
+  - data_extraction: Data Extraction
   - date: " Dates"
   - date_uploaded: Date Uploaded
   - default_document_language: Default Document Language
@@ -302,6 +304,7 @@
       on our list of %sfeatured reporting%s.
   - featured_reporting_list: You can find examples of embedded searches on our list
       of %sfeatured reporting%s.
+  - file_uploading: File Uploading
   - filter: Filter
   - finish: Finish
   - first_name: First name
@@ -488,6 +491,8 @@
   - published_documents: Published Documents
   - published_url: Published URL
   - publishing_embedding: Publishing & Embedding
+  - quality_assurance: Quality Assurance
+  - quality_control: Quality Control
   - reader_workspace_language: Reader/Workspace Language
   - really_delete_x_docs:
     - Really delete document?

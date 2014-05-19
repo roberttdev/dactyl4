@@ -39,15 +39,11 @@ class AccountsController < ApplicationController
     respond_to do |format|
       format.html do
         if logged_in?
-          if current_account.real?
-            @projects = Project.load_for(current_account)
-            @current_organization = current_account.organization
-            @organizations = Organization.all_slugs
-            @has_documents = Document.owned_by(current_account).count(:limit => 1) > 0
-            return render :layout => 'workspace'
-          else
-            return redirect_to '/public/search'
-          end
+          @projects = Project.load_for(current_account)
+          @current_organization = current_account.organization
+          @organizations = Organization.all_slugs
+          @has_documents = Document.owned_by(current_account).count(:limit => 1) > 0
+          return render :layout => 'workspace'
         end
         redirect_to '/home'
       end

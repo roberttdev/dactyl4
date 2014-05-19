@@ -6,7 +6,9 @@ dc.ui.OrganizationList = Backbone.View.extend({
   },
 
   render: function() {
-    this.$el.html(JST['organizer/organizations']({organizations: dc.account.organizations() }));
+    if (dc.account && dc.account.isAdmin()) {
+        this.$el.html(JST['organizer/organizations']({organizations: dc.account.organizations() }));
+    }
     return this;
   },
   

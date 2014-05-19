@@ -10,6 +10,8 @@
     <div class="tab_corner left"></div>
     <div class="tab_corner right"></div>
   </div>
+  <%} %>
+  <% if (dc.account && dc.account.isAdmin()) { %>
   <div id="templates_tab" data-tab="template" class="tab trailing">
       <%= _.t('templates') %>
       <div class="tab_corner left"></div>

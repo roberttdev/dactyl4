@@ -14,15 +14,11 @@ class WorkspaceController < ApplicationController
   # searching, the home page otherwise.
   def index
     if logged_in?
-      if current_account.real?
-        @projects = Project.load_for(current_account)
-        @current_organization = current_account.organization
-        @organizations = Organization.all_slugs
-        @has_documents = Document.owned_by(current_account).exists?
-        return render :template => 'workspace/index'
-      else
-        return redirect_to '/public/search'
-      end
+      @projects = Project.load_for(current_account)
+      @current_organization = current_account.organization
+      @organizations = Organization.all_slugs
+      @has_documents = Document.owned_by(current_account).exists?
+      return render :template => 'workspace/index'
     end
     redirect_to '/home'
   end

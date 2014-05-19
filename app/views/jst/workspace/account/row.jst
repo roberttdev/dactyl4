@@ -39,8 +39,11 @@
     <% } else { %>
     <select name="role" class="account_role" <%= current && current.isAdmin() && account.id != current.id ? '' : 'disabled="disabled"' %>>
       <option class="role_1" value="1"><%= _.t('administrator') %></option>
-      <option class="role_2" value="2"><%= _.t('contributor') %></option>
-      <option class="role_4" value="4"><%= _.t('freelancer') %></option>
+      <option class="role_5" value="5"><%= _.t('data_entry') %></option>
+      <option class="role_6" value="6"><%= _.t('quality_control') %></option>
+      <option class="role_7" value="7"><%= _.t('quality_assurance') %></option>
+      <option class="role_8" value="8"><%= _.t('file_uploading') %></option>
+      <option class="role_9" value="9"><%= _.t('data_extraction') %></option>
     </select>
     <% } %>
   </span>
