@@ -2,9 +2,9 @@
 class LifecycleMailer < ActionMailer::Base
   include ActionView::Helpers::TextHelper # pluralize and friends
   
-  SUPPORT   = 'support@documentcloud.org'
-  NO_REPLY  = 'no-reply@documentcloud.org'
-  INFO      = 'info@documentcloud.org'
+  SUPPORT   = 'support@denney.ws'
+  NO_REPLY  = 'no-reply@denney.ws'
+  INFO      = 'info@denney.ws'
   default from: SUPPORT
 
   # Mail instructions for a new account, with a secure link to activate,
