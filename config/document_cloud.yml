@@ -1,5 +1,6 @@
-defaults: &defaults
-  cloud_crowd_server:   http://localhost:8080
+<% secrets = YAML.load_file('./secrets/secrets.yml')[ENV['RAILS_ENV'] || "development"] %>
+defaults: &defaults 
+  cloud_crowd_server:	http://localhost:8080
   server_root:          localhost:1234
   aws_zone:             us-east-1c
   preconfigured_ami_id: ami-11a4b57801aae468
@@ -17,11 +18,10 @@ staging:
 
 production:
   <<: *defaults
-  cloud_crowd_server: localhost:8080
+  cloud_crowd_server: http://localhost:8080
   server_root:        54.197.224.62
-  asset_root:         "//s3.amazonaws.com/s3.documentcloud.org"
+  asset_root:         "//s3.amazonaws.com/dactyl-docs"
   db_volume_id:       vol-d4c305bd
 
 test:
   <<: *defaults
-
