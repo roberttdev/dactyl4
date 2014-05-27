@@ -954,7 +954,7 @@ class Document < ActiveRecord::Base
       words = slugged[0...50].split(/\s|_|-/)
       slugged = words.length > 1 ? words[0, words.length - 1].join(' ') : words.first
     end
-    slugged.gsub!(' ', '-')   # Dasherize spaces.
+    slugged.gsub!(' ', '_')   # Dasherize spaces.
     self.slug = slugged.empty? ? "untitled" : slugged
     true
   end

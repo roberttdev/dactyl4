@@ -246,10 +246,12 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
   },
 
   deleteAnnotation : function(anno) {
-    currentDocument.api.deleteAnnotation({
-        id: anno.id,
-        location: anno.get('location')
-    });
+    if( anno.get('location') ) {
+        currentDocument.api.deleteAnnotation({
+            id: anno.id,
+            location: anno.get('location')
+        });
+    }
   },
 
   // Fire event indicating which annotation was selected so DC-side can sync
