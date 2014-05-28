@@ -73,7 +73,9 @@ DC::Application.routes.draw do
   resources :documents do
 
     #Groups
-    resources :groups
+    resources :groups do
+      post :clone
+    end
 
     resources :annotations do
       member {  match '(*all)', action: :cors_options, via: :options, allowed_methods: [:delete,:post] }

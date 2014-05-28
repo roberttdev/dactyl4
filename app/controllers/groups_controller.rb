@@ -62,4 +62,9 @@ class GroupsController < ApplicationController
 
     json({"success" => true})
   end
+
+  def clone
+    to_clone = Group.find(params[:group_id])
+    json to_clone.clone(to_clone.parent_id, false)
+  end
 end

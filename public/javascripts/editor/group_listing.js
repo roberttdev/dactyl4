@@ -2,11 +2,12 @@ dc.ui.GroupListing = Backbone.View.extend({
 
   events : {
       'click .edit_group'   : 'openEditGroupDialog',
-      'click .delete_group' : 'confirmDelete'
+      'click .delete_group' : 'confirmDelete',
+      'click .clone_group'  : 'cloneGroup'
   },
 
   initialize : function() {
-    _.bindAll(this, 'render', 'confirmDelete', 'deleteGroup', 'openEditGroupDialog');
+    _.bindAll(this, 'render', 'confirmDelete', 'deleteGroup', 'openEditGroupDialog', 'cloneGroup');
 
     this.model.on('change', this.render);
 
@@ -43,6 +44,12 @@ dc.ui.GroupListing = Backbone.View.extend({
       $(this.el).remove();
       this.trigger('reloadAnnotationsRequest');
       return true;
+  },
+
+
+  cloneGroup: function() {
+    _thisGroupView = this;
+    this.model.clone(function(){ _thisGroupView.trigger('reloadPointsRequest'); });
   }
 
 });

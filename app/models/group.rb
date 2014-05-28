@@ -34,4 +34,31 @@ class Group < ActiveRecord::Base
     end
     json
   end
+
+
+  #Clone override.. 'is_sub' determines if this is a sub-process of the original clone
+  def clone(parent_id, is_sub)
+    cloned = Group.create({
+        :document_id => document_id,
+        :parent_id => parent_id,
+        :template_id => template_id,
+        :name => is_sub ? name : "#{name} (copy)"
+    })
+
+    annotations.each do |anno|
+      Annotation.create({
+        :account_id => anno.account_id,
+        :document_id => anno.document_id,
+        :group_id => cloned.id,
+        :title => anno.title,
+        :templated => anno.templated
+      })
+    end
+
+    children.each do |child|
+      child.clone(cloned.id, true)
+    end
+
+    cloned
+  end
 end

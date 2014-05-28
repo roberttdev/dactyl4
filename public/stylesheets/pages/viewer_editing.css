@@ -208,6 +208,14 @@
         margin-bottom: 7px;
     }
 
+    .clone_group {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        background: url(/images/embed/icons/copy.png) no-repeat center center;
+        cursor: pointer;
+    }
+
     .delete_item {
         display: inline-block;
         width: 16px;

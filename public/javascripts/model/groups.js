@@ -23,6 +23,19 @@ dc.model.Group = Backbone.Model.extend({
         this.annotations.reset(response.annotations);
         delete response.annotations;
         return response;
+    },
+
+
+    //Clone: create a value-less copy of this group and all subgroups/data points
+    clone: function(success, error) {
+        $.ajax({
+            url         : this.urlRoot + '/' + this.id + '/clone',
+            contentType : 'application/json; charset=utf-8',
+            type        : 'post',
+            data        : null,
+            success     : success,
+            error       : error
+        })
     }
 });
 

@@ -87,6 +87,7 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
       this.groupViewList.push(_view);
       _view.render();
       this.listenTo(_view, 'reloadAnnotationsRequest', this.reloadAnnotations);
+      this.listenTo(_view, 'reloadPointsRequest', function(){ this.reloadPoints(this.model.id); });
       return _view;
   },
 
