@@ -10,7 +10,7 @@ dc.ui.TemplateFieldListing = Backbone.View.extend({
 
     render: function(options) {
         this.$el.html(JST['template/template_field_listing']({
-            field_name: this.model.get('field_name').replace(/\"/g,'&quot;')
+            field_name: this.model.get('field_name') ? this.model.get('field_name').replace(/\"/g,'&quot;') : ''
         }));
         return this;
     },

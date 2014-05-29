@@ -17,7 +17,7 @@ dc.ui.TemplateListing = Backbone.View.extend({
 
         //Render this template
         _thisView.$el.html(JST['template/template_listing']({
-            name: _thisView.model.get('name')
+            name: dc.inflector.escapeHTML(_thisView.model.get('name'))
         }));
 
         //Render subtemplates
