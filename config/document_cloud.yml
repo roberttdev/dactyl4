@@ -1,4 +1,3 @@
-<% secrets = YAML.load_file('./secrets/secrets.yml')[ENV['RAILS_ENV'] || "development"] %>
 defaults: &defaults 
   cloud_crowd_server:	http://localhost:8080
   server_root:          localhost:1234
