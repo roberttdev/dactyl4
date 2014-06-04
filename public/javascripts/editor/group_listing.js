@@ -19,7 +19,7 @@ dc.ui.GroupListing = Backbone.View.extend({
     _thisView = this;
     $(this.el).html(_thisView._mainJST({
         group_id:   this.model.id,
-        name:       this.model.get('name')
+        name:       this.model.get('extension') ? this.model.get('name') + '[' + this.model.get('extension') + ']' : this.model.get('name')
     }));
 
     return this;

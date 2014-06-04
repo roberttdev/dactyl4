@@ -37,8 +37,9 @@ dc.ui.CreateGroupDialog = dc.ui.Dialog.extend({
 
     //Main template
     this._container.html(this._mainJST({
-        name: this.model.get('name'),
-        mode: this.mode
+        name:      this.model.get('name'),
+        extension: this.model.get('extension'),
+        mode:      this.mode
     }));
 
     this.populateTemplateSelect();
@@ -74,7 +75,10 @@ dc.ui.CreateGroupDialog = dc.ui.Dialog.extend({
     }
 
     //Push template name to model
-    _thisDialog.model.set({name: _thisDialog.$('#group_name').val()});
+    _thisDialog.model.set({
+        name: _thisDialog.$('#group_name').val(),
+        extension: _thisDialog.$('#extension').val()
+    });
 
     //If creating, also push template data to model
     if( this.mode == 'create' ) {

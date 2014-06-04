@@ -17,7 +17,7 @@ class GroupsController < ApplicationController
 
   def create
     #Figure out which template id to use and then create group
-    group_attributes = pick(params, :name, :parent_id, :document_id)
+    group_attributes = pick(params, :name, :parent_id, :document_id, :extension)
     templateId = (params[:template_id] == "0" ? nil : params[:template_id])
     subtemplateId = (params[:subtemplate_id] == "0" ? nil : params[:subtemplate_id])
     group_attributes[:template_id] = templateId
@@ -56,7 +56,7 @@ class GroupsController < ApplicationController
 
   def update
     group = Group.find(params[:id])
-    unless group.update_attributes pick(params, :name)
+    unless group.update_attributes pick(params, :name, :extension)
       return json({ "errors" => template.errors.to_a.map{ |field, error| "#{field} #{error}" } }, 409)
     end
 

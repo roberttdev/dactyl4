@@ -15,15 +15,15 @@ SET search_path = public, pg_catalog;
 -- Name: get_ancestry(integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION get_ancestry(root_id integer) RETURNS TABLE(id integer, parent_id integer, name character varying)
+CREATE FUNCTION get_ancestry(root_id integer) RETURNS TABLE(id integer, parent_id integer, name character varying, extension character varying)
     LANGUAGE sql
     AS $_$
-      WITH RECURSIVE ancestry(id, parent_id, name) AS (
-        SELECT id, parent_id, name
+      WITH RECURSIVE ancestry(id, parent_id, name, extension) AS (
+        SELECT id, parent_id, name, extension
         FROM groups
         WHERE id = $1
         UNION ALL
-        SELECT C.id, C.parent_id, C.name
+        SELECT C.id, C.parent_id, C.name, C.extension
         FROM ancestry P
         INNER JOIN groups C on P.parent_id = C.id
       )
@@ -445,7 +445,8 @@ CREATE TABLE groups (
     template_id integer,
     document_id integer,
     created_at timestamp without time zone,
-    updated_at timestamp without time zone
+    updated_at timestamp without time zone,
+    extension text
 );
 
 
@@ -1651,4 +1652,8 @@ INSERT INTO schema_migrations (version) VALUES ('20140417171446');
 INSERT INTO schema_migrations (version) VALUES ('20140429184510');
 
 INSERT INTO schema_migrations (version) VALUES ('20140430200314');
+
+INSERT INTO schema_migrations (version) VALUES ('20140604213826');
+
+INSERT INTO schema_migrations (version) VALUES ('20140604220150');
 

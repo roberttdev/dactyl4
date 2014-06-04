@@ -196,7 +196,8 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
       returnStr = "<span class='group_title' id='0'>Home</span>";
       if (_ancestry != null) {
           $.each(_ancestry, function (index, ancestor) {
-              returnStr += "&nbsp;>&nbsp<span class='group_title' id='group_" + ancestor.id + "'>" + ancestor.name + "</span>";
+              groupName = ancestor.extension ? ancestor.name + '[' + ancestor.extension + ']' : ancestor.name;
+              returnStr += "&nbsp;>&nbsp<span class='group_title' id='group_" + ancestor.id + "'>" + groupName + "</span>";
           });
       }
 

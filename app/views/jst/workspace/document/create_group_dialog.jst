@@ -7,6 +7,14 @@
     <input name="group_name" id="group_name" class="attribute" type="text" value="<%=name%>"/>
   </div>
 </div>
+<div class="row">
+  <label for="extension" title="<%= _.t('extension') %>">
+      <%= _.t('extension') %>:
+  </label>
+  <div class="text_input dark small">
+    <input name="extension" id="extension" class="attribute" type="text" value="<%=extension%>" maxlength="10"/>
+  </div>
+</div>
 
 <%if( mode == 'create' ) {%>
 <div class="row">
