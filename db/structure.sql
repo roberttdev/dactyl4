@@ -74,6 +74,36 @@ ALTER SEQUENCE accounts_id_seq OWNED BY accounts.id;
 
 
 --
+-- Name: annotation_groups; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE annotation_groups (
+    id integer NOT NULL,
+    annotation_id integer,
+    group_id integer
+);
+
+
+--
+-- Name: annotation_groups_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE annotation_groups_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: annotation_groups_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE annotation_groups_id_seq OWNED BY annotation_groups.id;
+
+
+--
 -- Name: annotations; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -90,7 +120,6 @@ CREATE TABLE annotations (
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
     moderation_approval boolean,
-    group_id integer,
     templated boolean DEFAULT false
 );
 
@@ -920,6 +949,13 @@ ALTER TABLE ONLY accounts ALTER COLUMN id SET DEFAULT nextval('accounts_id_seq':
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
+ALTER TABLE ONLY annotation_groups ALTER COLUMN id SET DEFAULT nextval('annotation_groups_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
 ALTER TABLE ONLY annotations ALTER COLUMN id SET DEFAULT nextval('annotations_id_seq'::regclass);
 
 
@@ -1090,6 +1126,14 @@ ALTER TABLE ONLY template_fields ALTER COLUMN id SET DEFAULT nextval('template_f
 
 ALTER TABLE ONLY accounts
     ADD CONSTRAINT accounts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: annotation_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY annotation_groups
+    ADD CONSTRAINT annotation_groups_pkey PRIMARY KEY (id);
 
 
 --
@@ -1309,7 +1353,7 @@ CREATE INDEX index_accounts_on_identites ON accounts USING gin (identities);
 -- Name: index_annotation_group; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
-CREATE INDEX index_annotation_group ON annotations USING btree (group_id);
+CREATE INDEX index_annotation_group ON annotation_groups USING btree (group_id);
 
 
 --
@@ -1656,4 +1700,6 @@ INSERT INTO schema_migrations (version) VALUES ('20140430200314');
 INSERT INTO schema_migrations (version) VALUES ('20140604213826');
 
 INSERT INTO schema_migrations (version) VALUES ('20140604220150');
+
+INSERT INTO schema_migrations (version) VALUES ('20140605190022');
 

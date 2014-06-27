@@ -11,7 +11,10 @@ dc.model.Group = Backbone.Model.extend({
         attributes = typeof attributes !== 'undefined' ? attributes : {};
         this.urlRoot = '/documents/' + attributes.document_id + '/groups';
         this.children = new dc.model.Groups();
-        this.annotations = new dc.model.Annotations({document_id: attributes.document_id});
+        this.annotations = new dc.model.Annotations({
+            document_id: attributes.document_id,
+            group_id: attributes.id
+        });
         Backbone.Model.apply(this, arguments);
     },
 

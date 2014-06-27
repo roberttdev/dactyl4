@@ -71,11 +71,10 @@ class AnnotationsController < ApplicationController
   def destroy
     maybe_set_cors_headers
     return not_found unless anno = current_annotation
-    if ! current_account.allowed_to_edit?(anno)
-      anno.errors.add(:base, "You don't have permission to delete the note.")
-      return json(anno, 403)
-    end
-    anno.destroy
+
+    group_id = params[:group_id] == "" ? nil : params[:group_id]
+    ag = AnnotationGroup.where({group_id: group_id, annotation_id: params[:id]})
+    ag.destroy_all
     expire_page current_document.canonical_cache_path if current_document.cacheable?
     json nil
   end
@@ -87,20 +86,26 @@ class AnnotationsController < ApplicationController
   end
 
   def bulk_update
-    group_id = nil #Grab group ID from arbitrary entry, so we can return annotations of that group
+    group_id = params[:group_id]
     params[:bulkData].each do |field|
-      submitHash = pick(field, :document_id, :page_number, :title, :content, :location, :group_id, :templated)
+      submitHash = pick(field, :document_id, :page_number, :title, :content, :location, :templated)
       submitHash[:access] = DC::Access::PUBLIC
       submitHash[:location] = submitHash[:location] ? submitHash[:location][:image] : nil
-      group_id = submitHash[:group_id]
       if field[:id].nil?
         submitHash[:account_id] = current_account.id
-        Annotation.create(submitHash)
+        anno = Annotation.create(submitHash)
       else
-        Annotation.update(field[:id], submitHash)
+        anno = Annotation.update(field[:id], submitHash)
+      end
+
+      if anno.annotation_groups.where({:group_id => group_id}).size < 1
+       AnnotationGroup.create({
+            :group_id       => group_id,
+            :annotation_id  => anno.id
+        })
       end
     end
-    json Annotation.where({'group_id' => group_id, 'document_id' => params[:document_id]})
+    json Annotation.includes(:groups).where({:document_id => params[:document_id], 'groups.id' => group_id})
   end
 
   private

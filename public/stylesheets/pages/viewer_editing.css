@@ -208,7 +208,7 @@
         margin-bottom: 7px;
     }
 
-    .clone_group {
+    .clone_item {
         display: inline-block;
         width: 16px;
         height: 16px;
@@ -243,6 +243,10 @@
         background-color: yellow;
     }
 
+    .copyHighlighting {
+        background-color: orange;
+    }
+
     .annotation_status.incomplete {
         background: url(/images/embed/icons/alert_yellow.png) no-repeat center center;
     }
@@ -252,8 +256,13 @@
     }
 
     .annotation_listing {
-        margin-left: 40px;
+        display: inline;
+        margin-left: 5px;
         cursor: pointer;
+    }
+
+    .annotation_actions {
+        display: inline;
     }
 
     .annotation_name, .annotation_value {

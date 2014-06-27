@@ -69,6 +69,7 @@ DC::Application.routes.draw do
 
   #Bulk Annotation Submit
   put '/documents/:document_id/annotations' => 'annotations#bulk_update'
+  put '/documents/:document_id/groups/:group_id/annotations' => 'annotations#bulk_update'
 
   resources :documents do
 

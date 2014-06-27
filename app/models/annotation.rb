@@ -3,13 +3,15 @@ class Annotation < ActiveRecord::Base
   include DC::Store::DocumentResource
   include DC::Access
 
-  belongs_to :group
   belongs_to :document
   belongs_to :account # NB: This account is not the owner of the document.
                       #     Rather, it is the author of the annotation.
 
   belongs_to :organization
   has_many :project_memberships, :through => :document
+
+  has_many :annotation_groups
+  has_many :groups, :through => :annotation_groups
 
   attr_accessor :author
 
@@ -140,11 +142,16 @@ class Annotation < ActiveRecord::Base
   end
 
   def canonical(opts={})
-    data = {'id' => id, 'page' => page_number, 'title' => title, 'content' => content, 'access' => access_name.to_s, 'group_id' => group_id }
+    data = {'id' => id, 'page' => page_number, 'title' => title, 'content' => content, 'access' => access_name.to_s }
     data['location'] = {'image' => location} if location
     data['image_url'] = document.page_image_url_template if opts[:include_image_url]
     data['published_url'] = document.published_url || document.document_viewer_url(:allow_ssl => true) if opts[:include_document_url]
     data['account_id'] = account_id if [PREMODERATED, POSTMODERATED].include? document.access
+    data['groups'] = []
+    self.annotation_groups.select(:group_id).each do |anno_group|
+      data['groups'].push(anno_group.group_id)
+    end
+
     if author
       data.merge!({
         'author'              => author[:full_name],
@@ -165,6 +172,10 @@ class Annotation < ActiveRecord::Base
       'account_id'      => account_id,
       'organization_id' => organization_id
     })
+  end
+
+  def delete_group_ref(group_id)
+
   end
 
   private

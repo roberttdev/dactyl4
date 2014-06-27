@@ -24,7 +24,7 @@ dc.model.Annotations = Backbone.BulkSubmitCollection.extend({
     //Expected parameters: document_id
     constructor: function(attributes, options) {
         attributes = typeof attributes !== 'undefined' ? attributes : {};
-        this.url = '/documents/' + attributes.document_id + '/annotations';
+        this.url = attributes.group_id ? '/documents/' + attributes.document_id + '/groups/' + attributes.group_id + '/annotations' : '/documents/' + attributes.document_id + '/annotations';
         Backbone.Collection.apply(this, arguments);
     },
 

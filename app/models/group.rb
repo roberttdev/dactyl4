@@ -1,14 +1,15 @@
 class Group < ActiveRecord::Base
   belongs_to :parent, :class_name => 'Group', :foreign_key => 'parent_id'
-  has_many :children, :class_name => 'Group', :foreign_key => 'parent_id', :dependent => :delete_all
+  has_many :children, :class_name => 'Group', :foreign_key => 'parent_id', :dependent => :destroy
   belongs_to :group_template, :foreign_key => 'template_id'
-  has_many :annotations, :dependent => :delete_all
 
+  has_many :annotation_groups, :dependent => :destroy
+  has_many :annotations, :through => :annotation_groups
 
   #Get ordered ancestry array for record
   def get_ancestry
-    sql = "SELECT * FROM get_ancestry(#{id})"
-    ancestry = ActiveRecord::Base.connection.exec_query(sql)
+    sqlID = ActiveRecord::Base.connection.quote(id)
+    ancestry = ActiveRecord::Base.connection.exec_query("SELECT * FROM get_ancestry(#{sqlID})")
     order_ancestry(ancestry.to_hash)
   end
 

@@ -4,14 +4,14 @@ class GroupsController < ApplicationController
     responseJSON = ActiveSupport::JSON.encode({
         document_id: params[:document_id],
         children: Group.where({:document_id => params[:document_id], :parent_id => nil}),
-        annotations: Annotation.where({:document_id => params[:document_id], :group_id => nil})
+        annotations: Annotation.includes(:groups).where({:document_id => params[:document_id], "groups.id" => nil})
     })
     json responseJSON
   end
 
   def show
     responseJSON = Group.includes(:children, :group_template).find(params[:id]).as_json({include: [:children, :group_template], ancestry: true})
-    responseJSON[:annotations] = Annotation.where({:document_id => params[:document_id], :group_id => params[:id]})
+    responseJSON[:annotations] = Annotation.includes(:groups).where({:document_id => params[:document_id], 'groups.id' => params[:id]})
     json responseJSON
   end
 
@@ -35,13 +35,13 @@ class GroupsController < ApplicationController
         #Leaving this code here in case cache needs expiring later
         #doc = current_document
         #expire_page doc.canonical_cache_path if doc.cacheable?
-        Annotation.create({
+        anno = Annotation.create({
             :account_id   => current_account.id,
             :document_id  => params[:document_id],
             :title        => field.field_name,
-            :group_id     => group.id,
             :templated    => true
         })
+        anno.groups << group
       end
     end
 

@@ -31,11 +31,14 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
     this._inserts.click(this.createPageNote);
   },
 
-  open : function(annotation) {
+  open : function(annotation, groupId) {
     //If annotation already has location, just show it
     if( annotation.get('location') ){ return this.showAnnotation(annotation); }
 
-    if( annotation != null ){ this._active_annotation = annotation; }
+    if( annotation != null ){
+        annotation.groups = [groupId];
+        this._active_annotation = annotation;
+    }
 
     this.hideActiveAnnotations();
 
@@ -61,6 +64,7 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
     $(document).unbind('keydown', this.close);
     this.clearAnnotation();
     this.clearRedactions();
+    this.hideActiveAnnotations();
     this._inserts.hide().removeClass('DV-public DV-private');
     $(document.body).setMode(null, 'editing');
     this._buttons['public'].removeClass('open');
@@ -191,7 +195,7 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
             title           : _annotation.get('title'),
             content         : _annotation.get('content'),
             document_id     : _annotation.get('document_id'),
-            group_id        : _annotation.get('group_id'),
+            groups          : _annotation.groups,
             location        : {image : image},
             page            : this._activePageNumber,
             unsaved         : true,
@@ -226,7 +230,7 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
       content     : anno.text,
       title       : anno.title,
       access      : anno.access,
-      group_id    : anno.group_id,
+      group_id    : anno.groupCount > 0 ? anno.groups[anno.groupIndex - 1] : undefined,
       location    : anno.location
     };
     return _.extend(params, extra || {});
@@ -245,12 +249,12 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
     this.trigger('updateAnnotation', params);
   },
 
-  deleteAnnotation : function(anno) {
+  deleteAnnotation : function(anno, groupId) {
     if( anno.get('location') ) {
         currentDocument.api.deleteAnnotation({
             id: anno.id,
             location: anno.get('location')
-        });
+        }, groupId);
     }
   },
 
@@ -273,6 +277,10 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
       currentDocument.api.syncAnnotationIDs(locationIds);
   },
 
+  //Pass group association to DV so it can update if necessary
+  syncGroupAssociation: function(annoId, groupId){
+      currentDocument.api.syncGroupAnnotation(annoId, groupId);
+  },
 
   //Reload DV annotation list after a major change
   reloadAnnotations: function(annos) {
