@@ -63,8 +63,13 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
     $('input').removeClass('error');
     _hasErrors = false;
 
-    //If there are annotations on-screen, and data has changed, handle them..
-    if( $('.annotation_listing').length > 0  && this.hasChanged() ) {
+    //Remove any blank points
+    this.model.annotations.each(function(model, index) {
+        if(model.get('title') == null && model.get('content') == null){ _deView.model.annotations.remove(model); }
+    });
+
+    //If there are non-blank annotations, attempt to sync them with DB.
+    if( this.model.annotations.length > 0 ) {
         this.model.annotations.pushAll({success: function(){
             _deView.syncDV(success)
         }});
@@ -266,13 +271,6 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
     annos.getAll({success: function(response){
         dc.app.editor.annotationEditor.reloadAnnotations(response);
     }});
-  },
-
-
-  //Check whether any annotations have changed; return boolean
-  hasChanged: function(){
-      _view = _.find(this.pointViewList, function(view){ return view.model.isNew() || view.model.changedAttributes(); });
-      return _view ? true : false;
   }
 
 });

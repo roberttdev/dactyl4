@@ -49,17 +49,24 @@ Backbone.BulkSubmitCollection = Backbone.Collection.extend({
     //'error'   : error function
     pushAll: function(options){
         _thisColl = this;
-        _bulkJSON = {bulkData: this.toJSON()};
-        $.ajax({
-            url         : this.url,
-            contentType : 'application/json; charset=utf-8',
-            type        : 'put',
-            data        : JSON.stringify(_bulkJSON),
-            success     : function(responseData) {
-                _thisColl.parseBulkResponse(responseData, options['success']);
-            },
-            error       : options['error']
-        })
+
+        _hasChanged = _.find(this.models, function(model){ return model.isNew() || model.changedAttributes(); });
+
+        if( _hasChanged ) {
+            _bulkJSON = {bulkData: this.toJSON()};
+            $.ajax({
+                url: this.url,
+                contentType: 'application/json; charset=utf-8',
+                type: 'put',
+                data: JSON.stringify(_bulkJSON),
+                success: function (responseData) {
+                    _thisColl.parseBulkResponse(responseData, options['success']);
+                },
+                error: options['error']
+            });
+        } else {
+            options['success'].call();
+        }
     },
 
 
