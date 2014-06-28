@@ -10,7 +10,7 @@ class Annotation < ActiveRecord::Base
   belongs_to :organization
   has_many :project_memberships, :through => :document
 
-  has_many :annotation_groups
+  has_many :annotation_groups, :dependent => :destroy
   has_many :groups, :through => :annotation_groups
 
   attr_accessor :author

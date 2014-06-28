@@ -40,6 +40,7 @@ class Document < ActiveRecord::Base
   has_many :entities,             :dependent   => :destroy, :inverse_of=>:document
   has_many :entity_dates,         :dependent   => :destroy
   has_many :sections,             :dependent   => :destroy
+  has_many :groups,               :dependent   => :destroy
   has_many :annotations,          :dependent   => :destroy
   has_many :remote_urls,          :dependent   => :destroy
   has_many :project_memberships,  :dependent   => :destroy
