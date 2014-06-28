@@ -164,6 +164,16 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
   },
 
 
+  createDataPointCopy: function(anno) {
+      _point = new dc.model.Annotation(anno);
+      _point.set('group_id', this.model.id); //Update group id, and in process mark as changed
+      this.model.annotations.add(_point);
+      _view = this.addDataPoint(_point);
+      $('#annotation_section').append(_view.$el);
+      dc.app.editor.annotationEditor.syncGroupAssociation(anno.id, _deView.model.id);
+  },
+
+
   //reloadPoints: fetch data again and re-render. Expects group ID (null is no group)
   //annotationId is optional; will highlight that if exists
   reloadPoints: function(groupId, annotationId) {
@@ -234,15 +244,14 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
   handleAnnotationSelect: function(anno){
     _deView = this;
     if( anno.id ){
-        _decpView = this;
-
-        //If a data point is waiting for a clone response, pass response
+        //If a data point is waiting for a clone response, pass response, then create copy
         _view = _.find(this.pointViewList, function(view){ return view.waitingForClone; });
         if( _view ) {
             _view.handleDVSelect(anno);
+            _deView.createDataPointCopy(anno);
         }else{
             //If the group selected is this group, find and highlight point; otherwise save and reload proper group
-            if( anno.group_id == _decpView.model.id ) {
+            if( anno.group_id == _deView.model.id ) {
                 _view = _.find(this.pointViewList, function(view){ return view.model.id == anno.id; });
                 _view.handleDVSelect(anno);
             }else {

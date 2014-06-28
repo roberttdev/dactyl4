@@ -101,13 +101,8 @@ dc.ui.AnnotationListing = Backbone.View.extend({
 
   //handleDVSelect: receive selected annotation data from DV, and process it based on status
   handleDVSelect: function(anno) {
-      //If waiting for clone, update this with select anno and sync group association
-      if(this.waitingForClone) {
-          this.updateAnnotation(anno);
-          dc.app.editor.annotationEditor.syncGroupAssociation(this.model.id, this.group_id);
-      }
-
-      this.highlight();
+      //If expecting a clone, delete this to make way for clone.  Otherwise, highlight
+      if(this.waitingForClone) { this.deletePoint(); }else{ this.highlight(); }
   },
 
 
