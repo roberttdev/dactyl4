@@ -101,21 +101,18 @@ class Document < ActiveRecord::Base
   # our organization and we're allowed to see it, or it belongs to a project
   # that's been shared with us.
   scope :accessible, lambda {|account, org|
-    has_shared = account && account.accessible_project_ids.present?
     access = []
-    access << "(documents.access in (#{PUBLIC_LEVELS.join(",")}))"
-    access << "(documents.access in (#{PRIVATE}, #{PENDING}, #{ERROR}, #{ORGANIZATION}, #{EXCLUSIVE}) and documents.account_id = #{account.id})" if account
-    access << "(documents.access in (#{ORGANIZATION}, #{EXCLUSIVE}) and documents.organization_id = #{org.id})" if org && account && !account.freelancer?
-    access << "(memberships.document_id = documents.id)" if has_shared
-    query = where( access.join(' or ') )
-    if has_shared
-        query = query.joins( "
-          left outer join
-          (select distinct document_id from project_memberships
-            where project_id in (#{account.accessible_project_ids.join(',')})) as memberships
-          on memberships.document_id = documents.id
-        ")
+    if account.data_entry?
+      access << "((documents.access in (#{DE_ACCESS.join(",")})) OR ((documents.de_one_id=#{account.id} OR documents.de_two_id=#{account.id}) AND documents.access=#{STATUS_DE2}))"
     end
+    if account.quality_control?
+      access << "((documents.access in (#{QC_ACCESS.join(",")})) OR (documents.qc_id=#{account.id} AND documents.access=#{STATUS_IN_QC}))"
+    end
+    if account.quality_assurance?
+      access << "((documents.access in (#{QA_ACCESS.join(",")})) OR (documents.qa_id=#{account.id} AND documents.access=#{STATUS_IN_QA}))"
+    end
+    access << "(documents.access in (#{EXTRACT_ACCESS.join(",")}))" if account.data_extraction?
+    query = where( access.join(' or ') )
     query.readonly(false)
   }
   
@@ -143,6 +140,10 @@ class Document < ActiveRecord::Base
     integer :page_count
     integer :hit_count
     integer :public_note_count
+    integer :de_one_id
+    integer :de_two_id
+    integer :qc_id
+    integer :qa_id
     integer :project_ids, :multiple => true do
       self.project_memberships.map {|m| m.project_id }
     end

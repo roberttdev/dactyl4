@@ -11,6 +11,7 @@ module DC
     # just use Postgres.
     class Query
       include DC::Access
+      include DC::DocumentStatus
 
       FACET_OPTIONS = {
         :all      => {:limit => 6,   :sort => :count},
@@ -63,7 +64,6 @@ module DC
         build_text         if     has_text?
         build_fields       if     has_fields?
         build_data         if     has_data?
-        build_accounts     if     has_accounts?
         build_groups       if     has_groups?
         build_project_ids  if     has_project_ids?
         build_projects     if     has_projects?
@@ -250,18 +250,6 @@ module DC
         end
       end
 
-      # Generate the Solr or SQL to restrict the search to specific acounts.
-      def build_accounts
-        ids = @accounts
-        if needs_solr?
-          @solr.build do
-            with :account_id, ids
-          end
-        else
-          @sql << 'documents.account_id in (?)'
-          @interpolations << ids
-        end
-      end
 
       # Generate the Solr or SQL to restrict the search to specific organizations.
       def build_groups
@@ -422,21 +410,38 @@ module DC
         accessible_project_ids = has_projects? || has_project_ids? ? [] : (account && account.accessible_project_ids)
         @solr.build do
           any_of do
-            with        :access, PUBLIC_LEVELS
-            if account
-              all_of do
-                with    :access, [PRIVATE, PENDING, ERROR, ORGANIZATION, EXCLUSIVE]
-                with    :account_id, account.id
+            if account.data_entry?
+              any_of do
+                with :access, DE_ACCESS
+                all_of do
+                  with :access, STATUS_DE2
+                  any_of do
+                    with :de_one_id, account.id
+                    with :de_two_id, account.id
+                  end
+                end
               end
             end
-            if organization && account && !account.freelancer?
-              all_of do
-                with    :access, [ORGANIZATION, EXCLUSIVE]
-                with    :organization_id, organization.id
+            if account.quality_control?
+              any_of do
+                with :access, QC_ACCESS
+                all_of do
+                  with :access, STATUS_IN_QC
+                  with :qc_id, account.id
+                end
               end
             end
-            if accessible_project_ids.present?
-              with      :project_ids, accessible_project_ids
+            if account.quality_assurance?
+              any_of do
+                with :access, QA_ACCESS
+                all_of do
+                  with :access, STATUS_IN_QA
+                  with :qa_id, account.id
+                end
+              end
+            end
+            if account.data_extraction?
+              with :access, STATUS_READY_EXT
             end
           end
         end

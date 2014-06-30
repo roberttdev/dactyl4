@@ -162,6 +162,26 @@ class Account < ActiveRecord::Base
     has_role?(FREELANCER, org)
   end
 
+  def data_entry?(org=self.organization)
+    has_role?(DATA_ENTRY, org)
+  end
+
+  def quality_control?(org=self.organization)
+    has_role?(QUALITY_CONTROL, org)
+  end
+
+  def quality_assurance?(org=self.organization)
+    has_role?(QUALITY_ASSURANCE, org)
+  end
+
+  def file_uploading?(org=self.organization)
+    has_role?(FILE_UPLOADING, org)
+  end
+
+  def data_extraction?(org=self.organization)
+    has_role?(DATA_EXTRACTION, org)
+  end
+
   def real?(org=self.organization)
     admin?(org) || contributor?(org) || freelancer?(org)
   end
