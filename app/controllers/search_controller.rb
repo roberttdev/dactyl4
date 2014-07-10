@@ -10,6 +10,12 @@ class SearchController < ApplicationController
     results = {:query => @query, :documents => @documents}
     respond_to do |format|
       format.json do
+        #Populate whether current user has claim on each document
+        results[:documents] = @documents.map do |d|
+          d_json = d.as_json
+          d_json[:has_current_claim] = d.has_current_claim?(current_account)
+          d_json
+        end
         json results
       end
     end

@@ -3,7 +3,7 @@ dc.ui.GroupListing = Backbone.View.extend({
   events : {
       'click .edit_group'   : 'openEditGroupDialog',
       'click .delete_group' : 'confirmDelete',
-      'click .clone_group'  : 'cloneGroup'
+      'click .clone_item'  : 'cloneGroup'
   },
 
   initialize : function() {

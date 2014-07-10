@@ -64,7 +64,6 @@ dc.ui.AnnotationListing = Backbone.View.extend({
       this.openDocumentTab();
       this.highlight();
 
-      this.listenToOnce(dc.app.editor.annotationEditor, 'updateAnnotation', this.updateAnnotation);
       dc.app.editor.annotationEditor.open(this.model, this.group_id);
   },
 

@@ -243,7 +243,7 @@ dc.model.DocumentSet = Backbone.Collection.extend({
   },
 
   comparator : function(doc) {
-    return doc.get('index');
+    return doc.get('has_current_claim') ? -1 : doc.get('index');
   },
 
   pending : function() {

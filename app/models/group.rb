@@ -47,12 +47,16 @@ class Group < ActiveRecord::Base
     })
 
     annotations.each do |anno|
-      Annotation.create({
+      newAnno = Annotation.create({
         :account_id => anno.account_id,
         :document_id => anno.document_id,
-        :group_id => cloned.id,
         :title => anno.title,
         :templated => anno.templated
+      })
+
+      AnnotationGroup.create({
+         :annotation_id => newAnno.id,
+         :group_id => cloned.id
       })
     end
 

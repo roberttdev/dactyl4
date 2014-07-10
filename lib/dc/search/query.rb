@@ -400,7 +400,7 @@ module DC
               with :access, access
             end
           else
-            @sql << 'documents.access = ?'
+            @sql << 'documents.status = ?'
             @interpolations << access
           end
         end
@@ -412,36 +412,42 @@ module DC
           any_of do
             if account.data_entry?
               any_of do
-                with :access, DE_ACCESS
+                with :status, DE_ACCESS
                 all_of do
-                  with :access, STATUS_DE2
+                  with :status, STATUS_DE2
                   any_of do
-                    with :de_one_id, account.id
-                    with :de_two_id, account.id
+                    all_of do
+                      with :de_one_id, account.id
+                      with :de_one_complete, false
+                    end
+                    all_of do
+                      with :de_two_id, account.id
+                      with :de_two_complete, false
+                    end
                   end
                 end
               end
             end
             if account.quality_control?
               any_of do
-                with :access, QC_ACCESS
+                with :status, QC_ACCESS
                 all_of do
-                  with :access, STATUS_IN_QC
+                  with :status, STATUS_IN_QC
                   with :qc_id, account.id
                 end
               end
             end
             if account.quality_assurance?
               any_of do
-                with :access, QA_ACCESS
+                with :status, QA_ACCESS
                 all_of do
-                  with :access, STATUS_IN_QA
+                  with :status, STATUS_IN_QA
                   with :qa_id, account.id
                 end
               end
             end
             if account.data_extraction?
-              with :access, STATUS_READY_EXT
+              with :status, STATUS_READY_EXT
             end
           end
         end

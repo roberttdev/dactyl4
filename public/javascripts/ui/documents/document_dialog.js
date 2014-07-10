@@ -70,7 +70,7 @@ dc.ui.DocumentDialog = dc.ui.Dialog.extend({
     }, this));
 
     //Title validation
-    if( !changes['title'] || changes['title'] == ""){
+    if( this.$('#document_edit_title').val() == ""){
         this.$('#document_edit_title').addClass('error');
         this.error(_.t('must_have_title'));
         errors = true;

@@ -1,6 +1,7 @@
 class Annotation < ActiveRecord::Base
 
   include DC::Store::DocumentResource
+  include DC::DocumentStatus
   include DC::Access
 
   belongs_to :document
@@ -26,41 +27,17 @@ class Annotation < ActiveRecord::Base
   text_attr :title
   html_attr :content, :level=>:super_relaxed
 
-  scope :accessible, lambda { |account|
-    has_shared = account && account.accessible_project_ids.present?
-
-    # Notes accessible under the following circumstances:
+  scope :accessible, lambda { |doc_status, account|
     access = []
-    joins  = []
 
-    # A note is public
-    access << "(annotations.access in (#{PUBLIC_LEVELS.join(",")}))"
-
-    if account
-      # A note belongs to the accessing account
-      access << "(annotations.access = #{PRIVATE} and annotations.account_id = #{account.id})"
-
-      # An draft (EXCLUSIVE) note and the accessing account belong to the same organization
-      joins << <<-EOS
-        left outer join memberships on
-          (annotations.organization_id = memberships.organization_id and
-           memberships.account_id = #{account.id})
-      EOS
-      access << "(annotations.access = #{EXCLUSIVE} and annotations.organization_id = memberships.organization_id)"
+    case doc_status
+      when STATUS_DE1, STATUS_DE2
+        access << "annotations.account_id = #{account.id}"
+      else
+        access << ""
     end
 
-
-    if has_shared
-      # A draft (EXCLUSIVE) note is on a document shared with the accessing account
-      access << "((annotations.access = #{EXCLUSIVE}) and projects.document_id = annotations.document_id)"
-      joins  << <<-EOS
-        left outer join
-        (select distinct document_id from project_memberships
-          where project_id in (#{account.accessible_project_ids.join(',')})) as projects
-        on projects.document_id = annotations.document_id
-      EOS
-    end
-    where( "(#{access.join(' or ')})" ).joins( joins.join("\n") ).readonly(false)
+    where( "(#{access.join(' or ')})" ).readonly(false)
   }
 
   scope :owned_by, lambda { |account|
@@ -84,7 +61,7 @@ class Annotation < ActiveRecord::Base
 
   def self.counts_for_documents(account, docs)
     doc_ids = docs.map {|doc| doc.id }
-    self.accessible(account).where({:document_id => doc_ids}).group('annotations.document_id').count
+    self.where({:document_id => doc_ids}).group('annotations.document_id').count
   end
 
   def self.populate_author_info(notes, current_account=nil)

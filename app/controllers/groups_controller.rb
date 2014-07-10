@@ -1,11 +1,25 @@
 class GroupsController < ApplicationController
+  include DC::DocumentStatus
+
   def index
     #Pull base-level groups/annotations and create group-like JSON
-    responseJSON = ActiveSupport::JSON.encode({
-        document_id: params[:document_id],
-        children: Group.where({:document_id => params[:document_id], :parent_id => nil}),
-        annotations: Annotation.includes(:groups).where({:document_id => params[:document_id], "groups.id" => nil})
-    })
+    doc = Document.find(params[:document_id])
+    if( doc.status == STATUS_DE1 || doc.status == STATUS_DE2 )
+      #When in DE, return only current user's data
+      responseJSON = ActiveSupport::JSON.encode({
+        document_id: doc.id,
+        children: Group.where({
+            :document_id => params[:document_id],
+            :account_id => current_account.id,
+            :parent_id => nil
+        }),
+        annotations: Annotation.includes(:groups).where({
+            :document_id => params[:document_id],
+            :account_id => current_account.id,
+            "groups.id" => nil
+        })
+      })
+    end
     json responseJSON
   end
 
@@ -21,6 +35,7 @@ class GroupsController < ApplicationController
     templateId = (params[:template_id] == "0" ? nil : params[:template_id])
     subtemplateId = (params[:subtemplate_id] == "0" ? nil : params[:subtemplate_id])
     group_attributes[:template_id] = templateId
+    group_attributes[:account_id] = current_account.id
     group = Group.create(group_attributes)
 
     #If a template was used, create the attributes

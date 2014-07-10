@@ -34,6 +34,10 @@
     #document_list .document.has_notes {
       min-height: 96px;
     }
+
+    #document_list .document.claimed_yes .title a {
+        color: crimson;
+    }
   img.doc {
     cursor: pointer;
     background: #fff;

@@ -145,6 +145,7 @@
   - choose_location_to_insert_pages: Choose a location to insert pages.
   - choose_note: Choose note
   - city: City
+  - claimed: Claimed
   - close: Close
   - close_while_redacting: The document is being redacted. It will close while processing.
   - close_while_text_reprocess: The text is being processed. Please close this document.
@@ -573,6 +574,7 @@
   - revoke: Revoke
   - role_administrator_for_x: "You are an administrator for \n"
   - role_contributor_for_x: You are a contributor for %s
+  - role_data_entry_for_x: You are a Data Entry user for %s
   - role_freelancer_for_x: You are a freelancer for %s
   - role_reviewer_for_x: You are a reviewer for %s
   - save: Save

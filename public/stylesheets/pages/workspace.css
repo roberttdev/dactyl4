@@ -195,12 +195,15 @@ div.full_page_background {
     color: #000;
     font-size: 16px;
     line-height: 25px;
-    width: 500px;
   }
     .static_error a {
       color: #282d66;
       text-decoration: underline;
     }
+  .static_error_list {
+    list-style: disc;
+    margin-left: 40px;
+  }
   #full_screen_form form {
     padding: 50px 0 0 0;
   }

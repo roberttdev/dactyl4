@@ -302,7 +302,9 @@ CREATE TABLE documents (
     de_one_id integer,
     de_two_id integer,
     qc_id integer,
-    qa_id integer
+    qa_id integer,
+    de_one_complete boolean,
+    de_two_complete boolean
 );
 
 
@@ -475,7 +477,8 @@ CREATE TABLE groups (
     document_id integer,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
-    extension text
+    extension text,
+    account_id integer
 );
 
 
@@ -1702,4 +1705,8 @@ INSERT INTO schema_migrations (version) VALUES ('20140604213826');
 INSERT INTO schema_migrations (version) VALUES ('20140604220150');
 
 INSERT INTO schema_migrations (version) VALUES ('20140605190022');
+
+INSERT INTO schema_migrations (version) VALUES ('20140701175538');
+
+INSERT INTO schema_migrations (version) VALUES ('20140704154025');
 

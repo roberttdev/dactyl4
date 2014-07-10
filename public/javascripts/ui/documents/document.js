@@ -1,6 +1,18 @@
 // A tile view for previewing a Document in a listing.
 dc.ui.Document = Backbone.View.extend({
 
+  // Status text
+  DOC_STATUS : [
+      'New',
+      'In Data Entry (1 Claim)',
+      'In Data Entry (2 Claims)',
+      'Ready for Quality Control',
+      'In Quality Control',
+      'Ready for Quality Assurance',
+      'In Quality Assurance',
+      'Ready for Extraction'
+  ],
+
   // Number of pages to show at a time.
   PAGE_LIMIT : 50,
 
@@ -22,7 +34,6 @@ dc.ui.Document = Backbone.View.extend({
     'click .show_notes'             : 'toggleNotes',
     'click .title .edit_glyph'      : 'openDialog',
     'click .datalines .edit_glyph'  : 'openDataDialog',
-    'click .title .lock'            : 'editAccessLevel',
     'click .title .published'       : 'viewPublishedDocuments',
     'click .page_icon'              : '_openPage',
     'click .reviewer_count'         : '_openShareDialog',
@@ -77,7 +88,8 @@ dc.ui.Document = Backbone.View.extend({
       created_at    : this.model.get('created_at').replace(/\s/g, '&nbsp;'),
       icon          : this._iconAttributes(),
       thumbnail_url : this._thumbnailURL(),
-      data          : this.model.sortedData()
+      data          : this.model.sortedData(),
+      status_text   : this.DOC_STATUS[parseInt(this.model.get('status')) - 1].toUpperCase()
     });
     if (dc.app.paginator && dc.app.paginator.mini) data.title = dc.inflector.truncateWords(data.title, 50);
     $(this.el).html(JST['document/tile'](data));
@@ -89,7 +101,7 @@ dc.ui.Document = Backbone.View.extend({
     this.entitiesView = new dc.ui.SparkEntities({model: this.model, parent: this, container: this.$('.entities')});
     this.model.notes.each(function(note){ me._addNote(note); });
     if (options.notes && this.model.hasLoadedNotes()) this.setMode('has', 'notes');
-    this.setMode(dc.access.NAMES[this.model.get('access')], 'access');
+    this.setMode('claimed', this.model.get('has_current_claim') ? 'yes' : 'no');
     this.setMode(this.model.allowedToEdit() ? 'is' : 'not', 'editable');
     this._setSelected();
     return this;
@@ -375,12 +387,11 @@ dc.ui.Document = Backbone.View.extend({
       case dc.access.ORGANIZATION:
         return {'class' : base + 'lock',       title : _.t('private_to', (dc.account ?
                                                        dc.account.organization().get('name') :
-                                                       'your organization') )};
-      case dc.access.PRIVATE:
-        return {'class' : base + 'lock',       title : _.t('private')};
+                                                      'your organization') )};
       default:
-        if (this.model.isPublished())
-          return {'class' : base + 'published', title : _.t('open_published') };
+        if( this.model.get('has_current_claim')) {
+           return {'class' : base + 'lock',       title : _.t('claimed')};
+        }
         return {'class' : base + 'hidden', iconless: true};
     }
   },

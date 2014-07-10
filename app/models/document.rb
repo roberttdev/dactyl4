@@ -103,15 +103,15 @@ class Document < ActiveRecord::Base
   scope :accessible, lambda {|account, org|
     access = []
     if account.data_entry?
-      access << "((documents.access in (#{DE_ACCESS.join(",")})) OR ((documents.de_one_id=#{account.id} OR documents.de_two_id=#{account.id}) AND documents.access=#{STATUS_DE2}))"
+      access << "(documents.status in (#{DE_ACCESS.join(",")})) OR (documents.status=#{STATUS_DE2} AND ((documents.de_one_id=#{account.id} AND documents.de_one_complete is not true) OR (documents.de_two_id=#{account.id} AND documents.de_two_complete is not true)))"
     end
     if account.quality_control?
-      access << "((documents.access in (#{QC_ACCESS.join(",")})) OR (documents.qc_id=#{account.id} AND documents.access=#{STATUS_IN_QC}))"
+      access << "(documents.status in (#{QC_ACCESS.join(",")})) OR (documents.qc_id=#{account.id} AND documents.status=#{STATUS_IN_QC})"
     end
     if account.quality_assurance?
-      access << "((documents.access in (#{QA_ACCESS.join(",")})) OR (documents.qa_id=#{account.id} AND documents.access=#{STATUS_IN_QA}))"
+      access << "(documents.status in (#{QA_ACCESS.join(",")})) OR (documents.qa_id=#{account.id} AND documents.status=#{STATUS_IN_QA})"
     end
-    access << "(documents.access in (#{EXTRACT_ACCESS.join(",")}))" if account.data_extraction?
+    access << "(documents.status in (#{EXTRACT_ACCESS.join(",")}))" if account.data_extraction?
     query = where( access.join(' or ') )
     query.readonly(false)
   }
@@ -140,8 +140,11 @@ class Document < ActiveRecord::Base
     integer :page_count
     integer :hit_count
     integer :public_note_count
+    integer :status
     integer :de_one_id
     integer :de_two_id
+    boolean :de_one_complete
+    boolean :de_two_complete
     integer :qc_id
     integer :qa_id
     integer :project_ids, :multiple => true do
@@ -294,7 +297,7 @@ class Document < ActiveRecord::Base
   end
 
   def ordered_annotations(account)
-    self.annotations.accessible(account).order('page_number asc, location asc nulls first')
+    self.annotations.accessible(self.status, account).order('page_number asc, location asc nulls first')
   end
 
   def annotations_with_authors(account, annotations=nil)
@@ -628,6 +631,40 @@ class Document < ActiveRecord::Base
     large || greedy
   end
 
+  #Returns whether passed account has one of the current claims on the file
+  def has_current_claim?(account)
+    has_claim = false
+    if account
+      if self.status == STATUS_DE1 || self.status == STATUS_DE2
+        has_claim = true if (self.de_one_id == account.id && !self.de_one_complete) || (self.de_two_id && !self.de_two_complete)
+      end
+
+      has_claim = true if self.status == STATUS_IN_QC && self.qc_id == account.id
+      has_claim = true if self.status == STATUS_IN_QA && self.qa_id == account.id
+    end
+
+    has_claim
+  end
+
+  #Returns whether the doc is currently fully claimed
+  def claimable?
+    CLAIMABLE_STATUS.include?(self.status)
+  end
+
+  #Insert claim for doc from account
+  def claim(account)
+    case self.status
+      when STATUS_NEW
+        self.update({status: STATUS_DE1, de_one_id: account.id})
+      when STATUS_DE1
+        self.update({status: STATUS_DE2, de_two_id: account.id})
+      when STATUS_READY_QC
+        self.update({status: STATUS_IN_QC, qc_id: account.id})
+      when STATUS_READY_QA
+        self.update({status: STATUS_IN_QA, qa_id: account.id})
+    end
+  end
+
   def asset_store
     @asset_store ||= DC::Store::AssetStore.new
   end
@@ -822,6 +859,7 @@ class Document < ActiveRecord::Base
       :account_id          => account_id,
       :created_at          => created_at.to_date.strftime(DISPLAY_DATE_FORMAT),
       :access              => access,
+      :status              => status,
       :page_count          => page_count,
       :annotation_count    => annotation_count || 0,
       :public_note_count   => public_note_count,
@@ -885,6 +923,7 @@ class Document < ActiveRecord::Base
     doc['id']                 = canonical_id
     doc['title']              = title
     doc['access']             = ACCESS_NAMES[access] if options[:access]
+    doc['access']             = status
     doc['pages']              = page_count
     doc['description']        = description
     doc['source']             = source
@@ -918,9 +957,7 @@ class Document < ActiveRecord::Base
     doc['sections']           = ordered_sections.map {|s| s.canonical } if options[:sections]
     doc['data']               = data if options[:data]
     doc['language']           = language
-    if options[:annotations] && (options[:allowed_to_edit] || options[:allowed_to_review])
-      doc['annotations']      = self.annotations_with_authors(options[:account]).map {|a| a.canonical}
-    elsif options[:annotations]
+    if options[:annotations]
       doc['annotations']      = ordered_annotations(options[:account]).map {|a| a.canonical}
     end
     if self.mentions

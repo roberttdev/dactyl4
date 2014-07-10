@@ -1,6 +1,6 @@
 dc.ui.TemplateFieldListing = Backbone.View.extend({
     events: {
-        'click .delete':    'deleteField'
+        'click .delete_template':    'deleteField'
     },
 
     initialize: function() {

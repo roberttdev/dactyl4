@@ -19,6 +19,9 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
     this.viewer         = currentDocument;
     _.bindAll(this, 'openCreateGroupDialog', 'changeGroupView', 'createNewDataPoint', 'render', 'save', 'reloadPoints');
 
+    //Mark as changed when any update request is fired
+    this.listenTo(dc.app.editor.annotationEditor, 'updateAnnotation', this.delegateUpdate);
+
     //Listen for annotation selects and adjust UI accordingly
     this.listenTo(dc.app.editor.annotationEditor, 'annotationSelected', this.handleAnnotationSelect);
 
@@ -213,7 +216,7 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
       if (_ancestry != null) {
           $.each(_ancestry, function (index, ancestor) {
               groupName = ancestor.extension ? ancestor.name + '[' + ancestor.extension + ']' : ancestor.name;
-              returnStr += "&nbsp;>&nbsp<span class='group_title' id='group_" + ancestor.id + "'>" + groupName + "</span>";
+              returnStr += " > <span class='group_title' id='group_" + ancestor.id + "'>" + groupName + "</span>";
           });
       }
 
@@ -226,6 +229,13 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
       $.each(this.pointViewList, function(index, view) {
           view.clearAnnotation();
       });
+  },
+
+
+  //delegateUpdate: When request to update received, find proper view and instruct it to update
+  delegateUpdate: function(anno){
+      _view = _.find(this.pointViewList, function(view){ return view.$el.hasClass('highlighting'); });
+      _view.updateAnnotation(anno);
   },
 
 

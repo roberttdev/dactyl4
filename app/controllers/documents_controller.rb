@@ -16,6 +16,10 @@ class DocumentsController < ApplicationController
     Account.login_reviewer(params[:key], session, cookies) if params[:key]
     doc = current_document(true)
     return forbidden if doc.nil? && Document.exists?(params[:id].to_i)
+
+    #If not claimed yet, and it can be, submit claim
+    doc.claim(current_account) if doc.claimable? && !doc.has_current_claim?(current_account)
+
     return render :file => "#{Rails.root}/public/doc_404.html", :status => 404 unless doc
     respond_to do |format|
       format.html do

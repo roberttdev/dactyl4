@@ -22,7 +22,15 @@
     <div id="content">
       <div class="full_page_background">
         <div class="static_error">
-          Sorry! You need to be logged in to view this page. If you have an account, <a href="/login?next=<%= @next %>" style="text-decoration:underline;">log in</a> now. If you need an account, <a href="/contact" style="text-decoration:underline;">contact us</a> or perhaps <a href="/public">search our catalog</a> of public documents. 
+          You are not allowed to open the requested document.  One of the following may have occurred:
+        </div>
+          <ul class="static_error_list">
+              <li>You have already claimed another document in this status.  Please release the document if you would like to open another.</li>
+              <li>The document you are trying to open has already been claimed.</li>
+              <li>Your login has expired.</li>
+          </ul>
+        <div class="static_error">
+          Please close this window and refresh the file listing page.
         </div>
       </div>
     </div>
@@ -31,3 +39,17 @@
 
 </body>
 </html>
+
+SELECT COUNT(DISTINCT "documents"."id")
+FROM "documents" LEFT OUTER JOIN "accounts" ON "accounts"."id" = "documents"."account_id"
+LEFT OUTER JOIN "organizations" ON "organizations"."id" = "documents"."organization_id"
+WHERE (documents.access in (1,2) OR
+        (documents.access=3 AND
+            (
+                (documents.de_one_id=4 AND documents.de_one_complete=0
+                ) OR
+                (documents.de_two_id=4 AND documents.de_two_complete=0
+                )
+            )
+        )
+      )
