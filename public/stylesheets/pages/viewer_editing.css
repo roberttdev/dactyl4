@@ -164,12 +164,13 @@
         width: 80px;
     }
 
-    #control_panel .new_data {
+    #control_panel .new_data
+    #control_panel .save_exit {
         width: 70px;
     }
 
-    #control_panel .save_exit {
-        width: 70px;
+    #control_panel .drop_claim {
+        width: 35px;
     }
 
     #control_panel .group_title {

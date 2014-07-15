@@ -9,6 +9,7 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
     'click .new_group':         'openCreateGroupDialog',
     'click .new_data':          'createNewDataPoint',
     'click .save_exit':         'saveAndExit',
+    'click .drop_claim':        'dropClaim',
     'click .group_title':       'handleGroupClick',
     'click .group_name':        'handleGroupClick'
   },
@@ -271,6 +272,15 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
   syncDV: function(success) {
       dc.app.editor.annotationEditor.syncDV(this.model.annotations, this.model.id);
       success.call();
+  },
+
+
+  //dropClaim: If confirmed, return file to pool and remove all work from this user on this status
+  dropClaim: function(success) {
+      _thisView = this;
+      dc.ui.Dialog.confirm(_.t('confirm_drop_claim'), function(){
+          _thisView.docModel.dropClaim({success: window.close});
+      });
   },
 
 

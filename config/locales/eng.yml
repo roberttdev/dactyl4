@@ -151,6 +151,7 @@
   - close_while_text_reprocess: The text is being processed. Please close this document.
   - collaboration: Collaboration
   - collaborators: Collaborator
+  - confirm_drop_claim: Are you sure you want to drop this document?  You will lose all of your work.
   - confirm_group_delete: Are you sure you want to delete this group?  Your subgroups and data points will be lost.
   - confirm_point_delete: Are you sure you want to delete this data point?
   - confirm_remove_all_data: Are you sure you want to remove all data from %s?

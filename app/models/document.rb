@@ -646,6 +646,23 @@ class Document < ActiveRecord::Base
     has_claim
   end
 
+  #Drops current claim for attached user and removes their current data
+  def drop_claim(account)
+    case self.status
+      when STATUS_DE1, STATUS_DE2
+        Annotation.destroy_all({document_id: self.id, account_id: account.id})
+        Group.destroy_all({document_id: self.id, account_id: account.id})
+        newStatus = self.status == STATUS_DE2 ? STATUS_DE1 : STATUS_NEW
+        if self.de_one_id == account.id
+          self.update({status: newStatus, de_one_id: self.de_two_id, de_two_id: nil})
+        else
+          self.update({status: newStatus, de_two_id: nil})
+        end
+      when STATUS_IN_QC
+      when STATUS_IN_QA
+    end
+  end
+
   #Returns whether the doc is currently fully claimed
   def claimable?
     CLAIMABLE_STATUS.include?(self.status)

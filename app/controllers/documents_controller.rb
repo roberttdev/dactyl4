@@ -1,4 +1,6 @@
 class DocumentsController < ApplicationController
+  include DC::DocumentStatus
+
   layout nil
 
   before_action :bouncer,             :only => [:show] if Rails.env.staging?
@@ -16,6 +18,8 @@ class DocumentsController < ApplicationController
     Account.login_reviewer(params[:key], session, cookies) if params[:key]
     doc = current_document(true)
     return forbidden if doc.nil? && Document.exists?(params[:id].to_i)
+    #Block if another doc of this status already claimed
+    return forbidden if current_account.has_claims?(claimed_status(doc.status), doc.id)
 
     #If not claimed yet, and it can be, submit claim
     doc.claim(current_account) if doc.claimable? && !doc.has_current_claim?(current_account)
@@ -247,11 +251,19 @@ class DocumentsController < ApplicationController
   end
 
 
+  def drop_claim
+    doc = current_document(true)
+    return forbidden if !doc.has_current_claim?(current_account)
+
+    doc.drop_claim(current_account)
+    json_response
+  end
+
   private
 
   def populate_editor_data
     @edits_enabled = true
-    @allowed_to_edit = current_account.allowed_to_edit?(current_document)
+    @allowed_to_edit = current_document.status == STATUS_DE1 || current_document.status == STATUS_DE2
     @allowed_to_review = current_account.reviews?(current_document)
     @reviewer_inviter = @allowed_to_review && current_document.reviewer_inviter(current_account) || nil
     @template_list =  GroupTemplate.includes(:subtemplates).order(:name).all()

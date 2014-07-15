@@ -32,6 +32,16 @@ module DC
     #Which statuses allow claims
     CLAIMABLE_STATUS = [STATUS_NEW, STATUS_DE1, STATUS_READY_QC, STATUS_READY_QA]
 
+    #Returns what the status will be when the current status is claimed
+    def claimed_status(current)
+      case current
+        when STATUS_NEW, STATUS_DE1, STATUS_READY_QC, STATUS_READY_QA
+          return current+1
+        else
+          return nil
+      end
+    end
+
   end
 
 end

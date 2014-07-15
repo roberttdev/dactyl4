@@ -5,6 +5,7 @@
 class Account < ActiveRecord::Base
   include DC::Access
   include DC::Roles
+  include DC::DocumentStatus
 
   # Associations:
   has_many :memberships,     :dependent => :destroy
@@ -195,6 +196,25 @@ class Account < ActiveRecord::Base
     membership && membership.role != DISABLED
   end
 
+  #Checks whether user has claims for docs in the status being requested.  Optional, exclude a doc ID
+  def has_claims?(status, excludeId)
+    where = []
+    where << "id<>#{excludeId}" if excludeId
+
+    case status
+      when STATUS_DE1 || STATUS_DE2
+        where << "(status=#{STATUS_DE1} OR status=#{STATUS_DE2}) AND (de_one_id=#{self.id} OR de_two_id=#{self.id})"
+      when STATUS_IN_QC
+        where << "status=#{STATUS_IN_QC} AND qc_id=#{self.id}"
+      when STATUS_IN_QA
+        where << "status=#{STATUS_IN_QA} AND qa_id=#{self.id}"
+      else
+        return false
+    end
+
+    Document.where(where.join(' AND ')).count > 0
+  end
+
   # An account owns a resource if it's tagged with the account_id.
   def owns?(resource)
     resource.account_id == id
@@ -246,7 +266,7 @@ class Account < ActiveRecord::Base
   end
 
   def allowed_to_edit?(resource)
-    owns_or_collaborates?(resource) || shared?(resource)
+    resource.status
   end
 
   def allowed_to_edit_account?(account, org=self.organization)

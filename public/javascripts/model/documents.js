@@ -212,6 +212,17 @@ dc.model.Document = Backbone.Model.extend({
     Documents.reorderPages(this, pageOrder);
   },
 
+  dropClaim: function(options) {
+      $.ajax({
+          url: '/documents/drop_claim/' + this.id,
+          contentType: 'application/json; charset=utf-8',
+          type: 'post',
+          data: {},
+          success: function (responseData) { options['success'].call(); },
+          error: options['error']
+      });
+  },
+
   // Inspect.
   toString : function() {
     return 'Document ' + this.id + ' "' + this.get('title') + '"';
