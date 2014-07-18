@@ -97,6 +97,7 @@ dc.ui.TemplateDataDialog = dc.ui.Dialog.extend({
       view = this.createFieldView(new dc.model.TemplateField());
       view.render();
       this.$('.field_list').append(view.$el);
+      view.$('#field_name').focus();
   },
 
 

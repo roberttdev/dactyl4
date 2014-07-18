@@ -106,6 +106,11 @@ dc.model.Account = Backbone.Model.extend({
     return role == this.ADMINISTRATOR || role == this.CONTRIBUTOR || role == this.FREELANCER;
   },
 
+  canUpload : function() {
+    var role = this.attributes.role;
+    return role == this.ADMINISTRATOR || role == this.FILE_UPLOADING
+  },
+
   isPending : function() {
     return !!this.get('pending');
   },

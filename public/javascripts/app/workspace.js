@@ -84,16 +84,11 @@ dc.controllers.Workspace = Backbone.Router.extend({
 
   // Translated Search keys
   searchKeySubstitutions: {
-    text:      _.t('text'),
-    account:   _.t('account'),
     project:   _.t('project'),
-    filter:    _.t('filter'),
-    access:    _.t('access'),
+    text:      _.t('text'),
     title:     _.t('title'),
-    source:    _.t('source'),
-    group:     _.t('group'),
-    document:  _.t('document'),
-    projectid: _.t('projectid')
+    source:    _.t('source')
+
   },
 
   // Translated pre-defined search values
@@ -182,14 +177,7 @@ dc.controllers.Workspace = Backbone.Router.extend({
             { label: keys.project,     category: '' },
             { label: keys.text,        category: '' },
             { label: keys.title,       category: '' },
-            { label: keys.description, category: '' },
             { label: keys.source,      category: '' },
-            { label: keys.account,     category: '' },
-            { label: keys.document,    category: '' },
-            { label: keys.filter,      category: '' },
-            { label: keys.group,       category: '' },
-            { label: keys.access,      category: '' },
-            { label: keys.projectid,   category: '' }
           ];
           var metadata = _.map(_.keys(Documents.reduce(function(memo, doc) {
             if (_.size(doc.get('data'))) _.extend(memo, doc.get('data'));

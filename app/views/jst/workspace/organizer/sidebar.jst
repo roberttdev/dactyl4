@@ -3,11 +3,6 @@
   <div class="project_list_wrap">
 
     <div class="top_level_search">
-      <% _.each(searches, function(item) { %>
-        <div>
-          <span class="<%= item %> interface text_link"><%= dc.model.Project.topLevelTitle(item) %></span>
-        </div>
-      <% }); %>
       <% if( dc.account ){ %>
         <% dc.account.organizations().each( function( organization ){ %>
           <div class="organization">
@@ -26,6 +21,7 @@
     <% if (dc.account) { %>
 
       <div id="project_controls" class="block">
+    <%  if (dc.account.canUpload()) { %>
         <form id="new_document_form" class="float_left" action="/import/upload_document" method="POST" enctype="multipart/form-data" target="upload_iframe">
           <div class="minibutton float_left plus" id="new_document"><div class="icon white_plus"></div><%= _.t('new_documents') %></div>
           <button type="submit"><%= _.t('new_documents') %></button>
@@ -34,10 +30,13 @@
           <iframe id="upload_iframe" name="upload_iframe" src="about:blank" class="hidden_iframe">
           </iframe>
         </form>
+    <%  } %>
+    <%  if (dc.account.isAdmin()) { %>
         <div class="minibutton float_right plus" id="new_project"><div class="icon white_plus"></div><%= _.t('new_project') %></div>
+    <%  } %>
         <div class="clear"></div>
       </div>
-
+    <%  if (dc.account.isAdmin()) { %>
       <div class="project_list">
         <!-- Render target for projects. -->
       </div>
@@ -47,6 +46,7 @@
           <%= _.t('no_projects_help') %>
         </p>
       </div>
+    <%  } %>
 
     <% } else { %>
 

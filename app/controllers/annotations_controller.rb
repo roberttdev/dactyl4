@@ -8,7 +8,7 @@ class AnnotationsController < ApplicationController
 
   # In the workspace, request a listing of annotations.
   def index
-    searchParams = {:document_id => params[:document_id]}
+    searchParams = {:document_id => params[:document_id], :account_id => current_account.id}
     if(params['all'] != 'true')
       searchParams[:group_id] = params[:group_id] != "" ? params[:group_id] : nil
     end

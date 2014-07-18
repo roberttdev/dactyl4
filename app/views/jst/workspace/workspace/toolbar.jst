@@ -1,10 +1,14 @@
 <div id="floating_toolbar">
   <div id="open_viewers" class="minibutton"><%= _.t('open') %></div>
-  <div class="edit_menu_container"></div>
+  <% if( dc.account.canUpload() ){ %>
+    <div class="edit_menu_container"></div>
+  <% } %>
   <div class="sort_menu_container"></div>
-  <div class="project_menu_container"></div>
-  <div class="analyze_menu_container"></div>
-  <div class="publish_menu_container"></div>
+  <% if( dc.account.isAdmin() ){ %>
+    <div class="project_menu_container"></div>
+    <div class="analyze_menu_container"></div>
+    <div class="publish_menu_container"></div>
+  <% } %>
   <div id="size_toggle"></div>
   <div id="floating_line"></div>
 </div>
