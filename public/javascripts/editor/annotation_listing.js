@@ -45,6 +45,7 @@ dc.ui.AnnotationListing = Backbone.View.extend({
       dc.app.editor.annotationEditor.deleteAnnotation(this.model, this.group_id);
       this.model.destroy({data:{group_id: this.group_id}, processData: true});
       $(this.el).remove();
+      this.setWaitingForClone(false);
       return true;
   },
 
