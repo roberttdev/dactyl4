@@ -83,7 +83,7 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
 
 
   saveAndExit: function(){
-    this.save(window.close());
+    this.save(window.close);
   },
 
 
