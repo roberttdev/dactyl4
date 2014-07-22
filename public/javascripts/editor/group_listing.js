@@ -40,9 +40,11 @@ dc.ui.GroupListing = Backbone.View.extend({
 
 
   deleteGroup: function() {
-      this.model.destroy();
-      $(this.el).remove();
-      this.trigger('reloadAnnotationsRequest');
+      _thisView = this;
+      this.model.destroy({success: function() {
+          $(_thisView.el).remove();
+          _thisView.trigger('reloadAnnotationsRequest');
+      }});
       return true;
   },
 
