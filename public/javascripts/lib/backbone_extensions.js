@@ -36,6 +36,20 @@
     return oldSet.call(this, copy, options);
   };
 
+
+  // Wrapper for generic JSON post AJAX call
+  Backbone.Model.prototype.postJSON = function(url, data, success, error){
+      $.ajax({
+          url: url,
+          contentType: 'application/json; charset=utf-8',
+          type: 'post',
+          data: data,
+          success: function (responseData) { success(responseData); },
+          error: function(responseData) {
+              error($.parseJSON(responseData.responseText));
+          }
+      });
+  };
 })();
 
 

@@ -10,6 +10,7 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
     'click .new_data':          'createNewDataPoint',
     'click .save_exit':         'saveAndExit',
     'click .drop_claim':        'dropClaim',
+    'click .mark_complete':     'markComplete',
     'click .group_title':       'handleGroupClick',
     'click .group_name':        'handleGroupClick'
   },
@@ -18,7 +19,7 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
   initialize : function() {
     var docModel = this._getDocumentModel();
     this.viewer         = currentDocument;
-    _.bindAll(this, 'openCreateGroupDialog', 'changeGroupView', 'createNewDataPoint', 'render', 'save', 'reloadPoints');
+    _.bindAll(this, 'openCreateGroupDialog', 'changeGroupView', 'createNewDataPoint', 'render', 'save', 'reloadPoints', 'handleMarkCompleteError');
 
     //Mark as changed when any update request is fired
     this.listenTo(dc.app.editor.annotationEditor, 'updateAnnotation', this.delegateUpdate);
@@ -281,6 +282,28 @@ dc.ui.ViewerDEControlPanel = Backbone.View.extend({
       dc.ui.Dialog.confirm(_.t('confirm_drop_claim'), function(){
           _thisView.docModel.dropClaim({success: window.close});
       });
+  },
+
+
+  //markComplete: If confirmed, save current data and send request to mark complete; handle error if not able to mark complete
+  markComplete: function() {
+    _thisView = this;
+    dc.ui.Dialog.confirm(_.t('confirm_mark_complete'), function(){
+      _thisView.save(function() {
+          _thisView.docModel.markComplete({
+              success: window.close,
+              error: _thisView.handleMarkCompleteError
+          });
+      });
+      return true;
+    });
+  },
+
+
+  //handleMarkCompleteError: If error returned from attempted mark complete, notify and highlight field
+  handleMarkCompleteError: function(responseData) {
+      this.reloadPoints(responseData.data.group_id, responseData.data.id);
+      dc.ui.Dialog.alert(responseData.errorText);
   },
 
 

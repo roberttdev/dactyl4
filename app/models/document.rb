@@ -103,7 +103,7 @@ class Document < ActiveRecord::Base
   scope :accessible, lambda {|account, org|
     access = []
     if account.data_entry?
-      access << "(documents.status in (#{DE_ACCESS.join(",")})) OR (documents.status=#{STATUS_DE2} AND ((documents.de_one_id=#{account.id} AND documents.de_one_complete is not true) OR (documents.de_two_id=#{account.id} AND documents.de_two_complete is not true)))"
+      access << "((documents.status in (#{DE_ACCESS.join(",")}) AND NOT (documents.de_one_id=#{account.id} AND documents.de_one_complete IS true)) OR (documents.status=#{STATUS_DE2} AND ((documents.de_one_id=#{account.id} AND documents.de_one_complete is not true) OR (documents.de_two_id=#{account.id} AND documents.de_two_complete is not true))))"
     end
     if account.quality_control?
       access << "(documents.status in (#{QC_ACCESS.join(",")})) OR (documents.qc_id=#{account.id} AND documents.status=#{STATUS_IN_QC})"
@@ -654,9 +654,30 @@ class Document < ActiveRecord::Base
         Group.destroy_all({document_id: self.id, account_id: account.id})
         newStatus = self.status == STATUS_DE2 ? STATUS_DE1 : STATUS_NEW
         if self.de_one_id == account.id
-          self.update({status: newStatus, de_one_id: self.de_two_id, de_two_id: nil})
+          self.update({status: newStatus, de_one_id: self.de_two_id, de_two_id: nil, de_one_complete: self.de_two_complete, de_two_complete: nil})
         else
           self.update({status: newStatus, de_two_id: nil})
+        end
+      when STATUS_IN_QC
+      when STATUS_IN_QA
+    end
+  end
+
+  #Checks to see if current user's work can be marked as completed; is so, does it, if not, returns first field needing
+  #to be addressed
+  def mark_complete(account)
+    case self.status
+      when STATUS_DE1, STATUS_DE2
+        anno = Annotation.where("document_id=#{self.id} AND account_id=#{account.id} AND (title IS NULL OR title='' OR content IS NULL OR content='')").take
+        if anno
+          return {id: anno.id, group_id: anno.annotation_groups[0].group_id}
+        else
+          updateFields = {}
+          updateFields[:de_one_complete] = true if self.de_one_id==account.id
+          updateFields[:de_two_complete] = true if self.de_two_id==account.id
+          updateFields[:status] = STATUS_READY_QC if (self.de_one_id==account.id && self.de_two_complete) || (self.de_two_id==account.id && self.de_one_complete)
+          self.update updateFields
+          return nil
         end
       when STATUS_IN_QC
       when STATUS_IN_QA

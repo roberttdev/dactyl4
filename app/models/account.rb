@@ -203,7 +203,7 @@ class Account < ActiveRecord::Base
 
     case status
       when STATUS_DE1 || STATUS_DE2
-        where << "(status=#{STATUS_DE1} OR status=#{STATUS_DE2}) AND (de_one_id=#{self.id} OR de_two_id=#{self.id})"
+        where << "(status=#{STATUS_DE1} OR status=#{STATUS_DE2}) AND ((de_one_id=#{self.id} AND de_one_complete IS NOT true) OR (de_two_id=#{self.id} AND de_two_complete IS NOT true))"
       when STATUS_IN_QC
         where << "status=#{STATUS_IN_QC} AND qc_id=#{self.id}"
       when STATUS_IN_QA

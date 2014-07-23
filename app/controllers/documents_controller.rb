@@ -251,12 +251,31 @@ class DocumentsController < ApplicationController
   end
 
 
+  #Drop the current user's claim to the document (if any)
   def drop_claim
     doc = current_document(true)
     return forbidden if !doc.has_current_claim?(current_account)
 
     doc.drop_claim(current_account)
     json_response
+  end
+
+
+  #Mark the current user's work on the document as completed
+  def mark_complete
+    doc = current_document(true)
+    return forbidden if !doc.has_current_claim?(current_account)
+
+    errorResp = doc.mark_complete(current_account)
+    if errorResp
+      errorResp = {
+          'errorText' => 'Completion failed because a data point is incomplete.  Please populate or delete the incomplete point.',
+          'data' => errorResp
+      }
+      json errorResp, 500
+    else
+      json_response
+    end
   end
 
   private

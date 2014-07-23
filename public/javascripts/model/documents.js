@@ -212,15 +212,14 @@ dc.model.Document = Backbone.Model.extend({
     Documents.reorderPages(this, pageOrder);
   },
 
+  //Request to drop current claim to a document
   dropClaim: function(options) {
-      $.ajax({
-          url: '/documents/drop_claim/' + this.id,
-          contentType: 'application/json; charset=utf-8',
-          type: 'post',
-          data: {},
-          success: function (responseData) { options['success'].call(); },
-          error: options['error']
-      });
+      this.postJSON('/documents/drop_claim/' + this.id, {}, options['success'], options['error']);
+  },
+
+  //Request to mark current claim as completed
+  markComplete: function(options) {
+      this.postJSON('/documents/mark_complete/' + this.id, {}, options['success'], options['error']);
   },
 
   // Inspect.

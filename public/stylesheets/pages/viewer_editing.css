@@ -17,7 +17,7 @@
   #control_panel .control_panel_title {
     font-weight: bold;
     color: #000;
-    padding: 4px 24px;
+    padding: 4px 0px 4px 10px;
     text-shadow: 0 1px 0 #fff;
     border-top: 1px solid #ddd; border-bottom: 1px solid #ccc;
     font-size: 10px;
@@ -171,6 +171,10 @@
 
     #control_panel .drop_claim {
         width: 35px;
+    }
+
+    #control_panel .mark_complete {
+        width: 60px;
     }
 
     #control_panel .group_title {
