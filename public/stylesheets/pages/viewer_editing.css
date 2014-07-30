@@ -294,6 +294,10 @@ div input.error {
   z-index: 10000000;
 }
 
+.qc_editor_view {
+    display: inline-block;
+    vertical-align: top;
+}
 
 
 /*---------------------------- The Section Editor ----------------------------*/

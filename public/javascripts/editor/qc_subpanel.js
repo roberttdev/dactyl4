@@ -1,6 +1,7 @@
-dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
+dc.ui.ViewerQcSubpanel = dc.ui.ViewerBaseControlPanel.extend({
 
   id :                  'control_panel',
+  deNum:                null,
   template_listing:     null,
   pointViewList:        null,
   groupViewList:        null,
@@ -16,9 +17,10 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
   },
 
   //Initialize: base model for this view is the group that is being displayed
-  initialize : function() {
+  initialize : function(options) {
     var docModel = this._getDocumentModel();
     this.viewer         = currentDocument;
+    this.el.id          = this.el.id + '_' + this.deNum;
     _.bindAll(this, 'openCreateGroupDialog', 'changeGroupView', 'createNewDataPoint', 'render', 'save', 'reloadPoints', 'handleMarkCompleteError');
 
     //Mark as changed when any update request is fired
@@ -27,33 +29,33 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
     //Listen for annotation selects and adjust UI accordingly
     this.listenTo(dc.app.editor.annotationEditor, 'annotationSelected', this.handleAnnotationSelect);
 
-    this._mainJST = JST['de_control_panel'];
+    this._mainJST = JST['qc_subpanel'];
 
     this.reloadPoints(null);
   },
 
 
   render : function(annoId) {
-    _deView           = this;
+    var _deView           = this;
     var templateName    = this.model.get('group_template') == null ? null : this.model.get('group_template').name;
     $(this.el).html(this._mainJST({template_name: templateName ? templateName.substring(0,39) : null}));
 
     //Group Navigation
-    $('.group_navigation').html(this.generateGroupNav());
+    this.$('.group_navigation').html(this.generateGroupNav());
 
     //Group Listings
     this.model.children.each(function(model, index){
         _deView.addGroup(model);
     });
-    $('#group_section').html(_.pluck(this.groupViewList, 'el'));
+    this.$('#group_section').html(_.pluck(this.groupViewList, 'el'));
 
     //Annotations
     this.model.annotations.each(function(model, index) {
        _deView.addDataPoint(model, (model.id == annoId));
     });
-    $('#annotation_section').html(_.pluck(this.pointViewList,'el'));
+    this.$('#annotation_section').html(_.pluck(this.pointViewList,'el'));
 
-    return this;
+    return this.el;
   },
 
 
@@ -138,6 +140,7 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
     dc.app.editor.annotationEditor.toggle('public');
   },
 
+
   openCreateGroupDialog: function() {
       _thisView = this;
       _newGroup = new dc.model.Group({parent_id: this.model.id, document_id: this.model.get('document_id')});
@@ -168,7 +171,7 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
   //reloadPoints: fetch data again and re-render. Expects group ID (null is no group)
   //annotationId is optional; will highlight that if exists
   reloadPoints: function(groupId, annotationId) {
-      _thisView = this;
+      var _thisQCDEView = this;
 
       //Clear
       this.groupViewList = [];
@@ -177,8 +180,10 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
 
       if( groupId == 0 ){ groupId = null; }
       this.model = new dc.model.Group({document_id: dc.app.editor.docId, id: groupId});
-      this.model.fetch({success: function(){
-          _thisView.render(annotationId);
+      this.model.fetch({
+          data   : $.param({qc: true}),
+          success: function(){
+          _thisQCDEView.render(annotationId);
       }});
   },
 

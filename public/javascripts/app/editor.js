@@ -35,7 +35,19 @@ _.extend(dc.app.editor, {
     dc.ui.notifier          = new dc.ui.Notifier();
     this.sectionEditor      = new dc.ui.SectionEditor();
     this.annotationEditor   = new dc.ui.AnnotationEditor();
-    this.controlPanel       = new dc.ui.ViewerDEControlPanel();
+
+    switch(this.options.status) {
+      case 2:
+      case 3:
+          this.controlPanel = new dc.ui.ViewerDEControlPanel();
+          break;
+      case 5:
+          this.controlPanel = new dc.ui.ViewerQCControlPanel();
+          break;
+      default:
+          alert('System Error: Invalid document status for editing');
+    }
+
     this.removePagesEditor  = new dc.ui.RemovePagesEditor({editor : this});
     this.reorderPagesEditor = new dc.ui.ReorderPagesEditor({editor : this});
     this.editPageTextEditor = new dc.ui.EditPageTextEditor({editor : this});

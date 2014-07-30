@@ -19,10 +19,10 @@ class DocumentsController < ApplicationController
     doc = current_document(true)
     return forbidden if doc.nil? && Document.exists?(params[:id].to_i)
     #Block if another doc of this status already claimed
-    return forbidden if current_account.has_claims?(claimed_status(doc.status), doc.id)
+    return forbidden if current_account.has_claims?(claimed_status(doc.status), doc.id) || doc.has_completed_claim?(current_account)
 
     #If not claimed yet, and it can be, submit claim
-    doc.claim(current_account) if doc.claimable? && !doc.has_current_claim?(current_account)
+    doc.claim(current_account) if doc.claimable? && !doc.has_open_claim?(current_account)
 
     return render :file => "#{Rails.root}/public/doc_404.html", :status => 404 unless doc
     respond_to do |format|
@@ -283,6 +283,11 @@ class DocumentsController < ApplicationController
   def populate_editor_data
     @edits_enabled = true
     @allowed_to_edit = current_document.status == STATUS_DE1 || current_document.status == STATUS_DE2
+    if current_document.status == STATUS_IN_QC
+      @orientation = 'vertical'
+    else
+      @orientation = 'horizontal'
+    end
     @allowed_to_review = current_account.reviews?(current_document)
     @reviewer_inviter = @allowed_to_review && current_document.reviewer_inviter(current_account) || nil
     @template_list =  GroupTemplate.includes(:subtemplates).order(:name).all()

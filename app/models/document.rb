@@ -631,19 +631,27 @@ class Document < ActiveRecord::Base
     large || greedy
   end
 
-  #Returns whether passed account has one of the current claims on the file
-  def has_current_claim?(account)
-    has_claim = false
+  #Returns whether passed account has one of the current (incomplete) claims on the file
+  def has_open_claim?(account)
     if account
       if self.status == STATUS_DE1 || self.status == STATUS_DE2
-        has_claim = true if (self.de_one_id == account.id && !self.de_one_complete) || (self.de_two_id && !self.de_two_complete)
+        return true if (self.de_one_id == account.id && !self.de_one_complete) || (self.de_two_id && !self.de_two_complete)
       end
 
-      has_claim = true if self.status == STATUS_IN_QC && self.qc_id == account.id
-      has_claim = true if self.status == STATUS_IN_QA && self.qa_id == account.id
+      return true if self.status == STATUS_IN_QC && self.qc_id == account.id
+      return true if self.status == STATUS_IN_QA && self.qa_id == account.id
     end
 
-    has_claim
+    false
+  end
+
+  #Returned whether passed account has a completed claim on the file
+  def has_completed_claim?(account)
+    return true if (self.de_one_id == account.id && self.de_one_complete) || (self.de_two_id == account.id && self.de_two_complete)
+    return true if self.status > STATUS_IN_QC && self.qc_id == account.id
+    return true if self.status > STATUS_IN_QA && self.qa_id == account.id
+
+    false
   end
 
   #Drops current claim for attached user and removes their current data
@@ -961,7 +969,7 @@ class Document < ActiveRecord::Base
     doc['id']                 = canonical_id
     doc['title']              = title
     doc['access']             = ACCESS_NAMES[access] if options[:access]
-    doc['access']             = status
+    doc['status']             = status
     doc['pages']              = page_count
     doc['description']        = description
     doc['source']             = source

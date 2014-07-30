@@ -7,7 +7,8 @@
       var docId = <%=raw @current_document.id %>;
       var opts        = {
         isOwner         : <%=raw !!@allowed_to_edit %>,
-        isReviewer      : <%=raw !!@allowed_to_review %>
+        isReviewer      : <%=raw !!@allowed_to_review %>,
+        status          : <%=raw @current_document.status %>
       }
       <% if @reviewer_inviter %>
         opts['reviewerInviter'] = {

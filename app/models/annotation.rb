@@ -33,11 +33,10 @@ class Annotation < ActiveRecord::Base
     case doc_status
       when STATUS_DE1, STATUS_DE2
         access << "annotations.account_id = #{account.id}"
-      else
-        access << ""
     end
 
-    where( "(#{access.join(' or ')})" ).readonly(false)
+    where( "(#{access.join(' or ')})" ).readonly(false) if access.size > 0
+    nil
   }
 
   scope :owned_by, lambda { |account|

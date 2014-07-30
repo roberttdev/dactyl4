@@ -27,6 +27,7 @@ dc.ui.CreateGroupDialog = dc.ui.Dialog.extend({
     this.render();
 
     $(document.body).append(this.el);
+    this.$('#group_name').focus();
   },
 
 

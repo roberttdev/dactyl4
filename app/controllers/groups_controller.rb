@@ -4,22 +4,38 @@ class GroupsController < ApplicationController
   def index
     #Pull base-level groups/annotations and create group-like JSON
     doc = Document.find(params[:document_id])
-    if( doc.status == STATUS_DE1 || doc.status == STATUS_DE2 )
-      #When in DE, return only current user's data
-      responseJSON = ActiveSupport::JSON.encode({
-        document_id: doc.id,
-        children: Group.where({
-            :document_id => params[:document_id],
-            :account_id => current_account.id,
-            :parent_id => nil
-        }),
-        annotations: Annotation.includes(:groups).where({
-            :document_id => params[:document_id],
-            :account_id => current_account.id,
-            "groups.id" => nil
-        })
-      })
+    case doc.status
+      when STATUS_DE1, STATUS_DE2
+        accountId = current_account.id
+      when STATUS_IN_QC
+        accountId = doc.de_one_id if params[:de] == "1"
+        accountId = doc.de_two_id if params[:de] == "2"
+        accountId = doc.qc_id if params[:qc] == "true"
     end
+
+    groupWhere = {
+        :document_id => params[:document_id],
+        :account_id => accountId,
+        :parent_id => nil
+    }
+
+    annoWhere = {
+        :document_id => params[:document_id],
+        "groups.id" => nil
+    }
+
+    if params[:qc] == "true"
+      annoWhere[:qc_approved] = true
+    else
+      annoWhere[:account_id] = accountId
+    end
+
+
+    responseJSON = ActiveSupport::JSON.encode({
+      document_id: doc.id,
+      children: Group.where(groupWhere),
+      annotations: Annotation.includes(:groups).where(annoWhere)
+    })
     json responseJSON
   end
 

@@ -120,7 +120,9 @@ CREATE TABLE annotations (
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
     moderation_approval boolean,
-    templated boolean DEFAULT false
+    templated boolean DEFAULT false,
+    qc_approved boolean,
+    qa_approved boolean
 );
 
 
@@ -1709,4 +1711,6 @@ INSERT INTO schema_migrations (version) VALUES ('20140605190022');
 INSERT INTO schema_migrations (version) VALUES ('20140701175538');
 
 INSERT INTO schema_migrations (version) VALUES ('20140704154025');
+
+INSERT INTO schema_migrations (version) VALUES ('20140730203154');
 
