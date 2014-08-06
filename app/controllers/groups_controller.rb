@@ -54,8 +54,10 @@ class GroupsController < ApplicationController
     group_attributes[:account_id] = current_account.id
     group = Group.create(group_attributes)
 
-    #If a template was used, create the attributes
-    if group.template_id != nil
+    doc = Document.find(params[:document_id])
+
+    #If a template was used and we are in DE, create the attributes
+    if group.template_id != nil && (doc.status == STATUS_DE1 || doc.status == STATUS_DE2)
       if subtemplateId != nil
         template_fields = TemplateField.includes(:subtemplate_fields).where("subtemplate_fields.subtemplate_id=#{subtemplateId}").references(:subtemplate_fields)
       else

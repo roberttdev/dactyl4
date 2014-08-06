@@ -1,4 +1,4 @@
-dc.ui.AnnotationListing = Backbone.View.extend({
+dc.ui.BaseAnnotationListing = Backbone.View.extend({
 
   waitingForClone: false,
 

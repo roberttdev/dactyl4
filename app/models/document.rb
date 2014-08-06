@@ -102,14 +102,22 @@ class Document < ActiveRecord::Base
   # that's been shared with us.
   scope :accessible, lambda {|account, org|
     access = []
+
+    deFmt = "((documents.status in (%{statuses}) AND NOT (documents.de_one_id=#{account.id} AND documents.de_one_complete IS true)) OR (documents.status=#{STATUS_DE2} AND ((documents.de_one_id=#{account.id} AND documents.de_one_complete is not true) OR (documents.de_two_id=#{account.id} AND documents.de_two_complete is not true))))"
+    qcFmt = "(documents.qc_id=#{account.id} AND documents.status=#{STATUS_IN_QC})"
+    qaFmt = "(documents.qa_id=#{account.id} AND documents.status=#{STATUS_IN_QA})"
+
     if account.data_entry?
-      access << "((documents.status in (#{DE_ACCESS.join(",")}) AND NOT (documents.de_one_id=#{account.id} AND documents.de_one_complete IS true)) OR (documents.status=#{STATUS_DE2} AND ((documents.de_one_id=#{account.id} AND documents.de_one_complete is not true) OR (documents.de_two_id=#{account.id} AND documents.de_two_complete is not true))))"
+      access << deFmt % {statuses: DE_ACCESS.join(",")}
     end
     if account.quality_control?
-      access << "(documents.status in (#{QC_ACCESS.join(",")})) OR (documents.qc_id=#{account.id} AND documents.status=#{STATUS_IN_QC})"
+      access << deFmt % {statuses: QC_ACCESS.join(",")}
+      access << qcFmt
     end
     if account.quality_assurance?
-      access << "(documents.status in (#{QA_ACCESS.join(",")})) OR (documents.qa_id=#{account.id} AND documents.status=#{STATUS_IN_QA})"
+      access << deFmt % {statuses: QA_ACCESS.join(",")}
+      access << qcFmt
+      access << qaFmt
     end
     access << "(documents.status in (#{EXTRACT_ACCESS.join(",")}))" if account.data_extraction?
     query = where( access.join(' or ') )

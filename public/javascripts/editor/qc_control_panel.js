@@ -1,4 +1,4 @@
-dc.ui.ViewerQCControlPanel = dc.ui.ViewerBaseControlPanel.extend({
+dc.ui.ViewerQCControlPanel = Backbone.View.extend({
 
   id :                  'control_panel',
   template_listing:     null,
@@ -10,12 +10,6 @@ dc.ui.ViewerQCControlPanel = dc.ui.ViewerBaseControlPanel.extend({
 
   //Initialize: base model for this view is the group that is being displayed
   initialize : function() {
-    var docModel = this._getDocumentModel();
-    this.viewer         = currentDocument;
-    _.bindAll(this, 'render');
-
-    this._mainJST = JST['qc_control_panel'];
-
     this.deOneSubpanel = new dc.ui.ViewerQcDeSubpanel({de: 1});
     this.qcSubpanel = new dc.ui.ViewerQcSubpanel();
     this.deTwoSubpanel = new dc.ui.ViewerQcDeSubpanel({de: 2});
@@ -25,8 +19,9 @@ dc.ui.ViewerQCControlPanel = dc.ui.ViewerBaseControlPanel.extend({
 
 
   render : function(annoId) {
-    _deView = this;
-    $(this.el).html(this._mainJST());
+    var _deView = this;
+    var _mainJST = JST['qc_control_panel'];
+    $(this.el).html(_mainJST());
 
     this.$('#de1_view').html(this.deOneSubpanel.el);
     this.$('#qc_view').html(this.qcSubpanel.el);

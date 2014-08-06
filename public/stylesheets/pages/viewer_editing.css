@@ -5,9 +5,13 @@
 
 /*-------------------------- Main edit buttons --------------------------------*/
 #control_panel {
-  position: relative;
-  font: 12px Arial;
-  color: #004276;
+    position: relative;
+    font: 12px Arial;
+    color: #004276;
+    border-top-style: solid;
+    border-color: aliceblue;
+    border-width: 3px;
+    height: 100%;
 }
   #control_panel .control_panel_top {
     margin: 12px 10px 0;
@@ -164,7 +168,7 @@
         width: 80px;
     }
 
-    #control_panel .new_data
+    #control_panel .new_data,
     #control_panel .save_exit {
         width: 70px;
     }
@@ -237,7 +241,7 @@
         cursor: pointer;
     }
 
-    .annotation_status {
+    .row_status {
         display: inline-block;
         width: 16px;
         height: 16px;
@@ -252,11 +256,11 @@
         background-color: orange;
     }
 
-    .annotation_status.incomplete {
+    .row_status.incomplete {
         background: url(/images/embed/icons/alert_yellow.png) no-repeat center center;
     }
 
-    .annotation_status.complete {
+    .row_status.complete {
         background: url(/images/embed/icons/dark_check.png) no-repeat center center;
     }
 
@@ -294,9 +298,19 @@ div input.error {
   z-index: 10000000;
 }
 
+#qc_view {
+    border-left-style: double;
+    border-right-style: double;
+    border-color: black;
+    border-width: 3px;
+
+}
+
 .qc_editor_view {
     display: inline-block;
     vertical-align: top;
+    height: 100%;
+    overflow: auto;
 }
 
 

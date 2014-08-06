@@ -36,7 +36,6 @@ class Annotation < ActiveRecord::Base
     end
 
     where( "(#{access.join(' or ')})" ).readonly(false) if access.size > 0
-    nil
   }
 
   scope :owned_by, lambda { |account|
