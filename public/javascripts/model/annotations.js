@@ -9,6 +9,17 @@ dc.model.Annotation = Backbone.Model.extend({
         attributes = typeof attributes !== 'undefined' ? attributes : {};
         this.urlRoot = '/documents/' + attributes.document_id + '/annotations';
         Backbone.Model.apply(this, arguments);
+    },
+
+    //Remove QC approval from point.
+    removeFromQC: function(options) {
+        $.ajax({
+            url         : '/annotations/' + this.id + '/un_qc?group_id=' + options['group_id'],
+            contentType : 'application/json; charset=utf-8',
+            type        : 'put',
+            success     : options['success'],
+            error       : options['error']
+        })
     }
 });
 
@@ -30,7 +41,6 @@ dc.model.Annotations = Backbone.BulkSubmitCollection.extend({
 
     //Get all annotations for a document
     getAll: function(options){
-        _thisColl = this;
         $.ajax({
             url         : this.url + '?all=true',
             contentType : 'application/json; charset=utf-8',

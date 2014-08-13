@@ -203,7 +203,6 @@
         font-weight: bold;
         margin-left: 40px;
         font-size: 14px;
-        margin-top: 10px;
         cursor: pointer;
     }
 
@@ -303,7 +302,7 @@ div input.error {
     border-right-style: double;
     border-color: black;
     border-width: 3px;
-
+    min-width: 400px;
 }
 
 .qc_editor_view {

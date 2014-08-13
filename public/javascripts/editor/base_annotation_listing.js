@@ -1,6 +1,7 @@
 dc.ui.BaseAnnotationListing = Backbone.View.extend({
 
-  waitingForClone: false,
+  waitingForClone:  false,
+  showEdit:         false,
 
   events : {
       'click .annotation_listing'   : 'prepareForAnnotation',
@@ -24,12 +25,6 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
         title:          this.model.get('title') ? this.model.get('title').substring(0,49) : '(no title)',
         content:        this.model.get('content') ? this.model.get('content').substring(0,49) : ''
     }));
-
-    if( this.model.get('location') ){
-        this.$('.clone_item').hide();
-        this.$('.annotation_status').removeClass('incomplete');
-        this.$('.annotation_status').addClass('complete');
-    }
 
     return this;
   },
@@ -65,7 +60,7 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
       this.openDocumentTab();
       this.highlight();
 
-      dc.app.editor.annotationEditor.open(this.model, this.group_id);
+      dc.app.editor.annotationEditor.open(this.model, this.group_id, this.showEdit);
   },
 
 

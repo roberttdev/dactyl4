@@ -1,5 +1,9 @@
 dc.ui.ViewerQcSubpanel = dc.ui.ViewerBaseControlPanel.extend({
 
+  AnnoClass:    FuncUtils.stringToFunction("dc.ui.QCAnnotationListing"),
+
+  reloadParams: {qc: true},
+
   render : function(annoId) {
     var _deView           = this;
     var _mainJST = JST['qc_subpanel'];
@@ -31,27 +35,11 @@ dc.ui.ViewerQcSubpanel = dc.ui.ViewerBaseControlPanel.extend({
 
   //Save: save all valid data point changes if no errors
   save: function(success) {
-    _deView = this;
+    var _deView = this;
 
-    //Clear error class from all inputs
-    $('input').removeClass('error');
-    _hasErrors = false;
-
-    //Remove any blank points
-    this.model.annotations.each(function(model, index) {
-        if(model.get('title') == null && model.get('content') == null){ _deView.model.annotations.remove(model); }
-    });
-
-    //If there are non-blank annotations, attempt to sync them with DB.
-    if( this.model.annotations.length > 0 ) {
-        this.model.annotations.pushAll({success: function(){
-            _deView.syncDV(success)
-        }});
-    }
-    else {
-        //If not, just pass along to success function
-        success.call();
-    }
+    this.model.annotations.pushAll({success: function(){
+      _deView.syncDV(success)
+    }});
   }
 
 });

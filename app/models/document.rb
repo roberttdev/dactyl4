@@ -946,6 +946,10 @@ class Document < ActiveRecord::Base
       :file_hash           => file_hash,
       :original_file_path  => original_url
     }
+    if self.status == STATUS_IN_QC
+      json[:de_one_id] = de_one_id
+      json[:de_two_id] = de_two_id
+    end
     if opts[:annotations]
       json[:annotations_url] = annotations_url if commentable?(opts[:account])
       json[:annotations] = self.annotations_with_authors(opts[:account])
@@ -989,6 +993,10 @@ class Document < ActiveRecord::Base
     if options[:contributor]
       doc['contributor']      = account_name
       doc['contributor_organization'] = organization_name
+    end
+    if self.status == STATUS_IN_QC
+      doc['de_one_id'] = de_one_id
+      doc['de_two_id'] = de_two_id
     end
     doc['display_language']   = display_language
     doc['resources']          = res = ActiveSupport::OrderedHash.new

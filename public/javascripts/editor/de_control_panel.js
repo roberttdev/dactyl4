@@ -3,6 +3,14 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
   AnnoClass: FuncUtils.stringToFunction("dc.ui.DEAnnotationListing"),
 
 
+  initialize: function(options) {
+      //Listen for annotation selects and adjust UI accordingly
+      this.listenTo(dc.app.editor.annotationEditor, 'annotationSelected', this.handleAnnotationSelect);
+
+      dc.ui.ViewerBaseControlPanel.prototype.initialize.apply(this, arguments);
+  },
+
+
   render : function(annoId) {
     var _deView           = this;
     var _mainJST = JST['de_control_panel'];
@@ -54,6 +62,35 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
         //If not, just pass along to success function
         success.call();
     }
+  },
+
+
+  //When annotation selected in DV, find a data point that's waiting for DV input or matches the annotation and pass response to it.  If neither,
+  //reload to a group that contains a point that matches it
+  handleAnnotationSelect: function(anno){
+      _deView = this;
+      if( anno.id ){
+          //If a data point is waiting for a clone response, pass response, then create copy
+          _view = _.find(this.pointViewList, function(view){ return view.waitingForClone; });
+          if( _view ) {
+              _view.handleDVSelect(anno);
+              _deView.createDataPointCopy(anno);
+              dc.app.editor.annotationEditor.syncGroupAssociation(anno.id, _deView.model.id);
+          }else{
+              //If the group selected is this group, find and highlight point; otherwise save and reload proper group
+              if( anno.group_id == _deView.model.id ) {
+                  _view = _.find(this.pointViewList, function(view){ return view.model.id == anno.id; });
+                  if( _view ){ _view.handleDVSelect(anno); }
+              }else {
+                  this.save(function () {
+                      _deView.reloadPoints(anno.group_id, anno.id);
+                  });
+              }
+          }
+      }else{
+          _view = _.find(this.pointViewList, function(view){ return view.model.get('location') == anno.location; });
+          _view.handleDVSelect(anno);
+      }
   }
 
 });

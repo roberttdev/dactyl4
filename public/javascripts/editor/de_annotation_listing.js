@@ -1,4 +1,6 @@
 dc.ui.DEAnnotationListing = dc.ui.BaseAnnotationListing.extend({
+  showEdit: true, //Show edit UI in DV
+
   render : function() {
     dc.ui.BaseAnnotationListing.prototype.render.apply(this, arguments);
 

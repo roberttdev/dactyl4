@@ -121,7 +121,7 @@ class Annotation < ActiveRecord::Base
     data['location'] = {'image' => location} if location
     data['image_url'] = document.page_image_url_template if opts[:include_image_url]
     data['published_url'] = document.published_url || document.document_viewer_url(:allow_ssl => true) if opts[:include_document_url]
-    data['account_id'] = account_id if [PREMODERATED, POSTMODERATED].include? document.access
+    data['account_id'] = account_id
     data['groups'] = []
     self.annotation_groups.select(:group_id).each do |anno_group|
       data['groups'].push(anno_group.group_id)

@@ -88,7 +88,7 @@ class AnnotationsController < ApplicationController
   def bulk_update
     group_id = params[:group_id]
     params[:bulkData].each do |field|
-      submitHash = pick(field, :document_id, :page_number, :title, :content, :location, :templated)
+      submitHash = pick(field, :document_id, :page_number, :title, :content, :location, :templated, :qc_approved)
       submitHash[:access] = DC::Access::PUBLIC
       submitHash[:location] = submitHash[:location] ? submitHash[:location][:image] : nil
       if field[:id].nil?
@@ -106,6 +106,12 @@ class AnnotationsController < ApplicationController
       end
     end
     json Annotation.includes(:groups).where({:document_id => params[:document_id], 'groups.id' => group_id})
+  end
+
+  #Remove QC approval from QC'd anno
+  def un_qc
+    anno = Annotation.update(params[:id], {:qc_approved => false})
+
   end
 
   private

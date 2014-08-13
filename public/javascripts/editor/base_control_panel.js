@@ -29,10 +29,13 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
         //Mark as changed when any update request is fired
         this.listenTo(dc.app.editor.annotationEditor, 'updateAnnotation', this.delegateUpdate);
 
-        //Listen for annotation selects and adjust UI accordingly
-        this.listenTo(dc.app.editor.annotationEditor, 'annotationSelected', this.handleAnnotationSelect);
-
         this.reloadPoints(null);
+    },
+
+
+    //Placeholder save function; just calls success.  Override for children
+    save: function(success) {
+        success();
     },
 
 
@@ -148,21 +151,20 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
 
 
     createNewDataPoint: function() {
-        _point = new dc.model.Annotation({group_id: this.model.id, document_id: this.model.get('document_id'), templated: false});
+        var _point = new dc.model.Annotation({group_id: this.model.id, document_id: this.model.get('document_id'), templated: false});
         this.model.annotations.add(_point);
-        _view = this.addDataPoint(_point);
+        var _view = this.addDataPoint(_point);
         _view.prepareForAnnotation();
         $('#annotation_section').append(_view.$el);
     },
 
 
     createDataPointCopy: function(anno) {
-        _point = new dc.model.Annotation(anno);
-        _point.set('group_id', this.model.id); //Update group id, and in process mark as changed
+        var _point = new dc.model.Annotation(anno);
+        _point.set({group_id: this.model.id}); //Update group id, and in process mark as changed
         this.model.annotations.add(_point);
-        _view = this.addDataPoint(_point);
-        $('#annotation_section').append(_view.$el);
-        dc.app.editor.annotationEditor.syncGroupAssociation(anno.id, _deView.model.id);
+        var _view = this.addDataPoint(_point);
+        this.$('#annotation_section').append(_view.$el);
     },
 
 
@@ -170,34 +172,6 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
     delegateUpdate: function(anno){
         _view = _.find(this.pointViewList, function(view){ return view.$el.hasClass('highlighting'); });
         _view.updateAnnotation(anno);
-    },
-
-
-    //When annotation selected in DV, find a data point that's waiting for DV input or matches the annotation and pass response to it.  If neither,
-    //reload to a group that contains a point that matches it
-    handleAnnotationSelect: function(anno){
-        _deView = this;
-        if( anno.id ){
-            //If a data point is waiting for a clone response, pass response, then create copy
-            _view = _.find(this.pointViewList, function(view){ return view.waitingForClone; });
-            if( _view ) {
-                _view.handleDVSelect(anno);
-                _deView.createDataPointCopy(anno);
-            }else{
-                //If the group selected is this group, find and highlight point; otherwise save and reload proper group
-                if( anno.group_id == _deView.model.id ) {
-                    _view = _.find(this.pointViewList, function(view){ return view.model.id == anno.id; });
-                    _view.handleDVSelect(anno);
-                }else {
-                    this.save(function () {
-                        _deView.reloadPoints(anno.group_id, anno.id);
-                    });
-                }
-            }
-        }else{
-            _view = _.find(this.pointViewList, function(view){ return view.model.get('location') == anno.location; });
-            _view.handleDVSelect(anno);
-        }
     },
 
 

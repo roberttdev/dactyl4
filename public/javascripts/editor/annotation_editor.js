@@ -31,9 +31,9 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
     this._inserts.click(this.createPageNote);
   },
 
-  open : function(annotation, groupId) {
+  open : function(annotation, groupId, showEdit) {
     //If annotation already has location, just show it
-    if( annotation.get('location') ){ return this.showAnnotation(annotation); }
+    if( annotation.get('location') ){ return this.showAnnotation(annotation, showEdit); }
 
     if( annotation != null ){
         annotation.groups = [groupId];
@@ -210,11 +210,12 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
   },
 
   // Cause matching annotation in viewer to be selected
-  showAnnotation: function(anno) {
+  showAnnotation: function(anno, showEdit) {
       currentDocument.api.selectAnnotation({
           id        : anno.id,
           location  : anno.get('location')
-      });
+      },
+      showEdit);
   },
 
   saveAnnotation : function(anno) {
@@ -231,7 +232,8 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
       title       : anno.title,
       access      : anno.access,
       group_id    : anno.groupCount > 0 ? anno.groups[anno.groupIndex - 1] : undefined,
-      location    : anno.location
+      location    : anno.location,
+      account_id  : anno.account_id
     };
     return _.extend(params, extra || {});
   },
