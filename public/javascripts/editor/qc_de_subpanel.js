@@ -58,6 +58,13 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
     //listening to events from this control panel
     passCloneRequest: function(anno){
         this.trigger('requestAnnotationClone', anno);
+    },
+
+
+    //If a displayed anno has been removed from QC, update it
+    handleRemoveFromQC: function(anno){
+        _view = _.find(this.pointViewList, function(view){ return view.model.id == anno.id; });
+        if( _view ){ _view.model.set({qc_approved: false}); }
     }
 
 });

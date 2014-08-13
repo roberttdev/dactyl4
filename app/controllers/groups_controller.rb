@@ -13,29 +13,21 @@ class GroupsController < ApplicationController
         accountId = doc.qc_id if params[:qc] == "true"
     end
 
-    groupWhere = {
+    group = Group.includes(:children, :group_template)
+      .where({
         :document_id => params[:document_id],
         :account_id => accountId,
-        :parent_id => nil
-    }
+        :base => true
+      }).first
 
-    annoWhere = {
+    responseJSON = group.as_json({include: [:children, :group_template], ancestry: true})
+
+    responseJSON[:annotations] = Annotation.includes(:groups)
+      .where({
         :document_id => params[:document_id],
-        "groups.id" => nil
-    }
+        'groups.id' => group.id
+      })
 
-    if params[:qc] == "true"
-      annoWhere[:qc_approved] = true
-    else
-      annoWhere[:account_id] = accountId
-    end
-
-
-    responseJSON = ActiveSupport::JSON.encode({
-      document_id: doc.id,
-      children: Group.where(groupWhere),
-      annotations: Annotation.includes(:groups).where(annoWhere)
-    })
     json responseJSON
   end
 

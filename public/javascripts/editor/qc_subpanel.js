@@ -25,7 +25,8 @@ dc.ui.ViewerQcSubpanel = dc.ui.ViewerBaseControlPanel.extend({
 
     //Annotations
     this.model.annotations.each(function(model, index) {
-       _deView.addDataPoint(model, (model.id == annoId));
+       _anno = _deView.addDataPoint(model, (model.id == annoId));
+       _deView.listenTo(_anno, 'removeFromQC', _deView.passRemoveFromQC);
     });
     this.$('#annotation_section').html(_.pluck(this.pointViewList,'el'));
 
@@ -40,6 +41,20 @@ dc.ui.ViewerQcSubpanel = dc.ui.ViewerBaseControlPanel.extend({
     this.model.annotations.pushAll({success: function(){
       _deView.syncDV(success)
     }});
+  },
+
+
+  //Take in DE point, and make an approved copy
+  approveDEPoint: function(anno){
+      anno.set({qc_approved: true});
+      var _view = this.createDataPointCopy(anno.attributes);
+      this.listenTo(_view, 'removeFromQC', this.passRemoveFromQC);
+  },
+
+
+  //Pass removeFromQC event up the chain
+  passRemoveFromQC: function(anno) {
+      this.trigger('removeFromQC', anno);
   }
 
 });

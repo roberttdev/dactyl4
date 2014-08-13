@@ -12,6 +12,7 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
 
     this.listenTo(this.deOneSubpanel, 'requestAnnotationClone', this.passCloneRequest);
     this.listenTo(this.deTwoSubpanel, 'requestAnnotationClone', this.passCloneRequest);
+    this.listenTo(this.qcSubpanel, 'removeFromQC', this.passRemoveFromQC);
 
     this.render();
   },
@@ -40,7 +41,13 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
 
   //Hear clone request from DE panel; create anno in QC panel
   passCloneRequest: function(anno){
-      anno.set({qc_approved: true});
-      this.qcSubpanel.createDataPointCopy(anno.attributes);
+      this.qcSubpanel.approveDEPoint(anno);
+  },
+
+
+  //Hear anno removed from QC and pass update to DE panels
+  passRemoveFromQC: function(anno){
+      this.deOneSubpanel.handleRemoveFromQC(anno);
+      this.deTwoSubpanel.handleRemoveFromQC(anno);
   }
 });

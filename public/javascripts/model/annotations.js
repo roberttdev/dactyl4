@@ -11,10 +11,10 @@ dc.model.Annotation = Backbone.Model.extend({
         Backbone.Model.apply(this, arguments);
     },
 
-    //Remove QC approval from point.
+    //Remove QC approval from point.  Requires 'group_id' passed as an option
     removeFromQC: function(options) {
         $.ajax({
-            url         : '/annotations/' + this.id + '/un_qc?group_id=' + options['group_id'],
+            url         : '/groups/' + options['group_id'] + '/annotations/' + this.id + '/un_qc',
             contentType : 'application/json; charset=utf-8',
             type        : 'put',
             success     : options['success'],

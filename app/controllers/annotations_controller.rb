@@ -87,6 +87,9 @@ class AnnotationsController < ApplicationController
 
   def bulk_update
     group_id = params[:group_id]
+    #If no group ID passed, use base group
+    group_id = Group.where({document_id: params[:document_id], account_id: current_account.id, base: true}).first.id if group_id.nil?
+
     params[:bulkData].each do |field|
       submitHash = pick(field, :document_id, :page_number, :title, :content, :location, :templated, :qc_approved)
       submitHash[:access] = DC::Access::PUBLIC
@@ -111,7 +114,8 @@ class AnnotationsController < ApplicationController
   #Remove QC approval from QC'd anno
   def un_qc
     anno = Annotation.update(params[:id], {:qc_approved => false})
-
+    AnnotationGroup.destroy_all({group_id: params[:group_id], annotation_id: anno.id})
+    json anno
   end
 
   private

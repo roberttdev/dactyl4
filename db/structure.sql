@@ -480,7 +480,8 @@ CREATE TABLE groups (
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
     extension text,
-    account_id integer
+    account_id integer,
+    base boolean DEFAULT false
 );
 
 
@@ -1713,4 +1714,6 @@ INSERT INTO schema_migrations (version) VALUES ('20140701175538');
 INSERT INTO schema_migrations (version) VALUES ('20140704154025');
 
 INSERT INTO schema_migrations (version) VALUES ('20140730203154');
+
+INSERT INTO schema_migrations (version) VALUES ('20140813163126');
 

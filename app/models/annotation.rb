@@ -123,6 +123,7 @@ class Annotation < ActiveRecord::Base
     data['published_url'] = document.published_url || document.document_viewer_url(:allow_ssl => true) if opts[:include_document_url]
     data['account_id'] = account_id
     data['groups'] = []
+    data['qc_approved'] = qc_approved
     self.annotation_groups.select(:group_id).each do |anno_group|
       data['groups'].push(anno_group.group_id)
     end

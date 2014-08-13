@@ -1,15 +1,22 @@
 dc.ui.QCDEAnnotationListing = dc.ui.BaseAnnotationListing.extend({
 
+  initialize: function() {
+      this.listenTo(this.model, 'change', this.render);
+
+      dc.ui.BaseAnnotationListing.prototype.initialize.apply(this, arguments);
+  },
+
+
   render : function() {
     dc.ui.BaseAnnotationListing.prototype.render.apply(this, arguments);
 
     this.$('.delete_item').hide();
 
-    //qc_approved not passed yet
-    /*if(this.model.getAttribute('qc_approved') == 'true') {
-        this.$('.annotation_status').removeClass('incomplete');
-        this.$('.annotation_status').addClass('complete');
-    }*/
+    if(this.model.get('qc_approved')) {
+        this.$('.clone_item').hide();
+        this.$('.row_status').removeClass('incomplete');
+        this.$('.row_status').addClass('complete');
+    }
 
     return this;
   },

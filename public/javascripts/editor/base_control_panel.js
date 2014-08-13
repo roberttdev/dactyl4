@@ -88,11 +88,12 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
     //generateGroupNav: recursive function
     generateGroupNav: function() {
         var _ancestry = this.model.get('ancestry');
-        returnStr = "<span class='group_title' id='0'>Home</span>";
+        returnStr = "";
         if (_ancestry != null) {
             $.each(_ancestry, function (index, ancestor) {
                 groupName = ancestor.extension ? ancestor.name + '[' + ancestor.extension + ']' : ancestor.name;
-                returnStr += " > <span class='group_title' id='group_" + ancestor.id + "'>" + groupName + "</span>";
+                if( returnStr != "" ){ returnStr += " > "; }
+                returnStr += "<span class='group_title' id='group_" + ancestor.id + "'>" + groupName + "</span>";
             });
         }
 
@@ -165,6 +166,7 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
         this.model.annotations.add(_point);
         var _view = this.addDataPoint(_point);
         this.$('#annotation_section').append(_view.$el);
+        return _view;
     },
 
 

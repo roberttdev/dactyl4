@@ -12,6 +12,7 @@ dc.ui.QCAnnotationListing = dc.ui.BaseAnnotationListing.extend({
 
     //Delete override; removes from QC instead
     deletePoint: function() {
+        this.trigger('removeFromQC', this.model);
         this.model.removeFromQC({group_id: this.group_id});
         $(this.el).remove();
         return true;

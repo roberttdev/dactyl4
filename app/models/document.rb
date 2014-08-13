@@ -675,6 +675,9 @@ class Document < ActiveRecord::Base
           self.update({status: newStatus, de_two_id: nil})
         end
       when STATUS_IN_QC
+        Group.destroy_all({document_id: self.id, account_id: account.id})
+        Annotation.where({document_id: self.id}).update_all({qc_approved: false})
+        self.update({status: STATUS_READY_QC, qc_id: nil})
       when STATUS_IN_QA
     end
   end
@@ -717,6 +720,15 @@ class Document < ActiveRecord::Base
       when STATUS_READY_QA
         self.update({status: STATUS_IN_QA, qa_id: account.id})
     end
+
+    #Create a base group for this user
+    Group.create({
+        :name => 'Home',
+        :parent_id => nil,
+        :document_id => self.id,
+        :account_id => account.id,
+        :base => true
+    })
   end
 
   def asset_store
