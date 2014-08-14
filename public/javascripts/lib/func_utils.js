@@ -13,4 +13,4 @@ window.FuncUtils = {
 
         return  fn;
     }
-}
+};
