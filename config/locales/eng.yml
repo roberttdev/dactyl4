@@ -222,6 +222,8 @@
     - Preparing %d documents for download
   - draft: Draft
   - draft_note_visible: This draft is only visible to you and collaborators.
+  - duplicate_point_error: A point by this name already exists here.  Overwrite?
+  - duplicate_titles: Two points have the same title.  Please modify the points to have unique titles.
   - edit: Edit
   - edit_access: Edit Access Level
   - edit_data: Edit Data

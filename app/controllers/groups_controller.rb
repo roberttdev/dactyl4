@@ -1,13 +1,13 @@
 class GroupsController < ApplicationController
-  include DC::DocumentStatus
 
   def index
     #Pull base-level groups/annotations and create group-like JSON
     doc = Document.find(params[:document_id])
-    case doc.status
-      when STATUS_DE1, STATUS_DE2
+
+    if doc.in_de?
         accountId = current_account.id
-      when STATUS_IN_QC
+    end
+    if doc.in_qc?
         accountId = doc.de_one_id if params[:de] == "1"
         accountId = doc.de_two_id if params[:de] == "2"
         accountId = doc.qc_id if params[:qc] == "true"
@@ -20,7 +20,10 @@ class GroupsController < ApplicationController
         :base => true
       }).first
 
-    responseJSON = group.as_json({include: [:children, :group_template], ancestry: true})
+    responseJSON = group.as_json({
+                    include: [:children, :group_template],
+                    ancestry: true
+                  })
 
     responseJSON[:annotations] = Annotation.includes(:groups)
       .where({
@@ -32,7 +35,12 @@ class GroupsController < ApplicationController
   end
 
   def show
-    responseJSON = Group.includes(:children, :group_template).find(params[:id]).as_json({include: [:children, :group_template], ancestry: true})
+    #Pull base-level groups/annotations and create group-like JSON
+    doc = Document.find(params[:document_id])
+    responseJSON = Group.includes(:children, :group_template).find(params[:id]).as_json({
+                      include: [:children, :group_template],
+                      ancestry: true
+                  })
     responseJSON[:annotations] = Annotation.includes(:groups).where({:document_id => params[:document_id], 'groups.id' => params[:id]})
     json responseJSON
   end
@@ -49,7 +57,7 @@ class GroupsController < ApplicationController
     doc = Document.find(params[:document_id])
 
     #If a template was used and we are in DE, create the attributes
-    if group.template_id != nil && (doc.status == STATUS_DE1 || doc.status == STATUS_DE2)
+    if group.template_id != nil && doc.in_de?
       if subtemplateId != nil
         template_fields = TemplateField.includes(:subtemplate_fields).where("subtemplate_fields.subtemplate_id=#{subtemplateId}").references(:subtemplate_fields)
       else

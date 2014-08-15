@@ -45,9 +45,9 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
   },
 
 
-  //Hear anno removed from QC and pass update to DE panels
+  //Hear anno removed from QC and force reload of DE data to see if anything changed
   passRemoveFromQC: function(anno){
-      this.deOneSubpanel.handleRemoveFromQC(anno);
-      this.deTwoSubpanel.handleRemoveFromQC(anno);
+      this.deOneSubpanel.reloadCurrent();
+      this.deTwoSubpanel.reloadCurrent();
   }
 });

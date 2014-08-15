@@ -4,6 +4,7 @@ dc.ui.GroupListing = Backbone.View.extend({
   showEdit: true,
   showDelete: true,
   showClone: true,
+  complete: false,
 
   events : {
       'click .edit_group'   : 'openEditGroupDialog',
@@ -17,6 +18,7 @@ dc.ui.GroupListing = Backbone.View.extend({
     this.model.on('change', this.render);
 
     this.showStatus = options['showStatus'] != null ? options['showStatus'] : true;
+    this.complete = options['complete'] != null ? options['complete'] : false;
     this.showEdit = options['showEdit'] != null ? options['showEdit'] : true;
     this.showDelete = options['showDelete'] != null ? options['showDelete'] : true;
     this.showClone = options['showClone'] != null ? options['showClone'] : true;
@@ -36,6 +38,14 @@ dc.ui.GroupListing = Backbone.View.extend({
     if( !this.showEdit ){ this.$('.edit_group').hide(); }
     if( !this.showDelete ){ this.$('.delete_item').hide(); }
     if( !this.showClone ){ this.$('.clone_item').hide(); }
+
+    if( this.complete ){
+        this.$('.row_status').removeClass('incomplete');
+        this.$('.row_status').addClass('complete');
+    } else {
+        this.$('.row_status').removeClass('complete');
+        this.$('.row_status').addClass('incomplete');
+    }
 
     return this;
   },

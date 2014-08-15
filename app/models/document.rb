@@ -687,9 +687,21 @@ class Document < ActiveRecord::Base
   def mark_complete(account)
     case self.status
       when STATUS_DE1, STATUS_DE2
+        #Check that there are any annotations for this user
+        annoCount = Annotation.where("document_id=#{self.id} AND account_id=#{account.id}").count
+        if annoCount == 0
+          return {
+              'errorText' => 'Completion failed because no data points have been saved.  Please save a data point before marking complete.',
+              'data' => {}
+          }
+        end
+
         anno = Annotation.where("document_id=#{self.id} AND account_id=#{account.id} AND (title IS NULL OR title='' OR content IS NULL OR content='')").take
         if anno
-          return {id: anno.id, group_id: anno.annotation_groups[0].group_id}
+          return {
+              'errorText' => 'Completion failed because a data point is incomplete.  Please populate or delete the incomplete point.',
+              'data' => {id: anno.id, group_id: anno.annotation_groups[0].group_id}
+          }
         else
           updateFields = {}
           updateFields[:de_one_complete] = true if self.de_one_id==account.id
@@ -1045,6 +1057,19 @@ class Document < ActiveRecord::Base
   # or can be passed arbitrary data such as from a file on disk
   def update_file_metadata( data = asset_store.read_original(self) )
     update_attributes!( :file_size => data.bytesize, :file_hash => Digest::SHA1.hexdigest( data ) )
+  end
+
+
+  def in_de?
+    status == STATUS_DE1 || status == STATUS_DE2
+  end
+
+  def in_qc?
+    status == STATUS_IN_QC
+  end
+
+  def in_qa?
+    status == STATUS_IN_QA
   end
 
   private

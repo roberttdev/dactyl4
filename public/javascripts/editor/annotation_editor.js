@@ -24,10 +24,11 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
     this.page           = $('.DV-page');
     this._guide         = $('#public_note_guide');
 
-    _.bindAll(this, 'open', 'close', 'drawAnnotation', 'saveAnnotation',
+    _.bindAll(this, 'open', 'close', 'drawAnnotation', 'saveAnnotation', 'passCancelNotification',
       'deleteAnnotation', 'selectAnnotationPoint', 'createPageNote');
     currentDocument.api.onAnnotationSave(this.saveAnnotation);
     currentDocument.api.onAnnotationSelect(this.selectAnnotationPoint);
+    currentDocument.api.onAnnotationCancel(this.passCancelNotification);
     this._inserts.click(this.createPageNote);
   },
 
@@ -289,6 +290,10 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
       currentDocument.api.reloadAnnotations(annos);
   },
 
+  //Passes notification that cancel has fired in DV
+  passCancelNotification: function() {
+    this.trigger('annotationCancelled');
+  },
 
   // Lazily create the page-specific div for persistent elements.
   _specificPage : function() {

@@ -94,13 +94,6 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
   },
 
 
-  //handleDVSelect: receive selected annotation data from DV, and process it based on status
-  handleDVSelect: function(anno) {
-      //If expecting a clone, delete this to make way for clone.  Otherwise, highlight
-      if(this.waitingForClone) { this.deletePoint(); }else{ this.highlight(); }
-  },
-
-
   highlight: function() {
       //Clear any existing mid-annotation rows
       this.trigger('requestAnnotationClear');

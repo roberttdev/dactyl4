@@ -23,7 +23,8 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
             _deView.addGroup({
                 model: model,
                 showEdit: false,
-                showDelete: false
+                showDelete: false,
+                complete: (model.get('unapproved_count') == 0)
             });
         });
         this.$('#group_section').html(_.pluck(this.groupViewList, 'el'));
@@ -47,7 +48,7 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
         //If the group selected is this group, find and highlight point; otherwise save and reload proper group
         if( anno.group_id == _deView.model.id ) {
             _view = _.find(this.pointViewList, function(view){ return view.model.id == anno.id; });
-            if( _view ){ _view.handleDVSelect(anno); }
+            if( _view ){ _view.highlight(); }
         }else {
            _deView.reloadPoints(anno.group_id, anno.id);
         }

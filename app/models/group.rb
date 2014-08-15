@@ -6,6 +6,12 @@ class Group < ActiveRecord::Base
   has_many :annotation_groups, :dependent => :destroy
   has_many :annotations, :through => :annotation_groups
 
+
+  def attributes
+    super.merge('unapproved_count' => nil)
+  end
+
+
   #Get ordered ancestry array for record
   def get_ancestry
     sqlID = ActiveRecord::Base.connection.quote(id)
@@ -28,11 +34,35 @@ class Group < ActiveRecord::Base
   end
 
 
+  #Get count of unapproved points in this and child groups for this group's doc status
+  def unapproved_count
+    doc = Document.find(document_id)
+    approvedField = ""
+    approvedField = "qc_approved" if doc.in_qc?
+    approvedField = "qa_approved" if doc.in_qa?
+
+    if approvedField != ""
+      sqlID = ActiveRecord::Base.connection.quote(id)
+      sql = "SELECT anno.id
+            FROM get_descendants(#{sqlID}) grps
+            INNER JOIN annotation_groups ag ON grps.group_id=ag.group_id
+            INNER JOIN annotations anno ON ag.annotation_id=anno.id
+            WHERE anno.#{approvedField}=false"
+      annos = ActiveRecord::Base.connection.exec_query(sql)
+      unapproved = annos.count
+    else
+      unapproved = 0
+    end
+  end
+
+
   def as_json(options = {})
     json = super(options)
+
     if(options[:ancestry])
       json[:ancestry] = get_ancestry
     end
+
     json
   end
 
@@ -43,7 +73,8 @@ class Group < ActiveRecord::Base
         :document_id => document_id,
         :parent_id => parent_id,
         :template_id => template_id,
-        :name => is_sub ? name : "#{name} (copy)"
+        :name => is_sub ? name : "#{name} (copy)",
+        :extension => extension
     })
 
     annotations.each do |anno|

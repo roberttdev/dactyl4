@@ -32,6 +32,27 @@ CREATE FUNCTION get_ancestry(root_id integer) RETURNS TABLE(id integer, parent_i
       $_$;
 
 
+--
+-- Name: get_descendants(integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION get_descendants(group_id integer) RETURNS TABLE(group_id integer)
+    LANGUAGE sql
+    AS $_$
+        WITH RECURSIVE descendants(group_id) AS (
+          SELECT id AS group_id
+          FROM groups
+          WHERE id=$1
+          UNION ALL
+          SELECT id AS group_id
+          FROM descendants D
+          INNER JOIN groups G on G.parent_id = D.group_id
+        )
+
+      SELECT * from descendants ORDER BY group_id ASC
+      $_$;
+
+
 SET default_tablespace = '';
 
 SET default_with_oids = false;
@@ -1716,4 +1737,6 @@ INSERT INTO schema_migrations (version) VALUES ('20140704154025');
 INSERT INTO schema_migrations (version) VALUES ('20140730203154');
 
 INSERT INTO schema_migrations (version) VALUES ('20140813163126');
+
+INSERT INTO schema_migrations (version) VALUES ('20140814194013');
 

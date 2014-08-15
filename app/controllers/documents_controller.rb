@@ -268,10 +268,6 @@ class DocumentsController < ApplicationController
 
     errorResp = doc.mark_complete(current_account)
     if errorResp
-      errorResp = {
-          'errorText' => 'Completion failed because a data point is incomplete.  Please populate or delete the incomplete point.',
-          'data' => errorResp
-      }
       json errorResp, 500
     else
       json_response

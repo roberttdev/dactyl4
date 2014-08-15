@@ -26,6 +26,8 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
         var docModel = this._getDocumentModel();
         this.viewer         = currentDocument;
 
+        _.bindAll(this, 'handleMarkCompleteError')
+
         //Mark as changed when any update request is fired
         this.listenTo(dc.app.editor.annotationEditor, 'updateAnnotation', this.delegateUpdate);
 
@@ -120,6 +122,12 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
     },
 
 
+    //reloadCurrent: request reload of current group
+    reloadCurrent: function(){
+        this.reloadPoints(this.model.id);
+    },
+
+
     //Pull all annotations for the document and reload the DV with them
     reloadAnnotations: function(){
         var _annos = new dc.model.Annotations({document_id: this.model.get('document_id')});
@@ -167,6 +175,13 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
         var _view = this.addDataPoint(_point);
         this.$('#annotation_section').append(_view.$el);
         return _view;
+    },
+
+
+    //Clone 'anno', replacing AnnotationView 'replace'
+    replacePoint: function(anno, replace) {
+        replace.deletePoint();
+        this.createDataPointCopy(anno);
     },
 
 
