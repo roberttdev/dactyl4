@@ -32,7 +32,7 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
         //Annotations
         this.model.annotations.each(function(model, index) {
            _annoView = _deView.addDataPoint(model, (model.id == annoId));
-           _deView.listenTo(_annoView, 'requestAnnotationClone', _deView.passCloneRequest);
+           _deView.listenTo(_annoView, 'requestAnnotationClone', _deView.passAnnoCloneRequest);
         });
         this.$('#annotation_section').html(_.pluck(this.pointViewList,'el'));
 
@@ -57,8 +57,15 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
 
     //Listens for an annotation to request to be cloned and passes it to anything
     //listening to events from this control panel
-    passCloneRequest: function(anno){
+    passAnnoCloneRequest: function(anno){
         this.trigger('requestAnnotationClone', anno);
+    },
+
+
+    //Pass along group clone request and reload this view to cloned group
+    handleGroupCloneRequest: function(group) {
+        this.trigger('requestGroupClone', group);
+        this.reloadPoints(group.id);
     },
 
 

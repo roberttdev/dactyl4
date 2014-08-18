@@ -6,6 +6,7 @@ class Group < ActiveRecord::Base
   has_many :annotation_groups, :dependent => :destroy
   has_many :annotations, :through => :annotation_groups
 
+  before_destroy :unapprove_annotations, :prepend => true
 
   def attributes
     super.merge('unapproved_count' => nil)
@@ -67,8 +68,9 @@ class Group < ActiveRecord::Base
   end
 
 
-  #Clone override.. 'is_sub' determines if this is a sub-process of the original clone
-  def clone(parent_id, is_sub)
+  #Clone override.. 'is_sub' determines if this is a sub-process of the original clone;
+  # 'related' indicates whether to include related objects (children and annotations)
+  def clone(parent_id, is_sub, related)
     cloned = Group.create({
         :document_id => document_id,
         :parent_id => parent_id,
@@ -77,24 +79,33 @@ class Group < ActiveRecord::Base
         :extension => extension
     })
 
-    annotations.each do |anno|
-      newAnno = Annotation.create({
-        :account_id => anno.account_id,
-        :document_id => anno.document_id,
-        :title => anno.title,
-        :templated => anno.templated
-      })
+    if related
+      annotations.each do |anno|
+        newAnno = Annotation.create({
+          :account_id => anno.account_id,
+          :document_id => anno.document_id,
+          :title => anno.title,
+          :templated => anno.templated
+        })
 
-      AnnotationGroup.create({
-         :annotation_id => newAnno.id,
-         :group_id => cloned.id
-      })
-    end
+        AnnotationGroup.create({
+           :annotation_id => newAnno.id,
+           :group_id => cloned.id
+        })
+      end
 
-    children.each do |child|
-      child.clone(cloned.id, true)
+      children.each do |child|
+        child.clone(cloned.id, true)
+      end
     end
 
     cloned
+  end
+
+  #Remove approval if in status dealing with approvals
+  def unapprove_annotations
+    doc = Document.find(document_id)
+    annotations.update_all({qc_approved: false}) if doc.in_qc?
+    annotations.update_all({qa_approved: false}) if doc.in_qa?
   end
 end

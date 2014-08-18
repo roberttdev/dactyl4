@@ -121,6 +121,17 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
 
   handleAnnotationCancel: function() {
     this.clearAnnotations();
+  },
+
+
+  handleGroupCloneRequest: function(group) {
+    var _thisView = this;
+    group.clone(this.model.id, function(){ _thisView.reloadPoints(_thisView.model.id); });
+  },
+
+
+  handleGroupDelete: function(group){
+      this.reloadAnnotations();
   }
 
 });

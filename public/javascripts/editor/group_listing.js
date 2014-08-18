@@ -68,15 +68,14 @@ dc.ui.GroupListing = Backbone.View.extend({
       _thisView = this;
       this.model.destroy({success: function() {
           $(_thisView.el).remove();
-          _thisView.trigger('reloadAnnotationsRequest');
+          _thisView.trigger('groupDeleted');
       }});
       return true;
   },
 
 
   cloneGroup: function() {
-    _thisGroupView = this;
-    this.model.clone(function(){ _thisGroupView.trigger('reloadPointsRequest'); });
+    this.trigger('requestGroupClone', this.model);
   }
 
 });

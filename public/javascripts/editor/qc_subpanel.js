@@ -55,6 +55,12 @@ dc.ui.ViewerQcSubpanel = dc.ui.ViewerBaseControlPanel.extend({
   //Pass removeFromQC event up the chain
   passRemoveFromQC: function(anno) {
       this.trigger('removeFromQC', anno);
+  },
+
+
+  //Pass group delete notification up
+  handleGroupDelete: function(group) {
+      this.trigger('groupDeleted', group);
   }
 
 });

@@ -56,8 +56,8 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
         var _view = new dc.ui.GroupListing(options);
         this.groupViewList.push(_view);
         _view.render();
-        this.listenTo(_view, 'reloadAnnotationsRequest', this.reloadAnnotations);
-        this.listenTo(_view, 'reloadPointsRequest', function(){ this.reloadPoints(this.model.id); });
+        if(options['showDelete'] != false){ this.listenTo(_view, 'groupDeleted', function(group){ this.handleGroupDelete(group) }); }
+        if(options['showClone'] != false){ this.listenTo(_view, 'requestGroupClone', function(group){ this.handleGroupCloneRequest(group); }); }
         return _view;
     },
 
@@ -233,5 +233,16 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
     handleMarkCompleteError: function(responseData) {
         this.reloadPoints(responseData.data.group_id, responseData.data.id);
         dc.ui.Dialog.alert(responseData.errorText);
+    },
+
+
+    //handleCloneRequest: blank placeholder to be overridden if class wishes to handle cloning
+    handleGroupCloneRequest: function(group) {
+        alert('Error: Control Panel implementation has not written clone handler!');
+    },
+
+    //handleGroupDelete: blank placeholder to be overridden if class wishes to handle group deletes
+    handleGroupDelete: function(group) {
+        alert('Error: Control Panel implementation has not written delete handler!');
     }
 });

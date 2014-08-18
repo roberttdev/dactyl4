@@ -10,9 +10,12 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
 
     this.listenTo(dc.app.editor.annotationEditor, 'annotationSelected', this.handleAnnotationSelect);
 
-    this.listenTo(this.deOneSubpanel, 'requestAnnotationClone', this.passCloneRequest);
-    this.listenTo(this.deTwoSubpanel, 'requestAnnotationClone', this.passCloneRequest);
-    this.listenTo(this.qcSubpanel, 'removeFromQC', this.passRemoveFromQC);
+    this.listenTo(this.deOneSubpanel, 'requestAnnotationClone', this.passAnnoCloneRequest);
+    this.listenTo(this.deOneSubpanel, 'requestGroupClone', this.handleGroupCloneRequest);
+    this.listenTo(this.deTwoSubpanel, 'requestAnnotationClone', this.passAnnoCloneRequest);
+    this.listenTo(this.deTwoSubpanel, 'requestGroupClone', this.handleGroupCloneRequest);
+    this.listenTo(this.qcSubpanel, 'removeFromQC', this.refreshDE);
+    this.listenTo(this.qcSubpanel, 'groupDeleted', this.refreshDE);
 
     this.render();
   },
@@ -40,13 +43,21 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
 
 
   //Hear clone request from DE panel; create anno in QC panel
-  passCloneRequest: function(anno){
+  passAnnoCloneRequest: function(anno){
       this.qcSubpanel.approveDEPoint(anno);
   },
 
 
-  //Hear anno removed from QC and force reload of DE data to see if anything changed
-  passRemoveFromQC: function(anno){
+  //Pass along group clone request and reload this view to cloned group
+  handleGroupCloneRequest: function(group) {
+      _thisView = this;
+      group.clone(this.qcSubpanel.model.id, function(response){
+          _thisView.qcSubpanel.reloadPoints(response.id)
+      });
+  },
+
+  //Refresh DE views
+  refreshDE: function(anno){
       this.deOneSubpanel.reloadCurrent();
       this.deTwoSubpanel.reloadCurrent();
   }

@@ -676,7 +676,6 @@ class Document < ActiveRecord::Base
         end
       when STATUS_IN_QC
         Group.destroy_all({document_id: self.id, account_id: account.id})
-        Annotation.where({document_id: self.id}).update_all({qc_approved: false})
         self.update({status: STATUS_READY_QC, qc_id: nil})
       when STATUS_IN_QA
     end
