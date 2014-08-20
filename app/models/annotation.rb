@@ -123,7 +123,8 @@ class Annotation < ActiveRecord::Base
     data['published_url'] = document.published_url || document.document_viewer_url(:allow_ssl => true) if opts[:include_document_url]
     data['account_id'] = account_id
     data['groups'] = []
-    data['qc_approved'] = qc_approved
+    data['approved'] = qc_approved if document.in_qc?
+    data['approved'] = qa_approved if document.in_qa?
     self.annotation_groups.select(:group_id).each do |anno_group|
       data['groups'].push(anno_group.group_id)
     end
@@ -148,10 +149,6 @@ class Annotation < ActiveRecord::Base
       'account_id'      => account_id,
       'organization_id' => organization_id
     })
-  end
-
-  def delete_group_ref(group_id)
-
   end
 
   private

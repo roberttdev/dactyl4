@@ -90,10 +90,14 @@ class AnnotationsController < ApplicationController
     #If no group ID passed, use base group
     group_id = Group.where({document_id: params[:document_id], account_id: current_account.id, base: true}).first.id if group_id.nil?
 
+    doc = Document.find(params[:document_id])
+
     params[:bulkData].each do |field|
-      submitHash = pick(field, :document_id, :page_number, :title, :content, :location, :templated, :qc_approved)
+      submitHash = pick(field, :document_id, :page_number, :title, :content, :location, :templated)
       submitHash[:access] = DC::Access::PUBLIC
       submitHash[:location] = submitHash[:location] ? submitHash[:location][:image] : nil
+      submitHash[:qc_approved] = field[:approved] if doc.in_qc?
+      submitHash[:qa_approved] = field[:approved] if doc.in_qa?
       if field[:id].nil?
         submitHash[:account_id] = current_account.id
         anno = Annotation.create(submitHash)
@@ -111,10 +115,18 @@ class AnnotationsController < ApplicationController
     json Annotation.includes(:groups).where({:document_id => params[:document_id], 'groups.id' => group_id})
   end
 
-  #Remove QC approval from QC'd anno
-  def un_qc
-    anno = Annotation.update(params[:id], {:qc_approved => false})
+  #Remove approval for anno+group; if last group, removal approval for anno. Supported approval "type" parameter values: "qc","qa"
+  def unapprove
+    anno = Annotation.find(params[:id])
+    doc = Document.find(anno.document_id)
+    type = params[:type]
+    ag_count = AnnotationGroup.joins(:group).where({:annotation_id => params[:id], 'groups.account_id' => doc[type + '_id']}).count
     AnnotationGroup.destroy_all({group_id: params[:group_id], annotation_id: anno.id})
+
+    if ag_count <= 1
+      anno.update({type + '_approved' => false})
+    end
+
     json anno
   end
 

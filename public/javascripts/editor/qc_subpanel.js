@@ -46,7 +46,7 @@ dc.ui.ViewerQcSubpanel = dc.ui.ViewerBaseControlPanel.extend({
 
   //Take in DE point, and make an approved copy
   approveDEPoint: function(anno){
-      anno.set({qc_approved: true});
+      anno.set({approved: true});
       var _view = this.createDataPointCopy(anno.attributes);
       this.listenTo(_view, 'removeFromQC', this.passRemoveFromQC);
   },
@@ -54,6 +54,7 @@ dc.ui.ViewerQcSubpanel = dc.ui.ViewerBaseControlPanel.extend({
 
   //Pass removeFromQC event up the chain
   passRemoveFromQC: function(anno) {
+      this.model.annotations.remove(anno);
       this.trigger('removeFromQC', anno);
   },
 

@@ -14,7 +14,7 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
     this.listenTo(this.deOneSubpanel, 'requestGroupClone', this.handleGroupCloneRequest);
     this.listenTo(this.deTwoSubpanel, 'requestAnnotationClone', this.passAnnoCloneRequest);
     this.listenTo(this.deTwoSubpanel, 'requestGroupClone', this.handleGroupCloneRequest);
-    this.listenTo(this.qcSubpanel, 'removeFromQC', this.refreshDE);
+    this.listenTo(this.qcSubpanel, 'removeFromQC', this.handleRemoveFromQC);
     this.listenTo(this.qcSubpanel, 'groupDeleted', this.refreshDE);
 
     this.render();
@@ -45,6 +45,7 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
   //Hear clone request from DE panel; create anno in QC panel
   passAnnoCloneRequest: function(anno){
       this.qcSubpanel.approveDEPoint(anno);
+      dc.app.editor.annotationEditor.markApproval(anno.id, true);
   },
 
 
@@ -55,6 +56,14 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
           _thisView.qcSubpanel.reloadPoints(response.id)
       });
   },
+
+
+  //If anno is passed, have DV show it as unapproved.  Refresh DE views.
+  handleRemoveFromQC: function(anno){
+      if( !anno.get('approved') ){ dc.app.editor.annotationEditor.markApproval(anno.id, false); }
+      this.refreshDE(anno);
+  },
+
 
   //Refresh DE views
   refreshDE: function(anno){

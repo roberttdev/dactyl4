@@ -72,7 +72,7 @@ DC::Application.routes.draw do
   put '/documents/:document_id/groups/:group_id/annotations' => 'annotations#bulk_update'
 
   #Un-QC
-  put '/groups/:group_id/annotations/:id/un_qc' => 'annotations#un_qc'
+  put '/groups/:group_id/annotations/:id/unapprove' => 'annotations#unapprove'
 
   resources :documents do
 

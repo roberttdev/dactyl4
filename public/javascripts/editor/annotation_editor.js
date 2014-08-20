@@ -295,6 +295,11 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
     this.trigger('annotationCancelled');
   },
 
+  //Temporarily update view to mark annotation's state of approval
+  markApproval: function(anno_id, approved) {
+    currentDocument.api.markApproval(anno_id, approved);
+  },
+
   // Lazily create the page-specific div for persistent elements.
   _specificPage : function() {
     // if a div for redaction already exists, return it.

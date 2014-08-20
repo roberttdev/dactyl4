@@ -72,7 +72,7 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
     //If a displayed anno has been removed from QC, update it
     handleRemoveFromQC: function(anno){
         _view = _.find(this.pointViewList, function(view){ return view.model.id == anno.id; });
-        if( _view ){ _view.model.set({qc_approved: false}); }
+        if( _view ){ _view.model.set({approved: false}); }
     }
 
 });

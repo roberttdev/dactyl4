@@ -12,8 +12,7 @@ dc.ui.QCDEAnnotationListing = dc.ui.BaseAnnotationListing.extend({
 
     this.$('.delete_item').hide();
 
-    if(this.model.get('qc_approved')) {
-        this.$('.clone_item').hide();
+    if(this.model.get('approved')) {
         this.$('.row_status').removeClass('incomplete');
         this.$('.row_status').addClass('complete');
     }
