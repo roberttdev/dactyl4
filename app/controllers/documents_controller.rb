@@ -274,6 +274,15 @@ class DocumentsController < ApplicationController
     end
   end
 
+
+  #QC rejection of DE work
+  def reject_de
+    doc = current_document(true)
+    doc.reject_de(params[:de])
+    json_response
+  end
+
+
   private
 
   def populate_editor_data

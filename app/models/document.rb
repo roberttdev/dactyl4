@@ -714,6 +714,35 @@ class Document < ActiveRecord::Base
     end
   end
 
+
+  #Cancel QC and reject one or more DE's work; return status to DE
+  def reject_de(de_num)
+    #Generate values for actions (anno/group delete step, doc status update step)
+    delWhere = {document_id: doc.id, account_id: [qc_id]}
+    upValues = {qc_id: null}
+    case de_num
+      when 1
+        delWhere[:account_id] << de_one_id
+        upValues[:de_one_id] = de_two_id
+        upValues[:de_two_id] = null
+        upValues[:status] = STATUS_DE1
+      when 2
+        delWhere[:account_id] << de_two_id
+        upValues[:de_two_id] = null
+        upValues[:status] = STATUS_DE1
+      when 3
+        delWhere[:account_id] << de_one_id << de_two_id
+        upValues[:de_one_id] = null
+        upValues[:de_two_id] = null
+        upValues[:status] = STATUS_NEW
+    end
+
+    Annotation.destroy_all(delWhere)
+    Group.destroy_all(delWhere)
+    self.update_attributes(upValues)
+  end
+
+
   #Returns whether the doc is currently fully claimed
   def claimable?
     CLAIMABLE_STATUS.include?(self.status)

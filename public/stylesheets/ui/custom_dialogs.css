@@ -44,6 +44,16 @@
     position: absolute;
     left: 120px;
   }
+.tempalog .radio_row{
+    background-color: #000;
+    font-size: 11px;
+    color: #ccc;
+    text-align: left;
+    left: 0;
+}
+.tempalog .radio_row input {
+    margin-left: 180px;
+}
 
 #pubdate_dialog {
   width: 500px;

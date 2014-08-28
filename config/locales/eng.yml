@@ -125,6 +125,7 @@
   - apply_all_files: apply to all files
   - apply_fields_all_files: apply this description, source, and access level to all
       files
+  - approve_all: Approve All
   - at: at
   - back: Back
   - bad_data_key: "%s cannot be used as a key"
@@ -168,6 +169,7 @@
   - create_new_project: Create a New Project
   - data_entry: Data Entry
   - data_extraction: Data Extraction
+  - data_points: Data Points
   - date: " Dates"
   - date_uploaded: Date Uploaded
   - default_document_language: Default Document Language
@@ -224,6 +226,7 @@
   - draft_note_visible: This draft is only visible to you and collaborators.
   - duplicate_point_error: A point by this name already exists here.  Overwrite?
   - duplicate_titles: Two points have the same title.  Please modify the points to have unique titles.
+  - duplicate_titles_fail: A point with this title already exists in this group.
   - edit: Edit
   - edit_access: Edit Access Level
   - edit_data: Edit Data
@@ -326,6 +329,7 @@
   - full_page: Full Page
   - future_documents_w_appear: Future documents %s will appear in your embed.
   - group: Group
+  - groups: Groups
   - group_name: Group Name
   - group_name_explanation: A name that will distinctly identify this group.
   - guided_tour: Guided Tour
@@ -514,6 +518,12 @@
     - You've redacted %d passages. This document will close while it's being rebuilt.
       Are you sure you're ready to proceed?
   - reenable: Re-enable
+  - reject_de: Reject Data Entry
+  - reject_de_both: Both Data Entry Users
+  - reject_de_left: Data Entry 1 (Left Side)
+  - reject_de_not_selected: You have not selected a user to reject.
+  - reject_de_right: Data Entry 2 (Right Side)
+  - reject_de_text: Please choose which data entry user's work you would like to reject. This user's work and all current QC work will be deleted.
   - related_article_url: Source Reference
   - related_article_url_help: Providing the URL of the article that references this
       document will enable a "Related Article" link within the document viewer. Many

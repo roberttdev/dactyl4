@@ -4,6 +4,14 @@ dc.ui.ViewerQcSubpanel = dc.ui.ViewerBaseControlPanel.extend({
 
   reloadParams: {qc: true},
 
+
+  initialize: function(options) {
+      dc.ui.ViewerBaseControlPanel.prototype.initialize.apply(this, arguments);
+
+      this.events['click .reject'] = 'rejectDE';
+  },
+
+
   render : function(annoId) {
     var _deView           = this;
     var _mainJST = JST['qc_subpanel'];
@@ -44,11 +52,21 @@ dc.ui.ViewerQcSubpanel = dc.ui.ViewerBaseControlPanel.extend({
   },
 
 
-  //Take in DE point, and make an approved copy
+  //Take in DE point, and make an approved copy if it doesn't already exist
   approveDEPoint: function(anno){
-      anno.set({approved: true});
-      var _view = this.createDataPointCopy(anno.attributes);
-      this.listenTo(_view, 'removeFromQC', this.passRemoveFromQC);
+    if( this.hasTitle(anno.get('title')) ){
+        dc.ui.Dialog.alert(_.t('duplicate_titles_fail'));
+    }else {
+        anno.set({approved: true});
+        var _view = this.createDataPointCopy(anno.attributes);
+        this.listenTo(_view, 'removeFromQC', this.passRemoveFromQC);
+    }
+  },
+
+
+  //Send document back to DE
+  rejectDE: function(){
+      dc.ui.QCRejectDialog.open();
   },
 
 

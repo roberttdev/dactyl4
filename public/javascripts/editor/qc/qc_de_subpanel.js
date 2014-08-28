@@ -6,6 +6,8 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
         this.el.id = this.el.id + '_' + options['de'];
         this.reloadParams = {de: options['de']};
         dc.ui.ViewerBaseControlPanel.prototype.initialize.apply(this, arguments);
+
+        this.events['click .approve_all'] = 'approveAll';
     },
 
 
@@ -59,6 +61,15 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
     //listening to events from this control panel
     passAnnoCloneRequest: function(anno){
         this.trigger('requestAnnotationClone', anno);
+    },
+
+
+    //Request approval/clone for all current annotations
+    approveAll: function(anno){
+        var _thisView = this;
+        this.model.annotations.each(function(model, index) {
+            _thisView.passAnnoCloneRequest(model);
+        });
     },
 
 

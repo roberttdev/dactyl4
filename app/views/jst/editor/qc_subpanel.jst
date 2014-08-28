@@ -3,14 +3,15 @@
         <div class="cp_button new_group">+ New Group</div>
         <div class="cp_button save_exit">Save & Exit</div>
         <div class="cp_button drop_claim">Drop</div>
+        <div class="cp_button reject">Reject</div>
         <div class="cp_button mark_complete">Complete</div>
     </div>
 </div>
 <div class="control_panel_title gradient_light group_navigation"></div>
 
-<div class="header">Groups</div>
+<div class="header"><%=_.t('groups')%></div>
 <div id="group_section"></div>
 <hr>
-<div class="header">Data Points <%if(template_name != null){%>(Template: <%=template_name%>)<%}%></div>
+<div class="header"><%=_.t('data_points')%> <%if(template_name != null){%>(Template: <%=template_name%>)<%}%></div>
 <div id="annotation_section"></div>
 

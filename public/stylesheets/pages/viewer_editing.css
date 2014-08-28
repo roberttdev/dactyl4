@@ -173,13 +173,19 @@
         width: 70px;
     }
 
+    #control_panel .mark_complete {
+        width: 60px;
+    }
+
+    #control_panel .reject {
+        width: 50px;
+    }
+
     #control_panel .drop_claim {
         width: 35px;
     }
 
-    #control_panel .mark_complete {
-        width: 60px;
-    }
+
 
     #control_panel .group_title {
         font-size: 14px;
@@ -434,6 +440,11 @@ div input.error {
 
 .DV-annotationTextArea {
   border: 1px solid #ccc;
+}
+
+.approve_all {
+    margin-left: 10px;
+    margin-top: 10px;
 }
 
 /* Hide annotations while redacting. ---------------------------------------*/

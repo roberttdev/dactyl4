@@ -229,6 +229,15 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
     },
 
 
+    //hasTitle: Returns whether an annotation with this title already exists
+    hasTitle: function(title) {
+        for(var i=0; i < this.pointViewList.length; i++){
+            if( this.pointViewList[i].model.get('title') == title ){ return true; }
+        }
+        return false;
+    },
+
+
     //handleMarkCompleteError: If error returned from attempted mark complete, notify and highlight field
     handleMarkCompleteError: function(responseData) {
         this.reloadPoints(responseData.data.group_id, responseData.data.id);
