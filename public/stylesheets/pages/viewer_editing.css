@@ -318,6 +318,10 @@ div input.error {
     overflow: auto;
 }
 
+.qc_editor_view.de_review_view {
+    width: 400px;
+}
+
 
 /*---------------------------- The Section Editor ----------------------------*/
 #section_editor, #annotation_editor, div.dialog {

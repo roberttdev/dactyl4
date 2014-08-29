@@ -51,9 +51,11 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
 
   //Pass along group clone request and reload this view to cloned group
   handleGroupCloneRequest: function(group) {
-      _thisView = this;
+      var _thisView = this;
       group.clone(this.qcSubpanel.model.id, function(response){
-          _thisView.qcSubpanel.reloadPoints(response.id)
+         _thisView.qcSubpanel.save(function() {
+             _thisView.qcSubpanel.reloadPoints(response.id);
+         });
       });
   },
 

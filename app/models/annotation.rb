@@ -122,12 +122,9 @@ class Annotation < ActiveRecord::Base
     data['image_url'] = document.page_image_url_template if opts[:include_image_url]
     data['published_url'] = document.published_url || document.document_viewer_url(:allow_ssl => true) if opts[:include_document_url]
     data['account_id'] = account_id
-    data['groups'] = []
     data['approved'] = qc_approved if document.in_qc?
     data['approved'] = qa_approved if document.in_qa?
-    self.annotation_groups.select(:group_id).each do |anno_group|
-      data['groups'].push(anno_group.group_id)
-    end
+    data['groups'] = status_filtered_groups
 
     if author
       data.merge!({
@@ -149,6 +146,15 @@ class Annotation < ActiveRecord::Base
       'account_id'      => account_id,
       'organization_id' => organization_id
     })
+  end
+
+  #Return groups this annotation belongs to, filtered based on rules related to doc status.  Returns groups used by viewer for each status.
+  def status_filtered_groups
+    whereClause = {"groups.account_id" => account_id} if document.in_de?
+    whereClause = {"groups.account_id" => [document.de_one_id, document.de_two_id]} if document.in_qc?
+    whereClause = {"groups.account_id" => document.qc_id} if document.in_qa?
+
+    annotation_groups.includes(:group).where(whereClause).pluck(:group_id)
   end
 
   private
