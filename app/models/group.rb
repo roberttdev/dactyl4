@@ -48,7 +48,7 @@ class Group < ActiveRecord::Base
             FROM get_descendants(#{sqlID}) grps
             INNER JOIN annotation_groups ag ON grps.group_id=ag.group_id
             INNER JOIN annotations anno ON ag.annotation_id=anno.id
-            WHERE anno.#{approvedField} IS NOT FALSE"
+            WHERE anno.#{approvedField} IS NOT TRUE"
       annos = ActiveRecord::Base.connection.exec_query(sql)
       unapproved = annos.count
     else
