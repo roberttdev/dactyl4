@@ -66,7 +66,7 @@ dc.ui.ViewerQcSubpanel = dc.ui.ViewerBaseControlPanel.extend({
 
   //Send document back to DE
   rejectDE: function(){
-      dc.ui.QCRejectDialog.open();
+      dc.ui.QCRejectDialog.open(this.model.get('document_id'));
   },
 
 

@@ -64,7 +64,7 @@ dc.ui.QCRejectDialog = dc.ui.Dialog.extend({
   // This static method is used for conveniently opening the dialog for
   // any selected template.
   open : function(document_id) {
-    new dc.ui.QCRejectDialog();
+    new dc.ui.QCRejectDialog(document_id);
   }
 
 });

@@ -263,7 +263,7 @@ class DocumentsController < ApplicationController
 
   #Mark the current user's work on the document as completed
   def mark_complete
-    doc = current_document(true)
+    doc = Document.find(params[:id].to_i)
     return forbidden if !doc.has_open_claim?(current_account)
 
     errorResp = doc.mark_complete(current_account)
@@ -278,8 +278,11 @@ class DocumentsController < ApplicationController
   #QC rejection of DE work
   def reject_de
     doc = current_document(true)
-    doc.reject_de(params[:de])
-    json_response
+    if !doc.reject_de(current_account.id, params[:de])
+      json 'You do not have access to reject data entry on this document.', 500
+    else
+      json_response
+    end
   end
 
 

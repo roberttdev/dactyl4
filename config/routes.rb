@@ -67,12 +67,16 @@ DC::Application.routes.draw do
     collection { post :present_order }
   end
 
+  #Reject DE
+  put '/documents/:id/reject_de' => 'documents#reject_de'
+
   #Bulk Annotation Submit
   put '/documents/:document_id/annotations' => 'annotations#bulk_update'
   put '/documents/:document_id/groups/:group_id/annotations' => 'annotations#bulk_update'
 
   #Un-QC
   put '/groups/:group_id/annotations/:id/unapprove' => 'annotations#unapprove'
+
 
   resources :documents do
 

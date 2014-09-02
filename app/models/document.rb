@@ -716,30 +716,34 @@ class Document < ActiveRecord::Base
 
 
   #Cancel QC and reject one or more DE's work; return status to DE
-  def reject_de(de_num)
-    #Generate values for actions (anno/group delete step, doc status update step)
-    delWhere = {document_id: doc.id, account_id: [qc_id]}
-    upValues = {qc_id: null}
-    case de_num
-      when 1
-        delWhere[:account_id] << de_one_id
-        upValues[:de_one_id] = de_two_id
-        upValues[:de_two_id] = null
-        upValues[:status] = STATUS_DE1
-      when 2
-        delWhere[:account_id] << de_two_id
-        upValues[:de_two_id] = null
-        upValues[:status] = STATUS_DE1
-      when 3
-        delWhere[:account_id] << de_one_id << de_two_id
-        upValues[:de_one_id] = null
-        upValues[:de_two_id] = null
-        upValues[:status] = STATUS_NEW
-    end
+  def reject_de(account_id, de_num)
+    #Check that user is QC or QA, and therefore has permission
+    if( account_id == qc_id || account_id == qa_id )
+      #Generate values for actions (anno/group delete step, doc status update step)
+      delWhere = {document_id: id, account_id: [qc_id]}
+      upValues = {qc_id: nil, de_two_id: nil, de_two_complete: nil}
+      case de_num
+        when "1"
+          delWhere[:account_id] << de_one_id
+          upValues[:de_one_id] = de_two_id
+          upValues[:status] = STATUS_DE1
+        when "2"
+          delWhere[:account_id] << de_two_id
+          upValues[:status] = STATUS_DE1
+        when "3"
+          delWhere[:account_id] << de_one_id << de_two_id
+          upValues[:de_one_id] = nil
+          upValues[:status] = STATUS_NEW
+          upValues[:de_one_complete] = nil
+      end
 
-    Annotation.destroy_all(delWhere)
-    Group.destroy_all(delWhere)
-    self.update_attributes(upValues)
+      Annotation.destroy_all(delWhere)
+      Group.destroy_all(delWhere)
+      self.update_attributes(upValues)
+      annotations.update_all({qc_approved: false})
+    else
+      return false
+    end
   end
 
 
