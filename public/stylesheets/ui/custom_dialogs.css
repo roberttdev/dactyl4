@@ -10,6 +10,11 @@
     .docalog .row.tall, .tempalog .row.tall {
       height: 90px;
     }
+
+    #qc_complete_dialog .row {
+        font-size: 11px;
+    }
+
     .docalog .row.last, .tempalog .row.last {
       margin-bottom: 0;
     }
@@ -44,12 +49,16 @@
     position: absolute;
     left: 120px;
   }
+  #qc_complete_dialog select {
+    left: 150px;
+  }
 .tempalog .radio_row{
     background-color: #000;
     font-size: 11px;
     color: #ccc;
     text-align: left;
     left: 0;
+    height: 25px;
 }
 .tempalog .radio_row input {
     margin-left: 180px;

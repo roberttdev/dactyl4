@@ -710,6 +710,13 @@ class Document < ActiveRecord::Base
           return nil
         end
       when STATUS_IN_QC
+        self.update_attributes({
+          :de_one_rating => de_one_rating,
+          :de_two_rating => de_two_rating,
+          :qc_note       => qc_note,
+          :status        => STATUS_READY_QA
+        })
+        return nil
       when STATUS_IN_QA
     end
   end
@@ -765,14 +772,16 @@ class Document < ActiveRecord::Base
         self.update({status: STATUS_IN_QA, qa_id: account.id})
     end
 
-    #Create a base group for this user
-    Group.create({
-        :name => 'Home',
-        :parent_id => nil,
-        :document_id => self.id,
-        :account_id => account.id,
-        :base => true
-    })
+    #Create a base group for the user in group-creating statuses
+    if( self.status <= STATUS_READY_QC )
+      Group.create({
+          :name => 'Home',
+          :parent_id => nil,
+          :document_id => self.id,
+          :account_id => account.id,
+          :base => true
+      })
+    end
   end
 
   def asset_store

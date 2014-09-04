@@ -152,6 +152,7 @@
   - close_while_text_reprocess: The text is being processed. Please close this document.
   - collaboration: Collaboration
   - collaborators: Collaborator
+  - complete_qc: Mark Quality Control Complete
   - confirm_drop_claim: Are you sure you want to drop this document?  You will lose all of your work.
   - confirm_group_delete: Are you sure you want to delete this group?  Your subgroups and data points will be lost.
   - confirm_mark_complete: Are you sure you want to mark your work as complete?
@@ -172,6 +173,8 @@
   - data_points: Data Points
   - date: " Dates"
   - date_uploaded: Date Uploaded
+  - de_left: Data Entry 1 (Left)
+  - de_right: Data Entry 2 (Right)
   - default_document_language: Default Document Language
   - delete: Delete
   - delete_documents:
@@ -304,6 +307,7 @@
   - explain_disable_account: "%1$s will not be able to log in to DocumentCloud. Public
       documents and annotations provided by %1$s will remain available. %2$sContact
       support%3$s to completely purge %1$s's account."
+  - explain_rating_error: Please leave a note to explain any rating lower than 4.
   - export: Export
   - export_to_overview_explain: You are about to export to Overview. You must create
       an Overview account, and you must provide Overview with your DocumentCloud username
@@ -313,6 +317,7 @@
       on our list of %sfeatured reporting%s.
   - featured_reporting_list: You can find examples of embedded searches on our list
       of %sfeatured reporting%s.
+  - file_note: Note
   - file_uploading: File Uploading
   - filter: Filter
   - finish: Finish
@@ -520,9 +525,7 @@
   - reenable: Re-enable
   - reject_de: Reject Data Entry
   - reject_de_both: Both Data Entry Users
-  - reject_de_left: Data Entry 1 (Left Side)
   - reject_de_not_selected: You have not selected a user to reject.
-  - reject_de_right: Data Entry 2 (Right Side)
   - reject_de_text: Please choose which data entry user's work you would like to reject. This user's work and all current QC work will be deleted.
   - related_article_url: Source Reference
   - related_article_url_help: Providing the URL of the article that references this
@@ -566,6 +569,7 @@
   - resend_instructions: Resend Instructions
   - resend_welcome_email: Resend Welcome Email
   - restricted: Restricted
+  - review_de_instruct: Please review the Data Entry work for each user.
   - review_x_documents:
     - Review "%2$s" on DocumentCloud
     - Review %d documents on DocumentCloud

@@ -266,6 +266,13 @@ class DocumentsController < ApplicationController
     doc = Document.find(params[:id].to_i)
     return forbidden if !doc.has_open_claim?(current_account)
 
+    #Pull completion-related data and attach it to doc
+    if doc.in_qc?
+      doc.de_one_rating = params[:de_one_rating]
+      doc.de_two_rating = params[:de_two_rating]
+      doc.qc_note = params[:qc_note]
+    end
+
     errorResp = doc.mark_complete(current_account)
     if errorResp
       json errorResp, 500

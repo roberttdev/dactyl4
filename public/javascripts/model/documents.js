@@ -219,7 +219,12 @@ dc.model.Document = Backbone.Model.extend({
 
   //Request to mark current claim as completed
   markComplete: function(options) {
-      this.postJSON('/documents/mark_complete/' + this.id, {}, options['success'], options['error']);
+      this.postJSON(
+          '/documents/mark_complete/' + this.id,
+          JSON.stringify(options['data']),
+          options['success'],
+          options['error']
+        );
   },
 
   // Inspect.

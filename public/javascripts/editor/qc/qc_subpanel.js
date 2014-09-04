@@ -80,6 +80,13 @@ dc.ui.ViewerQcSubpanel = dc.ui.ViewerBaseControlPanel.extend({
   //Pass group delete notification up
   handleGroupDelete: function(group) {
       this.trigger('groupDeleted', group);
+  },
+
+
+  //Handle click of 'mark complete' button
+  markComplete: function(){
+      var _thisView = this;
+      this.save(function(){ dc.ui.QCCompleteDialog.open(_thisView.docModel); });
   }
 
 });
