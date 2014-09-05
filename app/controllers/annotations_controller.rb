@@ -86,14 +86,14 @@ class AnnotationsController < ApplicationController
   end
 
   def bulk_update
-    group_id = params[:group_id]
-    #If no group ID passed, use base group
-    group_id = Group.where({document_id: params[:document_id], account_id: current_account.id, base: true}).first.id if group_id.nil?
-
     doc = Document.find(params[:document_id])
+    group_id = params[:group_id]
+    account_id = doc.in_qa? ? doc.qc_id : current_account.id
+    #If no group ID passed, use base group
+    group_id = Group.where({document_id: doc.id, account_id: account_id, base: true}).first.id if group_id.nil?
 
     params[:bulkData].each do |field|
-      submitHash = pick(field, :document_id, :page_number, :title, :content, :location, :templated)
+      submitHash = pick(field, :document_id, :page_number, :title, :content, :location, :templated, :qa_note)
       submitHash[:access] = DC::Access::PUBLIC
       submitHash[:location] = submitHash[:location] ? submitHash[:location][:image] : nil
       submitHash[:qc_approved] = field[:approved] if doc.in_qc?

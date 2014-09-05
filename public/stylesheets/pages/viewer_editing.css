@@ -209,12 +209,12 @@
         font-weight: bold;
         margin-left: 40px;
         font-size: 14px;
-        cursor: pointer;
     }
 
     .group_name {
         display: inline-block;
         width: 200px;
+        cursor: pointer;
     }
 
     .edit_group {
@@ -222,28 +222,31 @@
         margin-bottom: 7px;
     }
 
-    .clone_item {
+    .editor_icon {
         display: inline-block;
         width: 16px;
         height: 16px;
-        background: url(/images/embed/icons/copy.png) no-repeat center center;
         cursor: pointer;
+    }
+
+    .clone_item {
+        background: url(/images/embed/icons/copy.png) no-repeat center center;
     }
 
     .delete_item {
-        display: inline-block;
-        width: 16px;
-        height: 16px;
         background: url(/images/embed/icons/delete.png) no-repeat center center;
-        cursor: pointer;
     }
 
     .create_annotation {
-        display: inline-block;
-        width: 16px;
-        height: 16px;
         background: url(/images/embed/icons/tag_yellow_16.png) no-repeat center center;
-        cursor: pointer;
+    }
+
+    .approve_item {
+        background: url(/images/embed/icons/thumb-up-icon.png) no-repeat center center;
+    }
+
+    .reject_item {
+        background: url(/images/embed/icons/thumb-down-icon.png) no-repeat center center;
     }
 
     .row_status {

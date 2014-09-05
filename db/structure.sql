@@ -143,7 +143,8 @@ CREATE TABLE annotations (
     moderation_approval boolean,
     templated boolean DEFAULT false,
     qc_approved boolean,
-    qa_approved boolean
+    qa_approved boolean,
+    qa_note text
 );
 
 
@@ -1744,4 +1745,6 @@ INSERT INTO schema_migrations (version) VALUES ('20140813163126');
 INSERT INTO schema_migrations (version) VALUES ('20140814194013');
 
 INSERT INTO schema_migrations (version) VALUES ('20140904170250');
+
+INSERT INTO schema_migrations (version) VALUES ('20140905183032');
 

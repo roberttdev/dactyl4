@@ -2,6 +2,8 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
 
   waitingForClone:  false,
   showEdit:         false,
+  showApprove:      false,
+  showReject:       false,
 
   events : {
       'click .annotation_listing'   : 'prepareForAnnotation',
@@ -25,6 +27,9 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
         title:          this.model.get('title') ? this.model.get('title').substring(0,49) : '(no title)',
         content:        this.model.get('content') ? this.model.get('content').substring(0,49) : ''
     }));
+
+    if( !this.showApprove ){ this.$('.approve_item').hide(); }
+    if( !this.showReject ){ this.$('.reject_item').hide(); }
 
     return this;
   },

@@ -6,11 +6,12 @@ class GroupsController < ApplicationController
 
     if doc.in_de?
         accountId = current_account.id
-    end
-    if doc.in_qc?
+    elsif doc.in_qc?
         accountId = doc.de_one_id if params[:de] == "1"
         accountId = doc.de_two_id if params[:de] == "2"
         accountId = doc.qc_id if params[:qc] == "true"
+    elsif doc.in_qa?
+        accountId = doc.qc_id
     end
 
     group = Group.includes(:children, :group_template)

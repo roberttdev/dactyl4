@@ -33,6 +33,8 @@ class Annotation < ActiveRecord::Base
     case doc_status
       when STATUS_DE1, STATUS_DE2
         access << "annotations.account_id = #{account.id}"
+      when STATUS_IN_QA
+        access << "qc_approved IS TRUE"
     end
 
     where( "(#{access.join(' or ')})" ).readonly(false) if access.size > 0
