@@ -98,6 +98,7 @@ class AnnotationsController < ApplicationController
       submitHash[:location] = submitHash[:location] ? submitHash[:location][:image] : nil
       submitHash[:qc_approved] = field[:approved] if doc.in_qc?
       submitHash[:qa_approved] = field[:approved] if doc.in_qa?
+      submitHash[:qa_note] = field[:qa_note] == '' ? nil : field[:qa_note]
       if field[:id].nil?
         submitHash[:account_id] = current_account.id
         anno = Annotation.create(submitHash)

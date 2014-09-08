@@ -4,6 +4,7 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
   showEdit:         false,
   showApprove:      false,
   showReject:       false,
+  showNote:         false,
 
   events : {
       'click .annotation_listing'   : 'prepareForAnnotation',
@@ -30,6 +31,7 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
 
     if( !this.showApprove ){ this.$('.approve_item').hide(); }
     if( !this.showReject ){ this.$('.reject_item').hide(); }
+    if( !this.showNote ){ this.$('.point_note').hide(); }
 
     return this;
   },

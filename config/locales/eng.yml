@@ -132,6 +132,7 @@
   - before_continue: Before continuing, you can take a moment to %s
   - black: black
   - blank_field_error: A field is blank.  Please enter a value or delete it.
+  - blank_note_error: Please enter a note explaining the rejection.
   - broken_document: Broken document
   - by_date: by date
   - by_length: by length
@@ -527,6 +528,8 @@
   - reject_de_both: Both Data Entry Users
   - reject_de_not_selected: You have not selected a user to reject.
   - reject_de_text: Please choose which data entry user's work you would like to reject. This user's work and all current QC work will be deleted.
+  - reject_point: Reject Data Point
+  - reject_point_explanation:  Please enter a rejection reason.
   - related_article_url: Source Reference
   - related_article_url_help: Providing the URL of the article that references this
       document will enable a "Related Article" link within the document viewer. Many

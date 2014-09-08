@@ -249,6 +249,10 @@
         background: url(/images/embed/icons/thumb-down-icon.png) no-repeat center center;
     }
 
+    .point_note {
+        background: url(/images/embed/icons/tag_yellow_16.png) no-repeat center center;
+    }
+
     .row_status {
         display: inline-block;
         width: 16px;

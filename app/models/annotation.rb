@@ -126,6 +126,7 @@ class Annotation < ActiveRecord::Base
     data['account_id'] = account_id
     data['approved'] = qc_approved if document.in_qc?
     data['approved'] = qa_approved if document.in_qa?
+    data['qa_note'] = qa_note
     data['groups'] = status_filtered_groups
 
     if author

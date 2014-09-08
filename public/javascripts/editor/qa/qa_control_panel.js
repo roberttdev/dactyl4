@@ -5,9 +5,9 @@ dc.ui.ViewerQAControlPanel = dc.ui.ViewerBaseControlPanel.extend({
 
     //Initialize: base model for this view is the group that is being displayed
     initialize : function() {
-    dc.ui.ViewerBaseControlPanel.prototype.initialize.apply(this, arguments);
+        dc.ui.ViewerBaseControlPanel.prototype.initialize.apply(this, arguments);
 
-    this.listenTo(dc.app.editor.annotationEditor, 'annotationSelected', this.handleAnnotationSelect);
+        this.listenTo(dc.app.editor.annotationEditor, 'annotationSelected', this.handleAnnotationSelect);
     },
 
 
@@ -35,7 +35,6 @@ dc.ui.ViewerQAControlPanel = dc.ui.ViewerBaseControlPanel.extend({
       //Annotations
       this.model.annotations.each(function(model, index) {
           _anno = _deView.addDataPoint(model, (model.id == annoId));
-          _deView.listenTo(_anno, 'removeFromQC', _deView.passRemoveFromQC);
       });
       this.$('#annotation_section').html(_.pluck(this.pointViewList,'el'));
 
