@@ -60,7 +60,7 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
     //Listens for an annotation to request to be cloned and passes it to anything
     //listening to events from this control panel
     passAnnoCloneRequest: function(anno){
-        this.trigger('requestAnnotationClone', anno);
+        this.trigger('requestAnnotationClone', anno, this.model.id);
     },
 
 

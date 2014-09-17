@@ -305,7 +305,11 @@ class Document < ActiveRecord::Base
   end
 
   def ordered_annotations(account)
-    self.annotations.accessible(self.status, account).order('page_number asc, location asc nulls first')
+    whereClause = {"annotation_groups.created_by" => account.id} if in_de?
+    whereClause = {"annotation_groups.created_by" => [de_one_id, de_two_id]} if in_qc?
+    whereClause = {"annotation_groups.created_by" => qc_id} if in_qa?
+
+    self.annotations.includes(:annotation_groups).where(whereClause).order('page_number asc, location asc nulls first')
   end
 
   def annotations_with_authors(account, annotations=nil)
@@ -643,7 +647,7 @@ class Document < ActiveRecord::Base
   def has_open_claim?(account)
     if account
       if self.status == STATUS_DE1 || self.status == STATUS_DE2
-        return true if (self.de_one_id == account.id && !self.de_one_complete) || (self.de_two_id && !self.de_two_complete)
+        return true if (self.de_one_id == account.id && !self.de_one_complete) || (self.de_two_id == account.id && !self.de_two_complete)
       end
 
       return true if self.status == STATUS_IN_QC && self.qc_id == account.id
@@ -684,6 +688,8 @@ class Document < ActiveRecord::Base
   #Checks to see if current user's work can be marked as completed; is so, does it, if not, returns first field needing
   #to be addressed
   def mark_complete(account)
+    history_status = 0
+
     case self.status
       when STATUS_DE1, STATUS_DE2
         #Check that there are any annotations for this user
@@ -703,11 +709,17 @@ class Document < ActiveRecord::Base
           }
         else
           updateFields = {}
-          updateFields[:de_one_complete] = true if self.de_one_id==account.id
-          updateFields[:de_two_complete] = true if self.de_two_id==account.id
+          if self.de_one_id==account.id
+            updateFields[:de_one_complete] = true
+            history_status = STATUS_DE1
+          end
+          if self.de_two_id==account.id
+            updateFields[:de_two_complete] = true
+            history_status = STATUS_DE2
+          end
           updateFields[:status] = STATUS_READY_QC if (self.de_one_id==account.id && self.de_two_complete) || (self.de_two_id==account.id && self.de_one_complete)
           self.update updateFields
-          return nil
+
         end
       when STATUS_IN_QC
         self.update_attributes({
@@ -716,9 +728,18 @@ class Document < ActiveRecord::Base
           :qc_note       => qc_note,
           :status        => STATUS_READY_QA
         })
-        return nil
+
       when STATUS_IN_QA
     end
+
+    #Add history event
+    history_status = self.status if history_status == 0
+    FileStatusHistory.create({
+        :user => account.id,
+        :status => history_status
+    })
+
+    return nil
   end
 
 
@@ -773,7 +794,7 @@ class Document < ActiveRecord::Base
     end
 
     #Create a base group for the user in group-creating statuses
-    if( self.status <= STATUS_READY_QC )
+    if( self.status <= STATUS_IN_QC )
       Group.create({
           :name => 'Home',
           :parent_id => nil,
@@ -1111,6 +1132,14 @@ class Document < ActiveRecord::Base
 
   def in_qa?
     status == STATUS_IN_QA
+  end
+
+  def in_supp_de?
+    status == STATUS_IN_SUPP_DE
+  end
+
+  def in_supp_qc?
+    status == STATUS_IN_SUPP_QC
   end
 
   private

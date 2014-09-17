@@ -6,8 +6,6 @@ class Group < ActiveRecord::Base
   has_many :annotation_groups, :dependent => :destroy
   has_many :annotations, :through => :annotation_groups
 
-  before_destroy :unapprove_annotations, :prepend => true
-
   def attributes
     super.merge('unapproved_count' => nil)
   end
@@ -40,15 +38,13 @@ class Group < ActiveRecord::Base
     doc = Document.find(document_id)
     approvedField = ""
     approvedField = "qc_approved" if doc.in_qc?
-    approvedField = "qa_approved" if doc.in_qa?
 
     if approvedField != ""
       sqlID = ActiveRecord::Base.connection.quote(id)
-      sql = "SELECT anno.id
+      sql = "SELECT ag.id
             FROM get_descendants(#{sqlID}) grps
             INNER JOIN annotation_groups ag ON grps.group_id=ag.group_id
-            INNER JOIN annotations anno ON ag.annotation_id=anno.id
-            WHERE anno.#{approvedField} IS NOT TRUE"
+            WHERE ag.approved_count=0"
       annos = ActiveRecord::Base.connection.exec_query(sql)
       unapproved = annos.count
     else
@@ -102,10 +98,4 @@ class Group < ActiveRecord::Base
     cloned
   end
 
-  #Remove approval if in status dealing with approvals
-  def unapprove_annotations
-    doc = Document.find(document_id)
-    annotations.update_all({qc_approved: false}) if doc.in_qc?
-    annotations.update_all({qa_approved: false}) if doc.in_qa?
-  end
 end

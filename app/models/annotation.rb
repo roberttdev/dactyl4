@@ -118,16 +118,18 @@ class Annotation < ActiveRecord::Base
     "/documents/#{document.id}/annotations/#{id}.js"
   end
 
+  #Canonical view of annotation is used by Document-Viewer side (use as_json for DocumentCloud)
   def canonical(opts={})
     data = {'id' => id, 'page' => page_number, 'title' => title, 'content' => content, 'access' => access_name.to_s }
     data['location'] = {'image' => location} if location
     data['image_url'] = document.page_image_url_template if opts[:include_image_url]
     data['published_url'] = document.published_url || document.document_viewer_url(:allow_ssl => true) if opts[:include_document_url]
     data['account_id'] = account_id
-    data['approved'] = qc_approved if document.in_qc?
-    data['approved'] = qa_approved if document.in_qa?
-    data['qa_note'] = qa_note
-    data['groups'] = status_filtered_groups
+
+    #If requested, pass anno+group relationship info
+    if !opts[:skip_groups]
+      data['groups'] = annotation_groups.map {|ag| ag.approval_json(document.in_qa?)}
+    end
 
     if author
       data.merge!({
@@ -143,22 +145,24 @@ class Annotation < ActiveRecord::Base
     document.reset_public_note_count
   end
 
+  #As_json view of annotation is used by DocumentCloud side (use canonical for Document-Viewer)
+  #This view flattens an annotation with a specific AnnotationGroup relationship.  The query that uses this JSON format will need to isolate
+  #a single AG reference for each annotation.
   def as_json(opts={})
-    canonical.merge({
-      'document_id'     => document_id,
-      'account_id'      => account_id,
-      'organization_id' => organization_id
+    anno_group = annotation_groups[0]
+    opts.merge({:skip_groups => true})
+
+    canonical(opts).merge({
+      'document_id'         => document_id,
+      'account_id'          => account_id,
+      'organization_id'     => organization_id,
+      'annotation_group_id' => anno_group.id,
+      'approved_count'      => anno_group.approved_count,
+      'qa_approved_by'      => anno_group.qa_approved_by,
+      'qa_note'             => anno_group.qa_reject_note
     })
   end
 
-  #Return groups this annotation belongs to, filtered based on rules related to doc status.  Returns groups used by viewer for each status.
-  def status_filtered_groups
-    whereClause = {"groups.account_id" => account_id} if document.in_de?
-    whereClause = {"groups.account_id" => [document.de_one_id, document.de_two_id]} if document.in_qc?
-    whereClause = {"groups.account_id" => document.qc_id} if document.in_qa?
-
-    annotation_groups.includes(:group).where(whereClause).pluck(:group_id)
-  end
 
   private
 

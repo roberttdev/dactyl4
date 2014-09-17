@@ -296,8 +296,8 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
   },
 
   //Temporarily update view to mark annotation's state of approval
-  markApproval: function(anno_id, approved) {
-    currentDocument.api.markApproval(anno_id, approved);
+  markApproval: function(anno_id, group_id, approved) {
+    currentDocument.api.markApproval(anno_id, group_id, approved);
   },
 
   // Lazily create the page-specific div for persistent elements.

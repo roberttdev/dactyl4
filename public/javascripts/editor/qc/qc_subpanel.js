@@ -56,10 +56,12 @@ dc.ui.ViewerQcSubpanel = dc.ui.ViewerBaseControlPanel.extend({
   approveDEPoint: function(anno){
     if( this.hasTitle(anno.get('title')) ){
         dc.ui.Dialog.alert(_.t('duplicate_titles_fail'));
+        return false;
     }else {
-        anno.set({approved: true});
+        anno.set({based_on: anno.get('annotation_group_id')});
         var _view = this.createDataPointCopy(anno.attributes);
         this.listenTo(_view, 'removeFromQC', this.passRemoveFromQC);
+        return true;
     }
   },
 
@@ -70,10 +72,16 @@ dc.ui.ViewerQcSubpanel = dc.ui.ViewerBaseControlPanel.extend({
   },
 
 
-  //Pass removeFromQC event up the chain
-  passRemoveFromQC: function(anno) {
+  //Remove qc point model/view and pass removeFromQC event up the chain
+  passRemoveFromQC: function(annoView, group_id) {
+      var anno = annoView.model;
       this.model.annotations.remove(anno);
-      this.trigger('removeFromQC', anno);
+
+      for(var i=0; i < this.pointViewList.length; i++){
+        if( this.pointViewList[i].cid == annoView.cid ){ this.pointViewList.splice(i, 1); }
+      }
+
+      this.trigger('removeFromQC', anno, group_id);
   },
 
 

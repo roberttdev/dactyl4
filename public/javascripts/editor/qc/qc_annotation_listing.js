@@ -14,10 +14,9 @@ dc.ui.QCAnnotationListing = dc.ui.BaseAnnotationListing.extend({
     deletePoint: function() {
         var _thisAnno = this;
         this.model.unapprove({
-            type:       'qc',
             group_id:   this.group_id,
-            success:    function(){
-                    _thisAnno.trigger('removeFromQC', _thisAnno.model);
+            success:    function(response){
+                    _thisAnno.trigger('removeFromQC', _thisAnno, response.group_id);
                     $(_thisAnno.el).remove();
             }
         });

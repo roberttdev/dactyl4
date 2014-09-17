@@ -26,11 +26,11 @@ class GroupsController < ApplicationController
                     ancestry: true
                   })
 
-    responseJSON[:annotations] = Annotation.includes(:groups)
+    responseJSON[:annotations] = Annotation.includes(:annotation_groups)
       .where({
         :document_id => params[:document_id],
-        'groups.id' => group.id
-      })
+        'annotation_groups.group_id' => group.id
+      }).as_json()
 
     json responseJSON
   end
@@ -42,7 +42,11 @@ class GroupsController < ApplicationController
                       include: [:children, :group_template],
                       ancestry: true
                   })
-    responseJSON[:annotations] = Annotation.includes(:groups).where({:document_id => params[:document_id], 'groups.id' => params[:id]})
+    responseJSON[:annotations] = Annotation.includes(:annotation_groups)
+      .where({
+        :document_id => params[:document_id],
+        'annotation_groups.group_id' => params[:id]
+      }).as_json()
     json responseJSON
   end
 
@@ -70,12 +74,18 @@ class GroupsController < ApplicationController
         #doc = current_document
         #expire_page doc.canonical_cache_path if doc.cacheable?
         anno = Annotation.create({
-            :account_id   => current_account.id,
-            :document_id  => params[:document_id],
-            :title        => field.field_name,
-            :templated    => true
+          :account_id   => current_account.id,
+          :document_id  => params[:document_id],
+          :title        => field.field_name,
+          :templated    => true
         })
-        anno.groups << group
+
+        ag = AnnotationGroup.create({
+          :annotation_id  => anno.id,
+          :group_id       => group.id,
+          :created_by     => current_account.id,
+          :approved_count => 0
+        })
       end
     end
 

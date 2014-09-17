@@ -93,24 +93,45 @@ class AnnotationsController < ApplicationController
     group_id = Group.where({document_id: doc.id, account_id: account_id, base: true}).first.id if group_id.nil?
 
     params[:bulkData].each do |field|
-      submitHash = pick(field, :document_id, :page_number, :title, :content, :location, :templated, :qa_note)
+      submitHash = pick(field, :document_id, :page_number, :title, :content, :location, :templated)
       submitHash[:access] = DC::Access::PUBLIC
       submitHash[:location] = submitHash[:location] ? submitHash[:location][:image] : nil
-      submitHash[:qc_approved] = field[:approved] if doc.in_qc?
-      submitHash[:qa_approved] = field[:approved] if doc.in_qa?
-      submitHash[:qa_note] = field[:qa_note] == '' ? nil : field[:qa_note]
-      if field[:id].nil?
-        submitHash[:account_id] = current_account.id
-        anno = Annotation.create(submitHash)
-      else
-        anno = Annotation.update(field[:id], submitHash)
+
+      #In DE mode, create/update the base annotation
+      if doc.in_de? || doc.in_supp_de?
+        if field[:id].nil?
+          submitHash[:account_id] = current_account.id
+          anno = Annotation.create(submitHash)
+        else
+          submitHash[:account_id] = current_account.id
+          anno = Annotation.update(field[:id], submitHash)
+        end
       end
 
-      if anno.annotation_groups.where({:group_id => group_id}).size < 1
-       AnnotationGroup.create({
-            :group_id       => group_id,
-            :annotation_id  => anno.id
+      anno_group = AnnotationGroup.where({:annotation_id => field[:id], :group_id => group_id}).first if !field[:id].nil? #If not new anno, check for anno-group relationship
+      if field[:id].nil? || anno_group.nil?
+        #If anno not in group yet, add relationship
+        AnnotationGroup.create({
+            :group_id           => group_id,
+            :annotation_id      => !field[:id].nil? ? field[:id] : anno.id,
+            :created_by         => current_account.id,
+            :based_on           => field[:based_on] ? field[:based_on] : nil,
+            :approved_count   => 0
         })
+
+        #If based on a non-null AG relationship, update the count on that relationship
+        if field[:based_on]
+          ag = AnnotationGroup.find(field[:based_on])
+          ag.update_attributes({:approved_count => ag.approved_count + 1})
+        end
+      else
+        #Update with new data if in QA (only current status that needs to bother)
+        if doc.in_qa?
+          anno_group.update_attributes({
+            :qa_approved        => params[:qa_approved_by] ? params[:qa_approved_by] : nil,
+            :qa_reject_note     => params[:qa_reject_note] ? params[:qa_reject_note] : nil
+          })
+        end
       end
     end
     json Annotation.includes(:groups).where({:document_id => params[:document_id], 'groups.id' => group_id})
@@ -118,17 +139,19 @@ class AnnotationsController < ApplicationController
 
   #Remove approval for anno+group; if last group, removal approval for anno. Supported approval "type" parameter values: "qc","qa"
   def unapprove
-    anno = Annotation.find(params[:id])
-    doc = Document.find(anno.document_id)
-    type = params[:type]
-    ag_count = AnnotationGroup.joins(:group).where({:annotation_id => params[:id], 'groups.account_id' => doc[type + '_id']}).count
-    AnnotationGroup.destroy_all({group_id: params[:group_id], annotation_id: anno.id})
+    ag = AnnotationGroup.where({group_id: params[:group_id], annotation_id: params[:id]}).first
 
-    if ag_count <= 1
-      anno.update({type + '_approved' => false})
+    #Decrement anno count of based on AG relationship, if exists
+    based = {}
+    if ag.based_on
+      based = AnnotationGroup.find(ag.based_on)
+      based.update_attributes({:approved_count => based.approved_count - 1})
     end
 
-    json anno
+    ag.destroy
+
+    #Return data for the original relationship that the unapproved relationship was based on
+    json based
   end
 
   private

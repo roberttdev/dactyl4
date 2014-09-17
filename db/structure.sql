@@ -101,7 +101,12 @@ ALTER SEQUENCE accounts_id_seq OWNED BY accounts.id;
 CREATE TABLE annotation_groups (
     id integer NOT NULL,
     annotation_id integer,
-    group_id integer
+    group_id integer,
+    created_by integer,
+    qa_approved_by integer,
+    qa_reject_note text,
+    based_on integer,
+    approved_count integer
 );
 
 
@@ -141,10 +146,7 @@ CREATE TABLE annotations (
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
     moderation_approval boolean,
-    templated boolean DEFAULT false,
-    qc_approved boolean,
-    qa_approved boolean,
-    qa_note text
+    templated boolean DEFAULT false
 );
 
 
@@ -459,6 +461,38 @@ CREATE SEQUENCE featured_reports_id_seq
 --
 
 ALTER SEQUENCE featured_reports_id_seq OWNED BY featured_reports.id;
+
+
+--
+-- Name: file_status_histories; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE file_status_histories (
+    id integer NOT NULL,
+    status integer NOT NULL,
+    "user" integer NOT NULL,
+    created_at timestamp without time zone,
+    updated_at timestamp without time zone
+);
+
+
+--
+-- Name: file_status_histories_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE file_status_histories_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: file_status_histories_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE file_status_histories_id_seq OWNED BY file_status_histories.id;
 
 
 --
@@ -1050,6 +1084,13 @@ ALTER TABLE ONLY featured_reports ALTER COLUMN id SET DEFAULT nextval('featured_
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
+ALTER TABLE ONLY file_status_histories ALTER COLUMN id SET DEFAULT nextval('file_status_histories_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
 ALTER TABLE ONLY group_templates ALTER COLUMN id SET DEFAULT nextval('group_templates_id_seq'::regclass);
 
 
@@ -1237,6 +1278,14 @@ ALTER TABLE ONLY entity_dates
 
 ALTER TABLE ONLY featured_reports
     ADD CONSTRAINT featured_reports_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: file_status_histories_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY file_status_histories
+    ADD CONSTRAINT file_status_histories_pkey PRIMARY KEY (id);
 
 
 --
@@ -1747,4 +1796,8 @@ INSERT INTO schema_migrations (version) VALUES ('20140814194013');
 INSERT INTO schema_migrations (version) VALUES ('20140904170250');
 
 INSERT INTO schema_migrations (version) VALUES ('20140905183032');
+
+INSERT INTO schema_migrations (version) VALUES ('20140911183140');
+
+INSERT INTO schema_migrations (version) VALUES ('20140911185636');
 

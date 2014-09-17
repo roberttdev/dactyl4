@@ -43,9 +43,11 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
 
 
   //Hear clone request from DE panel; create anno in QC panel
-  passAnnoCloneRequest: function(anno){
-      this.qcSubpanel.approveDEPoint(anno);
-      dc.app.editor.annotationEditor.markApproval(anno.id, true);
+  passAnnoCloneRequest: function(anno, group_id){
+      if( this.qcSubpanel.approveDEPoint(anno) ){
+        anno.set({approved_count: anno.get('approved_count') + 1});
+      }
+      dc.app.editor.annotationEditor.markApproval(anno.id, group_id, true);
   },
 
 
@@ -61,8 +63,8 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
 
 
   //If anno is passed, have DV show it as unapproved.  Refresh DE views.
-  handleRemoveFromQC: function(anno){
-      if( !anno.get('approved') ){ dc.app.editor.annotationEditor.markApproval(anno.id, false); }
+  handleRemoveFromQC: function(anno, group_id){
+      if( anno ){ dc.app.editor.annotationEditor.markApproval(anno.id, group_id, false); }
       this.refreshDE(anno);
   },
 

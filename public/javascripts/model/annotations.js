@@ -21,7 +21,7 @@ dc.model.Annotation = Backbone.Model.extend({
             data        : JSON.stringify({'type': options['type']}),
             success     : function(response){
                             _thisModel.set({'approved': response.approved}, {silent: true});
-                            options['success'].call();
+                            if(options['success']){ options['success'](response); }
                           },
             error       : options['error']
         })
