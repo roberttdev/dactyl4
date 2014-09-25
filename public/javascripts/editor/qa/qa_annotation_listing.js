@@ -16,7 +16,7 @@ dc.ui.QAAnnotationListing = dc.ui.BaseAnnotationListing.extend({
         this.$('.delete_item').hide();
 
         if( this.model.get('approved') ) { this.setApprove(); }
-        if( this.model.get('qa_note') != null ){ this.setReject(); }
+        if( this.model.get('qa_reject_note') != null ){ this.setReject(); }
 
         return this;
     },
@@ -43,18 +43,17 @@ dc.ui.QAAnnotationListing = dc.ui.BaseAnnotationListing.extend({
 
 
     handleApprove: function(){
-        this.model.set({approved: true, qa_note: null});
-        dc.app.editor.annotationEditor.markApproval(this.model.id, true);
+        this.model.set({approved: true, qa_reject_note: null});
         this.setApprove(false);
+        this.trigger('qaAddress', this);
     },
 
 
     handleReject: function(){
         var _thisView = this;
         dc.ui.QARejectDialog.open(_thisView.model, function(){
-            _thisView.model.set({approved: false});
-            dc.app.editor.annotationEditor.markApproval(_thisView.model.id, false);
             _thisView.setReject();
+            _thisView.trigger('qaAddress', _thisView);
         });
     },
 

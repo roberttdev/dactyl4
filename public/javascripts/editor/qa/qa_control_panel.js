@@ -35,6 +35,7 @@ dc.ui.ViewerQAControlPanel = dc.ui.ViewerBaseControlPanel.extend({
       //Annotations
       this.model.annotations.each(function(model, index) {
           _anno = _deView.addDataPoint(model, (model.id == annoId));
+          _deView.listenTo(_anno, 'qaAddress', _deView.handleQAAddress);
       });
       this.$('#annotation_section').html(_.pluck(this.pointViewList,'el'));
 
@@ -64,5 +65,11 @@ dc.ui.ViewerQAControlPanel = dc.ui.ViewerBaseControlPanel.extend({
                 _deView.reloadPoints(anno.group_id, anno.id);
             });
         }
+    },
+
+
+    //If anno approved/rejected, mark as addressed in DV
+    handleQAAddress: function(annoView){
+        dc.app.editor.annotationEditor.markApproval(annoView.model.id, this.model.id, true);
     }
 });

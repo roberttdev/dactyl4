@@ -26,11 +26,7 @@ class GroupsController < ApplicationController
                     ancestry: true
                   })
 
-    responseJSON[:annotations] = Annotation.includes(:annotation_groups)
-      .where({
-        :document_id => params[:document_id],
-        'annotation_groups.group_id' => group.id
-      }).as_json()
+    responseJSON[:annotations] = Annotation.flattened_by_group(group.id).as_json()
 
     json responseJSON
   end
@@ -42,11 +38,7 @@ class GroupsController < ApplicationController
                       include: [:children, :group_template],
                       ancestry: true
                   })
-    responseJSON[:annotations] = Annotation.includes(:annotation_groups)
-      .where({
-        :document_id => params[:document_id],
-        'annotation_groups.group_id' => params[:id]
-      }).as_json()
+    responseJSON[:annotations] = Annotation.flattened_by_group(params[:id]).as_json()
     json responseJSON
   end
 

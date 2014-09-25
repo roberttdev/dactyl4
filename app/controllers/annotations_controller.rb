@@ -8,12 +8,18 @@ class AnnotationsController < ApplicationController
 
   # In the workspace, request a listing of annotations.
   def index
-    searchParams = {:document_id => params[:document_id], :account_id => current_account.id}
-    if(params['all'] != 'true')
-      searchParams[:group_id] = params[:group_id] != "" ? params[:group_id] : nil
+    doc = Document.find(params[:document_id])
+    if doc.in_de?
+      searchParams = {:document_id => params[:document_id], :account_id => current_account.id}
+      if(params['all'] != 'true')
+        searchParams[:group_id] = params[:group_id] != "" ? params[:group_id] : nil
+      end
+    elsif doc.in_qc?
+      #For QC, this is used for DV -- return only DE anno-groups
+      searchParams = {:document_id => params[:document_id], "annotation_groups.based_on" => nil}
     end
-    annotations = Annotation.where(searchParams)
-    json annotations
+    annotations = Annotation.includes(:annotation_groups).where(searchParams)
+    json annotations.map {|a| a.canonical }
   end
 
   def show
@@ -108,7 +114,7 @@ class AnnotationsController < ApplicationController
         end
       end
 
-      anno_group = AnnotationGroup.where({:annotation_id => field[:id], :group_id => group_id}).first if !field[:id].nil? #If not new anno, check for anno-group relationship
+      anno_group = AnnotationGroup.includes(:annotation_note).where({:annotation_id => field[:id], :group_id => group_id}).first if !field[:id].nil? #If not new anno, check for anno-group relationship
       if field[:id].nil? || anno_group.nil?
         #If anno not in group yet, add relationship
         AnnotationGroup.create({
@@ -127,10 +133,7 @@ class AnnotationsController < ApplicationController
       else
         #Update with new data if in QA (only current status that needs to bother)
         if doc.in_qa?
-          anno_group.update_attributes({
-            :qa_approved        => params[:qa_approved_by] ? params[:qa_approved_by] : nil,
-            :qa_reject_note     => params[:qa_reject_note] ? params[:qa_reject_note] : nil
-          })
+          anno_group.update_qa_status(field[:approved], field[:qa_reject_note], current_account.id, doc.id)
         end
       end
     end

@@ -44,7 +44,7 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
 
   //Hear clone request from DE panel; create anno in QC panel
   passAnnoCloneRequest: function(anno, group_id){
-      if( this.qcSubpanel.approveDEPoint(anno) ){
+      if( this.qcSubpanel.approveDEPoint(anno, group_id) ){
         anno.set({approved_count: anno.get('approved_count') + 1});
       }
       dc.app.editor.annotationEditor.markApproval(anno.id, group_id, true);

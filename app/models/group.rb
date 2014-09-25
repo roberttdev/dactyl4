@@ -37,14 +37,15 @@ class Group < ActiveRecord::Base
   def unapproved_count
     doc = Document.find(document_id)
     approvedField = ""
-    approvedField = "qc_approved" if doc.in_qc?
+    approvedField = "ag.approved_count=0" if doc.in_qc?
+    approvedField = "ag.qa_approved_by IS NULL" if doc.in_qa?
 
     if approvedField != ""
       sqlID = ActiveRecord::Base.connection.quote(id)
       sql = "SELECT ag.id
             FROM get_descendants(#{sqlID}) grps
             INNER JOIN annotation_groups ag ON grps.group_id=ag.group_id
-            WHERE ag.approved_count=0"
+            WHERE #{approvedField}"
       annos = ActiveRecord::Base.connection.exec_query(sql)
       unapproved = annos.count
     else

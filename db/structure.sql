@@ -104,7 +104,6 @@ CREATE TABLE annotation_groups (
     group_id integer,
     created_by integer,
     qa_approved_by integer,
-    qa_reject_note text,
     based_on integer,
     approved_count integer
 );
@@ -127,6 +126,40 @@ CREATE SEQUENCE annotation_groups_id_seq
 --
 
 ALTER SEQUENCE annotation_groups_id_seq OWNED BY annotation_groups.id;
+
+
+--
+-- Name: annotation_notes; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE annotation_notes (
+    id integer NOT NULL,
+    document_id integer,
+    annotation_group_id integer,
+    note text,
+    addressed boolean,
+    created_at timestamp without time zone,
+    updated_at timestamp without time zone
+);
+
+
+--
+-- Name: annotation_notes_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE annotation_notes_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: annotation_notes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE annotation_notes_id_seq OWNED BY annotation_notes.id;
 
 
 --
@@ -1021,6 +1054,13 @@ ALTER TABLE ONLY annotation_groups ALTER COLUMN id SET DEFAULT nextval('annotati
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
+ALTER TABLE ONLY annotation_notes ALTER COLUMN id SET DEFAULT nextval('annotation_notes_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
 ALTER TABLE ONLY annotations ALTER COLUMN id SET DEFAULT nextval('annotations_id_seq'::regclass);
 
 
@@ -1206,6 +1246,14 @@ ALTER TABLE ONLY accounts
 
 ALTER TABLE ONLY annotation_groups
     ADD CONSTRAINT annotation_groups_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: annotation_notes_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY annotation_notes
+    ADD CONSTRAINT annotation_notes_pkey PRIMARY KEY (id);
 
 
 --
@@ -1800,4 +1848,6 @@ INSERT INTO schema_migrations (version) VALUES ('20140905183032');
 INSERT INTO schema_migrations (version) VALUES ('20140911183140');
 
 INSERT INTO schema_migrations (version) VALUES ('20140911185636');
+
+INSERT INTO schema_migrations (version) VALUES ('20140919173300');
 

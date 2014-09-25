@@ -34,7 +34,7 @@ dc.ui.QARejectDialog = dc.ui.Dialog.extend({
     this._container = this.$('.custom');
 
     //Main template
-    this._container.html(this._mainJST({qa_point_note: this.annotation.get('qa_note') ? this.annotation.get('qa_note') : ''}));
+    this._container.html(this._mainJST({qa_point_note: this.annotation.get('qa_reject_note') ? this.annotation.get('qa_reject_note') : ''}));
 
     return this;
   },
@@ -49,7 +49,7 @@ dc.ui.QARejectDialog = dc.ui.Dialog.extend({
         return false;
     }
 
-    this.annotation.set({qa_note: qa_note});
+    this.annotation.set({approved: true, qa_reject_note: qa_note});
     this.success.call();
     this.close();
   }

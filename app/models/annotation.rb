@@ -46,6 +46,13 @@ class Annotation < ActiveRecord::Base
 
   scope :unrestricted, lambda{ where( :access => PUBLIC_LEVELS ) }
 
+  #Gets annos flattened with anno-group and/or note info, flattened to a particular group
+  scope :flattened_by_group, ->(group_id) {
+    includes(:annotation_groups => :annotation_note).where({
+        'annotation_groups.group_id' => group_id
+    })
+  }
+
   # Annotations are not indexed for the time being.
 
   # searchable do
@@ -158,8 +165,8 @@ class Annotation < ActiveRecord::Base
       'organization_id'     => organization_id,
       'annotation_group_id' => anno_group.id,
       'approved_count'      => anno_group.approved_count,
-      'qa_approved_by'      => anno_group.qa_approved_by,
-      'qa_note'             => anno_group.qa_reject_note
+      'approved'            => anno_group.qa_approved_by ? true : false,
+      'qa_reject_note'      => anno_group.association_cache.keys.include?(:annotation_note) ? anno_group.annotation_note.note : nil
     })
   end
 
