@@ -185,6 +185,9 @@
         width: 35px;
     }
 
+    #control_panel .file_note {
+        width: 60px;
+    }
 
 
     #control_panel .group_title {

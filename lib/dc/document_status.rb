@@ -15,6 +15,8 @@ module DC
     STATUS_IN_SUPP_DE = 10
     STATUS_READY_SUPP_QC = 11
     STATUS_IN_SUPP_QC = 12
+    STATUS_READY_SUPP_QA = 13
+    STATUS_IN_SUPP_QA = 14
 
     STATUS_MAP = {
         :status_new       => STATUS_NEW,
@@ -28,7 +30,9 @@ module DC
         :status_ready_supp_de   => STATUS_READY_SUPP_DE,
         :status_in_supp_de      => STATUS_IN_SUPP_DE,
         :status_ready_supp_qc   => STATUS_READY_SUPP_QC,
-        :status_in_supp_qc      => STATUS_IN_SUPP_QC
+        :status_in_supp_qc      => STATUS_IN_SUPP_QC,
+        :status_ready_supp_qa   => STATUS_READY_SUPP_QA,
+        :status_in_supp_qa      => STATUS_IN_SUPP_QA
     }
 
     #Which statuses are accessible to which roles
@@ -43,7 +47,7 @@ module DC
     #Returns what the status will be when the current status is claimed
     def claimed_status(current)
       case current
-        when STATUS_NEW, STATUS_DE1, STATUS_READY_QC, STATUS_READY_QA, STATUS_READY_SUPP_DE, STATUS_READY_SUPP_QC
+        when STATUS_NEW, STATUS_DE1, STATUS_READY_QC, STATUS_READY_QA, STATUS_READY_SUPP_DE, STATUS_READY_SUPP_QC, STATUS_READY_SUPP_QA
           return current+1
         else
           return nil

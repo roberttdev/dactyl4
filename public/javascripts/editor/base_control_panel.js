@@ -17,7 +17,8 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
         'click .drop_claim':        'dropClaim',
         'click .mark_complete':     'markComplete',
         'click .group_title':       'handleGroupClick',
-        'click .group_name':        'handleGroupClick'
+        'click .group_name':        'handleGroupClick',
+        'click .file_note':         'handleFileNote'
     },
 
 
@@ -253,5 +254,10 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
     //handleGroupDelete: blank placeholder to be overridden if class wishes to handle group deletes
     handleGroupDelete: function(group) {
         alert('Error: Control Panel implementation has not written delete handler!');
+    },
+
+    //handleFileNote: blank placeholder to be overridden if class wishes to handle file notes
+    handleFileNote: function(group) {
+        alert('Error: Control Panel implementation has not written file note handler!');
     }
 });

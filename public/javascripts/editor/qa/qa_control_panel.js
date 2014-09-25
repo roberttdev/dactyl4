@@ -50,6 +50,12 @@ dc.ui.ViewerQAControlPanel = dc.ui.ViewerBaseControlPanel.extend({
         this.model.annotations.pushAll({success: success});
     },
 
+    //Handle click of 'mark complete' button
+    markComplete: function(){
+        var _thisView = this;
+        this.save(function(){ dc.ui.QACompleteDialog.open(_thisView.docModel); });
+    },
+
 
     //When annotation selected in DV, find a data point that's waiting for DV input or matches the annotation and pass response to it.  If neither,
     //reload to a group that contains a point that matches it
@@ -71,5 +77,11 @@ dc.ui.ViewerQAControlPanel = dc.ui.ViewerBaseControlPanel.extend({
     //If anno approved/rejected, mark as addressed in DV
     handleQAAddress: function(annoView){
         dc.app.editor.annotationEditor.markApproval(annoView.model.id, this.model.id, true);
+    },
+
+
+    //Handle clicking of file note
+    handleFileNote: function(){
+        dc.ui.FileNoteDialog.open(_thisView.docModel);
     }
 });

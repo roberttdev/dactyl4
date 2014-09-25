@@ -366,7 +366,8 @@ CREATE TABLE documents (
     de_two_complete boolean,
     de_one_rating integer,
     de_two_rating integer,
-    qc_note text
+    qc_note text,
+    qa_note text
 );
 
 
@@ -1850,4 +1851,6 @@ INSERT INTO schema_migrations (version) VALUES ('20140911183140');
 INSERT INTO schema_migrations (version) VALUES ('20140911185636');
 
 INSERT INTO schema_migrations (version) VALUES ('20140919173300');
+
+INSERT INTO schema_migrations (version) VALUES ('20140925203205');
 

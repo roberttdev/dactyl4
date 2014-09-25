@@ -257,6 +257,7 @@ class DocumentsController < ApplicationController
     return forbidden if !doc.has_open_claim?(current_account)
 
     doc.drop_claim(current_account)
+
     json_response
   end
 
@@ -277,6 +278,11 @@ class DocumentsController < ApplicationController
     if errorResp
       json errorResp, 500
     else
+      #If doc went to Supp DE and user requested to be assigned to it, then do so
+      if doc.status == STATUS_READY_SUPP_DE && (params[:assign_to_me] == true)
+        doc.update_attributes({status: STATUS_IN_SUPP_DE, de_one_id: current_account.id})
+      end
+
       json_response
     end
   end
