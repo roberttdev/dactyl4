@@ -126,6 +126,7 @@
   - apply_fields_all_files: apply this description, source, and access level to all
       files
   - approve_all: Approve All
+  - assign_to_self: Assign To Self?
   - at: at
   - back: Back
   - bad_data_key: "%s cannot be used as a key"
@@ -507,6 +508,8 @@
   - published_documents: Published Documents
   - published_url: Published URL
   - publishing_embedding: Publishing & Embedding
+  - qa_complete_instruct: Since there are rejection notes attached to this document, it will be returned for supplemental data entry.  Do you want to assign it to yourself?
+  - qa_reject_notes: Rejection Notes
   - quality_assurance: Quality Assurance
   - quality_control: Quality Control
   - reader_workspace_language: Reader/Workspace Language
@@ -569,6 +572,7 @@
   - replace_page_x: Replace page %d
   - reprocess: Reprocess
   - reprocess_text: Reprocess Text
+  - request_supp_work: Request Supplemental Work
   - resend_instructions: Resend Instructions
   - resend_welcome_email: Resend Welcome Email
   - restricted: Restricted

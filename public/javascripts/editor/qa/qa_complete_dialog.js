@@ -12,12 +12,12 @@ dc.ui.QACompleteDialog = dc.ui.Dialog.extend({
   },
 
 
-  constructor : function(document) {
-    this.document    = document;
+  constructor : function(docModel) {
+    this.document    = docModel;
     this.events         = _.extend({}, this.events, this.dataEvents);
     this._mainJST = JST['qa_complete_dialog'];
     _.bindAll(this, 'render');
-    dc.ui.Dialog.call(this, {mode : 'custom', title : _.t('complete_qc'), saveText : _.t('save') });
+    dc.ui.Dialog.call(this, {mode : 'custom', title : _.t('request_supp_work'), saveText : _.t('save') });
 
     _thisView = this;
 
@@ -40,23 +40,10 @@ dc.ui.QACompleteDialog = dc.ui.Dialog.extend({
 
 
   save : function(success) {
-    _thisView = this;
-
-    //If any rating <= 3, and no note is given, error
-    var rating_one = parseInt($("#de_one_review").val());
-    var rating_two = parseInt($("#de_two_review").val());
-    var file_note = $('#qc_file_note').val();
-    if( (rating_one <= 3 || rating_two <= 3) && file_note.length == 0 ){
-        this.error(_.t('explain_rating_error'));
-        return false;
-    }
-
     //Trigger save
     this.document.markComplete({
         data: {
-            'de_one_rating': rating_one,
-            'de_two_rating': rating_two,
-            'qc_note':       file_note
+            'self_assign': $("#self_assign").prop('checked')
         },
         success: window.close
       });

@@ -7,6 +7,8 @@ dc.ui.ViewerQAControlPanel = dc.ui.ViewerBaseControlPanel.extend({
     initialize : function() {
         dc.ui.ViewerBaseControlPanel.prototype.initialize.apply(this, arguments);
 
+        _.bindAll(this, 'handleMarkCompleteResponse');
+
         this.listenTo(dc.app.editor.annotationEditor, 'annotationSelected', this.handleAnnotationSelect);
     },
 
@@ -50,10 +52,31 @@ dc.ui.ViewerQAControlPanel = dc.ui.ViewerBaseControlPanel.extend({
         this.model.annotations.pushAll({success: success});
     },
 
+
     //Handle click of 'mark complete' button
     markComplete: function(){
         var _thisView = this;
-        this.save(function(){ dc.ui.QACompleteDialog.open(_thisView.docModel); });
+        this.save(function() {
+            _thisView.docModel.markComplete({
+                data: {},
+                error: _thisView.handleMarkCompleteResponse,
+                success: window.close
+            });
+        });
+    },
+
+
+    //Handle error response from mark complete call
+    handleMarkCompleteResponse: function(responseData){
+        //If there is an error..
+        if( responseData.errorText == 'no_self_assigned' ){
+            //And that error is no self-assigned, open prompt window to collect it
+            dc.ui.QACompleteDialog.open(this.docModel);
+        }else{
+            //Otherwise, display error in alert and reload to any passed data
+            this.reloadPoints(responseData.data.group_id, responseData.data.id);
+            dc.ui.Dialog.alert(responseData.errorText);
+        }
     },
 
 
@@ -82,6 +105,6 @@ dc.ui.ViewerQAControlPanel = dc.ui.ViewerBaseControlPanel.extend({
 
     //Handle clicking of file note
     handleFileNote: function(){
-        dc.ui.FileNoteDialog.open(_thisView.docModel);
+        dc.ui.FileNoteDialog.open(this.docModel);
     }
 });

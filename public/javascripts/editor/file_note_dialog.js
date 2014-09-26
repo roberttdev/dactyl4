@@ -17,7 +17,7 @@ dc.ui.FileNoteDialog = dc.ui.Dialog.extend({
     this.events         = _.extend({}, this.events, this.dataEvents);
     this._mainJST = JST['file_note_dialog'];
     _.bindAll(this, 'render');
-    dc.ui.Dialog.call(this, {mode : 'custom', title : _.t('complete_qc'), saveText : _.t('save') });
+    dc.ui.Dialog.call(this, {mode : 'custom', title : _.t('qa_reject_notes'), saveText : _.t('save') });
 
     _thisView = this;
 
@@ -33,7 +33,7 @@ dc.ui.FileNoteDialog = dc.ui.Dialog.extend({
     this._container = this.$('.custom');
 
     //Main template
-    this._container.html(this._mainJST({}));
+    this._container.html(this._mainJST({qa_note: this.document.get('qa_note')}));
 
     return this;
   },
@@ -42,10 +42,10 @@ dc.ui.FileNoteDialog = dc.ui.Dialog.extend({
   save : function(success) {
     _thisView = this;
 
-    var file_note = $('#qa_file_note').val();
-
-    //Trigger save
-
+    this.document.set({qa_note: $('#qa_note').val()});
+    this.document.save({},{success: function() {
+        _thisView.close();
+    }});
   }
 
 }, {

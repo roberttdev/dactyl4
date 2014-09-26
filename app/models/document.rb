@@ -686,22 +686,22 @@ class Document < ActiveRecord::Base
       when STATUS_IN_QA
         annotation_notes.destroy_all
         AnnotationGroup.joins(:group).where({"groups.document_id" => self.id}).update_all({qa_approved_by: nil})
-        self.update({status: STATUS_READY_QA, qa_id: nil})
+        self.update({status: STATUS_READY_QA, qa_id: nil, qa_note: nil})
     end
   end
 
   #Checks to see if current user's work can be marked as completed; is so, does it, if not, returns first field needing
   #to be addressed
-  def mark_complete(account)
+  def mark_complete(params)
     history_status = 0
 
     case self.status
       when STATUS_DE1, STATUS_DE2
-        error = mark_de_complete(account)
+        error = mark_de_complete(params[:account])
       when STATUS_IN_QC
         error = mark_qc_complete
       when STATUS_IN_QA
-        error = mark_qa_complete
+        error = mark_qa_complete(params[:account], params[:self_assign])
     end
 
     return error if error
@@ -766,21 +766,38 @@ class Document < ActiveRecord::Base
 
 
   #Mark QA work as complete
-  def mark_qa_complete
+  def mark_qa_complete(account, self_assigned)
     #Check that all annotation groups have been addressed
-    ag = AnnotationGroup.joins(:groups).where({"groups.document_id" => self.id, :created_by => doc.qc_id, "qa_approved_by" => nil}).take
+    ag = AnnotationGroup.joins(:group).where({"groups.document_id" => self.id, :created_by => self.qc_id, "qa_approved_by" => nil}).take
     if ag
       return {
           'errorText' => 'Completion failed because a data point has not been addressed.  Please address all points.',
           'data' => {id: ag.annotation_id, group_id: ag.group_id}
       }
-    else
-      #If any rejection notes are made, go to Supplemental, otherwise go to Ready for Extraction
-      if self.qc_note || self.annotation_notes
-        self.update({status: STATUS_READY_SUPP_DE})
+    end
+
+    #If document contains rejections..
+    if (!self.qa_note.nil? && self.qa_note != '') || self.annotation_notes
+      if self_assigned.nil?
+        #And no self assign preference is sent, error
+        return { 'errorText' => 'no_self_assigned' }
       else
-        self.update({status: STATUS_READY_EXT})
+        #Otherwise, update and re-claim if requested
+        self.update({
+            status: STATUS_READY_SUPP_DE,
+            de_one_id: nil,
+            de_two_id: nil,
+            qc_id: nil,
+            qa_id: nil,
+            de_one_complete: nil,
+            de_two_complete: nil
+        })
       end
+
+      self.claim(account) if self_assigned
+    else
+      #If no rejections, complete
+      self.update({status: STATUS_READY_EXT})
     end
 
     return nil
@@ -835,6 +852,8 @@ class Document < ActiveRecord::Base
         self.update({status: STATUS_IN_QC, qc_id: account.id})
       when STATUS_READY_QA
         self.update({status: STATUS_IN_QA, qa_id: account.id})
+      when STATUS_READY_SUPP_DE
+        self.update({status: STATUS_IN_SUPP_DE, de_one_id: account.id})
     end
 
     #Create a base group for the user in group-creating statuses
@@ -1074,7 +1093,8 @@ class Document < ActiveRecord::Base
       :data                => data,
       :language            => language,
       :file_hash           => file_hash,
-      :original_file_path  => original_url
+      :original_file_path  => original_url,
+      :qa_note             => qa_note
     }
     if self.status == STATUS_IN_QC
       json[:de_one_id] = de_one_id
@@ -1141,6 +1161,7 @@ class Document < ActiveRecord::Base
     res['page']['text']       = page_text_url_template(:local => options[:local])
     res['related_article']    = related_article if related_article
     res['annotations_url']    = annotations_url if commentable?(options[:account])
+    res['qa_note']            = qa_note
     if options[:allow_detected]
       res['published_url']    = published_url if published_url
     else

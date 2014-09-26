@@ -27,8 +27,6 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
         var docModel = this._getDocumentModel();
         this.viewer         = currentDocument;
 
-        _.bindAll(this, 'handleMarkCompleteError')
-
         //Mark as changed when any update request is fired
         this.listenTo(dc.app.editor.annotationEditor, 'updateAnnotation', this.delegateUpdate);
 
@@ -214,22 +212,6 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
         });
     },
 
-
-    //markComplete: If confirmed, save current data and send request to mark complete; handle error if not able to mark complete
-    markComplete: function() {
-        _thisView = this;
-        dc.ui.Dialog.confirm(_.t('confirm_mark_complete'), function(){
-            _thisView.save(function() {
-                _thisView.docModel.markComplete({
-                    success: window.close,
-                    error: _thisView.handleMarkCompleteError
-                });
-            });
-            return true;
-        });
-    },
-
-
     //hasTitle: Returns whether an annotation with this title already exists
     hasTitle: function(title) {
         for(var i=0; i < this.pointViewList.length; i++){
@@ -238,13 +220,10 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
         return false;
     },
 
-
-    //handleMarkCompleteError: If error returned from attempted mark complete, notify and highlight field
-    handleMarkCompleteError: function(responseData) {
-        this.reloadPoints(responseData.data.group_id, responseData.data.id);
-        dc.ui.Dialog.alert(responseData.errorText);
+    //markComplete: blank placeholder to be overridden if class wishes to handle mark complete
+    markComplete: function() {
+        alert('Error: Control Panel implementation has not written mark complete handler!');
     },
-
 
     //handleCloneRequest: blank placeholder to be overridden if class wishes to handle cloning
     handleGroupCloneRequest: function(group) {

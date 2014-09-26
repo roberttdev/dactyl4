@@ -8,6 +8,8 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
       this.listenTo(dc.app.editor.annotationEditor, 'annotationSelected', this.handleAnnotationSelect);
       this.listenTo(dc.app.editor.annotationEditor, 'annotationCancelled', this.handleAnnotationCancel);
 
+      _.bindAll(this, 'handleMarkCompleteError')
+
       dc.ui.ViewerBaseControlPanel.prototype.initialize.apply(this, arguments);
   },
 
@@ -92,7 +94,7 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
                   dc.ui.Dialog.confirm(_.t('duplicate_point_error'), function(){
                       _dupeView.deletePoint();
                       _deView.replacePoint(anno, _view);
-                      dc.app.editor.annotationEditor.syncGroupAssociation(anno.id, this.model.id);
+                      dc.app.editor.annotationEditor.syncGroupAssociation(anno.id, _deView.model.id);
                       return true;
                   },{
                       onCancel: function(){ dc.app.editor.annotationEditor.hideActiveAnnotations(); }
@@ -132,6 +134,26 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
 
   handleGroupDelete: function(group){
       this.reloadAnnotations();
+  },
+
+  //markComplete: If confirmed, save current data and send request to mark complete; handle error if not able to mark complete
+  markComplete: function() {
+      _thisView = this;
+      dc.ui.Dialog.confirm(_.t('confirm_mark_complete'), function(){
+          _thisView.save(function() {
+              _thisView.docModel.markComplete({
+                  success: window.close,
+                  error: _thisView.handleMarkCompleteError
+              });
+          });
+          return true;
+      });
+  },
+
+  //handleMarkCompleteError: If error returned from attempted mark complete, notify and highlight field
+  handleMarkCompleteError: function(responseData) {
+      this.reloadPoints(responseData.data.group_id, responseData.data.id);
+      dc.ui.Dialog.alert(responseData.errorText);
   }
 
 });

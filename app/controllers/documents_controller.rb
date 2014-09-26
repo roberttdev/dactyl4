@@ -21,8 +21,14 @@ class DocumentsController < ApplicationController
     #Block if another doc of this status already claimed
     return forbidden if current_account.has_claims?(claimed_status(doc.status), doc.id) || doc.has_completed_claim?(current_account)
 
+    claimable = doc.claimable?
+    has_open_claim = doc.has_open_claim?(current_account)
+
+    #This mainly applies to admins viewing a claimed file, but 403 if doc is claimed and not by them
+    return forbidden if !claimable && !has_open_claim
+
     #If not claimed yet, and it can be, submit claim
-    doc.claim(current_account) if doc.claimable? && !doc.has_open_claim?(current_account)
+    doc.claim(current_account) if claimable && !has_open_claim
 
     return render :file => "#{Rails.root}/public/doc_404.html", :status => 404 unless doc
     respond_to do |format|
@@ -55,7 +61,7 @@ class DocumentsController < ApplicationController
   def update
     return not_found unless doc = current_document(true)
     attrs = pick(params, :access, :title, :description, :source,
-                         :related_article, :study, :publish_at, :data, :language)
+                         :related_article, :study, :publish_at, :data, :language, :qa_note)
     success = doc.secure_update attrs, current_account
     return json(doc, 403) unless success
     if doc.cacheable?
@@ -274,15 +280,10 @@ class DocumentsController < ApplicationController
       doc.qc_note = params[:qc_note]
     end
 
-    errorResp = doc.mark_complete(current_account)
+    errorResp = doc.mark_complete({account: current_account, self_assign: params[:self_assign]})
     if errorResp
       json errorResp, 500
     else
-      #If doc went to Supp DE and user requested to be assigned to it, then do so
-      if doc.status == STATUS_READY_SUPP_DE && (params[:assign_to_me] == true)
-        doc.update_attributes({status: STATUS_IN_SUPP_DE, de_one_id: current_account.id})
-      end
-
       json_response
     end
   end
