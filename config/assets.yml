@@ -28,6 +28,7 @@ javascripts:
     - public/javascripts/editor/de/*.js
     - public/javascripts/editor/qc/*.js
     - public/javascripts/editor/qa/*.js
+    - public/javascripts/editor/supp_de/*.js
     - app/views/jst/editor/*.jst
   search_embed:
     - app/views/jst/embed/search_*.jst

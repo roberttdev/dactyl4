@@ -105,7 +105,11 @@ class Document < ActiveRecord::Base
   scope :accessible, lambda {|account, org|
     access = []
 
-    deFmt = "((documents.status in (%{statuses}) AND NOT (documents.de_one_id=#{account.id} AND documents.de_one_complete IS true)) OR (documents.status=#{STATUS_DE2} AND ((documents.de_one_id=#{account.id} AND documents.de_one_complete is not true) OR (documents.de_two_id=#{account.id} AND documents.de_two_complete is not true))))"
+    #Base is complex: first, provide access for all 'ready for' statuses that user's role can see.. and add special exception if user has completed work as DE One
+    deFmt = "((documents.status in (%{statuses}) AND NOT (documents.de_one_id=#{account.id} AND documents.de_one_complete IS true))"
+    #Add logic for allowing access to DE2/Supp DE statuses if user is one of the DE users unless user has already completed DE work
+    deFmt << " OR ((documents.status=#{STATUS_DE2} OR documents.status=#{STATUS_IN_SUPP_DE}) AND ((documents.de_one_id=#{account.id} AND documents.de_one_complete is not true) OR (documents.de_two_id=#{account.id} AND documents.de_two_complete is not true))))"
+
     qcFmt = "(documents.qc_id=#{account.id} AND documents.status=#{STATUS_IN_QC})"
     qaFmt = "(documents.qa_id=#{account.id} AND documents.status=#{STATUS_IN_QA})"
 
@@ -648,12 +652,12 @@ class Document < ActiveRecord::Base
   #Returns whether passed account has one of the current (incomplete) claims on the file
   def has_open_claim?(account)
     if account
-      if self.status == STATUS_DE1 || self.status == STATUS_DE2
+      if self.status == STATUS_DE1 || self.status == STATUS_DE2 || self.status == STATUS_IN_SUPP_DE
         return true if (self.de_one_id == account.id && !self.de_one_complete) || (self.de_two_id == account.id && !self.de_two_complete)
       end
 
-      return true if self.status == STATUS_IN_QC && self.qc_id == account.id
-      return true if self.status == STATUS_IN_QA && self.qa_id == account.id
+      return true if (self.status == STATUS_IN_QC || self.status == STATUS_IN_SUPP_QC) && self.qc_id == account.id
+      return true if (self.status == STATUS_IN_QA || self.status == STATUS_IN_SUPP_QA) && self.qa_id == account.id
     end
 
     false
@@ -783,7 +787,6 @@ class Document < ActiveRecord::Base
             status: STATUS_READY_SUPP_DE,
             de_one_id: nil,
             de_two_id: nil,
-            qc_id: nil,
             qa_id: nil,
             de_one_complete: nil,
             de_two_complete: nil

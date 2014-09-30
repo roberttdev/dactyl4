@@ -10,7 +10,13 @@ dc.ui.Document = Backbone.View.extend({
       'In Quality Control',
       'Ready for Quality Assurance',
       'In Quality Assurance',
-      'Ready for Extraction'
+      'Ready for Extraction',
+      'Ready for Supplemental Data Entry',
+      'In Supplemental Data Entry',
+      'Ready for Supplemental Quality Control',
+      'In Supplemental Quality Control',
+      'Ready for Supplemental Quality Assurance',
+      'In Supplemental Quality Assurance'
   ],
 
   // Number of pages to show at a time.

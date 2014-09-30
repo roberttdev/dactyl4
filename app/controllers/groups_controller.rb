@@ -10,7 +10,7 @@ class GroupsController < ApplicationController
         accountId = doc.de_one_id if params[:de] == "1"
         accountId = doc.de_two_id if params[:de] == "2"
         accountId = doc.qc_id if params[:qc] == "true"
-    elsif doc.in_qa?
+    elsif doc.in_qa? || doc.in_supp_de?
         accountId = doc.qc_id
     end
 
