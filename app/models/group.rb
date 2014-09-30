@@ -92,7 +92,7 @@ class Group < ActiveRecord::Base
       end
 
       children.each do |child|
-        child.clone(cloned.id, true)
+        child.clone(cloned.id, true, related)
       end
     end
 

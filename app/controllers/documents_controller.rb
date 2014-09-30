@@ -273,11 +273,17 @@ class DocumentsController < ApplicationController
     doc = Document.find(params[:id].to_i)
     return forbidden if !doc.has_open_claim?(current_account)
 
-    #Pull completion-related data and attach it to doc
+    #If in QC, add supplemental review
     if doc.in_qc?
-      doc.de_one_rating = params[:de_one_rating]
-      doc.de_two_rating = params[:de_two_rating]
-      doc.qc_note = params[:qc_note]
+      QcReview.create({
+        :document_id    => doc.id,
+        :qc_id          => current_account.id,
+        :de_one_id      => doc.de_one_id,
+        :de_one_rating  => params[:de_one_rating],
+        :de_two_id      => doc.de_two_id,
+        :de_two_rating  => params[:de_two_rating],
+        :qc_note        => params[:qc_note]
+      })
     end
 
     errorResp = doc.mark_complete({account: current_account, self_assign: params[:self_assign]})

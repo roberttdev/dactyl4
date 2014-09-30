@@ -46,6 +46,7 @@ class Document < ActiveRecord::Base
   has_many :project_memberships,  :dependent   => :destroy
   has_many :projects,             :through     => :project_memberships
   has_many :annotation_notes,     :dependent   => :destroy
+  has_many :qc_reviews,           :dependent   => :destroy
 
 
   has_many :reviewer_projects,     -> { where( :hidden => true) },
@@ -754,12 +755,7 @@ class Document < ActiveRecord::Base
 
   #Mark QC work as complete
   def mark_qc_complete
-    self.update_attributes({
-         :de_one_rating => de_one_rating,
-         :de_two_rating => de_two_rating,
-         :qc_note       => qc_note,
-         :status        => STATUS_READY_QA
-     })
+    self.update_attributes({:status => STATUS_READY_QA})
 
     return nil
   end
