@@ -734,6 +734,7 @@ class Document < ActiveRecord::Base
       }
     end
 
+    #Check that all points are completed
     anno = Annotation.where("document_id=#{self.id} AND account_id=#{account.id} AND (title IS NULL OR title='' OR content IS NULL OR content='')").take
     if anno
       return {
@@ -774,6 +775,15 @@ class Document < ActiveRecord::Base
       return {
           'errorText' => 'Completion failed because a data point has not been addressed.  Please address all points.',
           'data' => {id: ag.annotation_id, group_id: ag.group_id}
+      }
+    end
+
+    #Check that all groups have been addressed
+    grp = Group.where({:document_id => self.id, :account_id => self.qc_id, :qa_approved_by => nil}).take
+    if grp
+      return {
+          'errorText' => 'Completion failed because a group has not been addressed.  Please address all points.',
+          'data' => {group_id: grp.id}
       }
     end
 

@@ -100,5 +100,11 @@ dc.ui.ViewerQAControlPanel = dc.ui.ViewerBaseControlPanel.extend({
                 _deView.reloadPoints(anno.group_id, anno.id);
             });
         }
+    },
+
+
+    //If anno approved/rejected, mark as addressed in DV
+    handleQAAddress: function(annoView){
+        dc.app.editor.annotationEditor.markApproval(annoView.model.id, this.model.id, true);
     }
 });
