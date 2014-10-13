@@ -46,6 +46,7 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
   deletePoint: function() {
       dc.app.editor.annotationEditor.deleteAnnotation(this.model, this.group_id);
       this.model.destroy({data:{group_id: this.group_id}, processData: true});
+      this.trigger('pointDeleted', this, this.model.id);
       $(this.el).remove();
       this.setWaitingForClone(false);
       return true;

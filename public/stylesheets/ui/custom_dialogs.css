@@ -11,6 +11,10 @@
       height: 90px;
     }
 
+    .docalog .row.unbounded, .tempalog .row.unbounded {
+        height: 100%;
+    }
+
     #qc_complete_dialog .row {
         font-size: 11px;
     }
@@ -79,3 +83,23 @@
       #pubdate_dialog select {
         margin-left: 5px;
       }
+
+#file_note_dialog .note_text {
+    display: inline-block;
+    margin-right: 10px;
+}
+
+#file_note_dialog .file_note_actions,
+#file_note_dialog .file_note_listing {
+    display: inline-block;
+}
+
+#file_note_dialog .file_note_section {
+    height: 150px;
+    overflow-y: scroll;
+}
+
+#file_note_dialog .anno_note_section {
+    height: 250px;
+    overflow-y: scroll;
+}

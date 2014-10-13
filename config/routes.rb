@@ -77,12 +77,16 @@ DC::Application.routes.draw do
   #Un-QC
   put '/groups/:group_id/annotations/:id/unapprove' => 'annotations#unapprove'
 
+  #File Notes
+  resources :file_notes, path: '/documents/:document_id/file_notes'
+
 
   resources :documents do
 
     #Groups
     resources :groups do
       post :clone
+      post :update_approval
     end
 
     resources :annotations do

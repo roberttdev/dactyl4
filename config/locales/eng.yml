@@ -230,7 +230,7 @@
   - draft: Draft
   - draft_note_visible: This draft is only visible to you and collaborators.
   - duplicate_point_error: A point by this name already exists here.  Overwrite?
-  - duplicate_titles: Two points have the same title.  Please modify the points to have unique titles.
+  - duplicate_titles: "Two points have the same title (\'%1$s\').  Please modify the points to have unique titles."
   - duplicate_titles_fail: A point with this title already exists in this group.
   - edit: Edit
   - edit_access: Edit Access Level

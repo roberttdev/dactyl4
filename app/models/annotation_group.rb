@@ -8,8 +8,8 @@ class AnnotationGroup < ActiveRecord::Base
   before_destroy {
     #If based on something, decrement that relationship's annotation count
     if based_on
-      ag = AnnotationGroup.find(based_on)
-      ag.update_attributes({approved_count: ag.approved_count - 1})
+      ag = AnnotationGroup.where(id: based_on).first
+      ag.update_attributes({approved_count: ag.approved_count - 1}) if !ag.nil?
     end
   }
 

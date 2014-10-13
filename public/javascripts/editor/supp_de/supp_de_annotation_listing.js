@@ -4,11 +4,7 @@ dc.ui.SuppDEAnnotationListing = dc.ui.BaseAnnotationListing.extend({
   render : function() {
     dc.ui.BaseAnnotationListing.prototype.render.apply(this, arguments);
 
-    if( this.model.get('location') ){
-        this.$('.clone_item').hide();
-        this.$('.row_status').removeClass('incomplete');
-        this.$('.row_status').addClass('complete');
-    }
+    this.$('.row_status').removeClass('incomplete');
 
     return this;
   }

@@ -4,7 +4,8 @@ dc.ui.FileNoteDialog = dc.ui.Dialog.extend({
   className         : 'dialog tempalog',
   template          : null,
   parentTemplate    : null,
-  fieldViewList     : [],
+  noteViewList      : [],
+
 
   dataEvents : {
       'click .cancel'     : 'close',
@@ -12,12 +13,14 @@ dc.ui.FileNoteDialog = dc.ui.Dialog.extend({
   },
 
 
-  constructor : function(document) {
-    this.document    = document;
+  constructor : function(document, noteList, onClose) {
+    this.document           = document;
+    this.noteList           = noteList;
+    this.options.onClose    = onClose;
     this.events         = _.extend({}, this.events, this.dataEvents);
     this._mainJST = JST['file_note_dialog'];
     _.bindAll(this, 'render');
-    dc.ui.Dialog.call(this, {mode : 'custom', title : _.t('qa_reject_notes'), saveText : _.t('save') });
+    dc.ui.Dialog.call(this, {mode : 'custom', title : _.t('file_note'), saveText : _.t('save') });
 
     _thisView = this;
 
@@ -28,12 +31,24 @@ dc.ui.FileNoteDialog = dc.ui.Dialog.extend({
 
 
   render : function() {
+    var _thisView = this;
+
     //Base dialog object needs
     dc.ui.Dialog.prototype.render.call(this);
     this._container = this.$('.custom');
 
     //Main template
-    this._container.html(this._mainJST({qa_note: this.document.get('qa_note')}));
+    var qa_note = this.document.get('qa_note') ? this.document.get('qa_note').replace(/(?:\r\n|\r|\n)/g, '<br />') : nil;
+    this._container.html(this._mainJST({qa_note: qa_note}));
+
+    //Notes
+    this.noteViewList = [];
+    this.noteList.each(function(model, index) {
+        _view = new dc.ui.FileNoteListing({model: model});
+        _thisView.noteViewList.push(_view);
+        _view.render();
+    });
+    $('#note_section').html(_.pluck(this.noteViewList,'el'));
 
     return this;
   },
@@ -52,8 +67,8 @@ dc.ui.FileNoteDialog = dc.ui.Dialog.extend({
 
   // This static method is used for conveniently opening the dialog for
   // any selected template.
-  open : function(document) {
-    new dc.ui.FileNoteDialog(document);
+  open : function(document, noteList) {
+    new dc.ui.FileNoteDialog(document, noteList);
   }
 
 });

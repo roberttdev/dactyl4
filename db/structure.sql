@@ -105,7 +105,8 @@ CREATE TABLE annotation_groups (
     created_by integer,
     qa_approved_by integer,
     based_on integer,
-    approved_count integer
+    approved_count integer,
+    iteration integer
 );
 
 
@@ -135,11 +136,12 @@ ALTER SEQUENCE annotation_groups_id_seq OWNED BY annotation_groups.id;
 CREATE TABLE annotation_notes (
     id integer NOT NULL,
     document_id integer,
-    annotation_group_id integer,
     note text,
     addressed boolean,
     created_at timestamp without time zone,
-    updated_at timestamp without time zone
+    updated_at timestamp without time zone,
+    annotation_group_id integer,
+    group_id integer
 );
 
 
@@ -364,7 +366,8 @@ CREATE TABLE documents (
     qa_id integer,
     de_one_complete boolean,
     de_two_complete boolean,
-    qa_note text
+    qa_note text,
+    iteration integer
 );
 
 
@@ -571,7 +574,9 @@ CREATE TABLE groups (
     updated_at timestamp without time zone,
     extension text,
     account_id integer,
-    base boolean DEFAULT false
+    base boolean DEFAULT false,
+    iteration integer,
+    qa_approved_by integer
 );
 
 
@@ -834,43 +839,6 @@ ALTER SEQUENCE projects_id_seq OWNED BY projects.id;
 
 
 --
--- Name: qc_reviews; Type: TABLE; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE TABLE qc_reviews (
-    id integer NOT NULL,
-    document_id integer,
-    qc_id integer,
-    de_one_id integer,
-    de_one_rating integer,
-    de_two_id integer,
-    de_two_rating integer,
-    qc_note text,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone
-);
-
-
---
--- Name: qc_reviews_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE qc_reviews_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: qc_reviews_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE qc_reviews_id_seq OWNED BY qc_reviews.id;
-
-
---
 -- Name: remote_urls; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -899,6 +867,46 @@ CREATE SEQUENCE remote_urls_id_seq
 --
 
 ALTER SEQUENCE remote_urls_id_seq OWNED BY remote_urls.id;
+
+
+--
+-- Name: reviews; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE reviews (
+    id integer NOT NULL,
+    document_id integer,
+    qc_id integer,
+    de_one_id integer,
+    de_one_rating integer,
+    de_two_id integer,
+    de_two_rating integer,
+    qc_note text,
+    created_at timestamp without time zone,
+    updated_at timestamp without time zone,
+    qa_id integer,
+    qc_rating integer,
+    iteration integer
+);
+
+
+--
+-- Name: reviews_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE reviews_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: reviews_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE reviews_id_seq OWNED BY reviews.id;
 
 
 --
@@ -1229,14 +1237,14 @@ ALTER TABLE ONLY projects ALTER COLUMN id SET DEFAULT nextval('projects_id_seq':
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY qc_reviews ALTER COLUMN id SET DEFAULT nextval('qc_reviews_id_seq'::regclass);
+ALTER TABLE ONLY remote_urls ALTER COLUMN id SET DEFAULT nextval('remote_urls_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY remote_urls ALTER COLUMN id SET DEFAULT nextval('remote_urls_id_seq'::regclass);
+ALTER TABLE ONLY reviews ALTER COLUMN id SET DEFAULT nextval('reviews_id_seq'::regclass);
 
 
 --
@@ -1454,7 +1462,7 @@ ALTER TABLE ONLY projects
 -- Name: qc_reviews_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
-ALTER TABLE ONLY qc_reviews
+ALTER TABLE ONLY reviews
     ADD CONSTRAINT qc_reviews_pkey PRIMARY KEY (id);
 
 
@@ -1904,4 +1912,8 @@ INSERT INTO schema_migrations (version) VALUES ('20140919173300');
 INSERT INTO schema_migrations (version) VALUES ('20140925203205');
 
 INSERT INTO schema_migrations (version) VALUES ('20140929133607');
+
+INSERT INTO schema_migrations (version) VALUES ('20141010155400');
+
+INSERT INTO schema_migrations (version) VALUES ('20141010180742');
 

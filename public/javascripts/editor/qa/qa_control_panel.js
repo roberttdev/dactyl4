@@ -24,12 +24,18 @@ dc.ui.ViewerQAControlPanel = dc.ui.ViewerBaseControlPanel.extend({
 
       //Group Listings
       this.model.children.each(function(model, index){
-          _deView.addGroup({
+          var _approved = model.get('approved');
+          var _has_note = model.get('qa_reject_note') != null;
+
+          var _groupView = _deView.addGroup({
               model: model,
               showClone: false,
               showEdit: false,
               showDelete: false,
-              complete: (model.get('unapproved_count') == 0)
+              showApprove: !_approved || _has_note,
+              showReject: !_approved || (_approved && !_has_note),
+              showNote: _has_note,
+              complete: _approved
           });
       });
       this.$('#group_section').html(_.pluck(this.groupViewList, 'el'));
@@ -94,17 +100,5 @@ dc.ui.ViewerQAControlPanel = dc.ui.ViewerBaseControlPanel.extend({
                 _deView.reloadPoints(anno.group_id, anno.id);
             });
         }
-    },
-
-
-    //If anno approved/rejected, mark as addressed in DV
-    handleQAAddress: function(annoView){
-        dc.app.editor.annotationEditor.markApproval(annoView.model.id, this.model.id, true);
-    },
-
-
-    //Handle clicking of file note
-    handleFileNote: function(){
-        dc.ui.FileNoteDialog.open(this.docModel);
     }
 });

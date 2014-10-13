@@ -34,7 +34,8 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
 
     //Annotations
     this.model.annotations.each(function(model, index) {
-       _deView.addDataPoint(model, (model.id == annoId));
+       var _view = _deView.addDataPoint(model, (model.id == annoId));
+       _deView.listenTo(_view, 'pointDeleted', _deView.handlePointDelete);
     });
     $('#annotation_section').html(_.pluck(this.pointViewList,'el'));
 
@@ -53,8 +54,8 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
     //Check for duplicate annotation titles.  If found, throw error and exit
     var titleList = [];
     for(var i=0; i < this.pointViewList.length; i++){
-        if( $.inArray(this.pointViewList[i].model.get('title'), titleList) > 0 ){
-            dc.ui.Dialog.alert(_.t('duplicate_titles'));
+        if( $.inArray(this.pointViewList[i].model.get('title'), titleList) > -1 ){
+            dc.ui.Dialog.alert(_.t('duplicate_titles', this.pointViewList[i].model.get('title')));
             return false;
         }else{
             titleList.push(this.pointViewList[i].model.get('title'));
@@ -135,6 +136,12 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
   handleGroupDelete: function(group){
       this.reloadAnnotations();
   },
+
+
+  handlePointDelete: function(annoView){
+      this.pointViewList = this.pointViewList.filter(function (val) { return val.model.id != annoView.model.id; });
+  },
+
 
   //markComplete: If confirmed, save current data and send request to mark complete; handle error if not able to mark complete
   markComplete: function() {

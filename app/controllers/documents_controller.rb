@@ -275,14 +275,15 @@ class DocumentsController < ApplicationController
 
     #If in QC, add supplemental review
     if doc.in_qc?
-      QcReview.create({
+      Review.create({
         :document_id    => doc.id,
         :qc_id          => current_account.id,
         :de_one_id      => doc.de_one_id,
         :de_one_rating  => params[:de_one_rating],
         :de_two_id      => doc.de_two_id,
         :de_two_rating  => params[:de_two_rating],
-        :qc_note        => params[:qc_note]
+        :qc_note        => params[:qc_note],
+        :iteration      => doc.iteration
       })
     end
 

@@ -122,7 +122,8 @@ class AnnotationsController < ApplicationController
             :annotation_id      => !field[:id].nil? ? field[:id] : anno.id,
             :created_by         => current_account.id,
             :based_on           => field[:based_on] ? field[:based_on] : nil,
-            :approved_count   => 0
+            :approved_count     => 0,
+            :iteration          => doc.iteration
         })
 
         #If based on a non-null AG relationship, update the count on that relationship

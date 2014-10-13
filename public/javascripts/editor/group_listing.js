@@ -4,16 +4,23 @@ dc.ui.GroupListing = Backbone.View.extend({
   showEdit: true,
   showDelete: true,
   showClone: true,
+  showApprove: false,
+  showReject: false,
+  showNote: false,
   complete: false,
 
   events : {
       'click .edit_group'   : 'openEditGroupDialog',
       'click .delete_group' : 'confirmDelete',
-      'click .clone_item'  : 'cloneGroup'
+      'click .clone_item'   : 'cloneGroup',
+      'click .approve_item' : 'approveGroup',
+      'click .reject_item'  : 'rejectGroup',
+      'click .point_note'   : 'openNote'
   },
 
   initialize : function(options) {
-    _.bindAll(this, 'render', 'confirmDelete', 'deleteGroup', 'openEditGroupDialog', 'cloneGroup');
+    _.bindAll(this, 'render', 'confirmDelete', 'deleteGroup', 'openEditGroupDialog', 'cloneGroup', 'approveGroup', 'rejectGroup',
+        'openNote', 'setApprove', 'setReject');
 
     this.model.on('change', this.render);
 
@@ -22,6 +29,9 @@ dc.ui.GroupListing = Backbone.View.extend({
     this.showEdit = options['showEdit'] != null ? options['showEdit'] : true;
     this.showDelete = options['showDelete'] != null ? options['showDelete'] : true;
     this.showClone = options['showClone'] != null ? options['showClone'] : true;
+    this.showApprove = options['showApprove'] != null ? options['showApprove'] : false;
+    this.showReject = options['showReject'] != null ? options['showReject'] : false;
+    this.showNote = options['showNote'] != null ? options['showNote'] : false;
 
     this._mainJST = JST['group_listing'];
   },
@@ -38,6 +48,9 @@ dc.ui.GroupListing = Backbone.View.extend({
     if( !this.showEdit ){ this.$('.edit_group').hide(); }
     if( !this.showDelete ){ this.$('.delete_item').hide(); }
     if( !this.showClone ){ this.$('.clone_item').hide(); }
+    if( !this.showApprove ){ this.$('.approve_item').hide(); }
+    if( !this.showReject ){ this.$('.reject_item').hide(); }
+    if( !this.showNote ){ this.$('.point_note').hide(); }
 
     if( this.complete ){
         this.$('.row_status').removeClass('incomplete');
@@ -52,8 +65,6 @@ dc.ui.GroupListing = Backbone.View.extend({
 
 
   openEditGroupDialog: function() {
-      //_newGroup = new dc.model.Group({parent_id: this.model.id, document_id: this.model.get('document_id')});
-      //_newGroup.once('sync', function(){ this.reloadPoints(_thisView.model.id); }, this);
       dc.ui.CreateGroupDialog.open(this.model);
   },
 
@@ -76,6 +87,45 @@ dc.ui.GroupListing = Backbone.View.extend({
 
   cloneGroup: function() {
     this.trigger('requestGroupClone', this.model);
-  }
+  },
+
+    approveGroup: function() {
+        var _thisView = this;
+        this.model.set({approved: true, qa_reject_note: null});
+        this.model.update_approval(_thisView.setApprove);
+    },
+
+    rejectGroup: function() {
+        var _thisView = this;
+        dc.ui.QARejectDialog.open(_thisView.model, function(){
+            _thisView.model.update_approval(_thisView.setReject);
+        });
+    },
+
+    openNote: function() {
+        var _thisView = this;
+        dc.ui.QARejectDialog.open(_thisView.model, function(){
+            _thisView.model.update_approval();
+        });
+    },
+
+    //setApprove: Sets UI to approved
+    setApprove: function(){
+        this.$('.approve_item').hide();
+        this.$('.point_note').hide();
+        this.$('.row_status').removeClass('incomplete');
+        this.$('.row_status').addClass('complete');
+        this.$('.reject_item').show().css('display', 'inline-block');
+    },
+
+
+    //setReject: Sets UI to rejected
+    setReject: function(){
+        this.$('.reject_item').hide();
+        this.$('.row_status').removeClass('incomplete');
+        this.$('.row_status').addClass('complete');
+        this.$('.approve_item').show().css('display', 'inline-block');
+        this.$('.point_note').show().css('display', 'inline-block');
+    }
 
 });

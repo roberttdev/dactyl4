@@ -43,15 +43,16 @@ class GroupsController < ApplicationController
   end
 
   def create
+    doc = Document.find(params[:document_id])
+
     #Figure out which template id to use and then create group
     group_attributes = pick(params, :name, :parent_id, :document_id, :extension)
     templateId = (params[:template_id] == "0" ? nil : params[:template_id])
     subtemplateId = (params[:subtemplate_id] == "0" ? nil : params[:subtemplate_id])
     group_attributes[:template_id] = templateId
     group_attributes[:account_id] = current_account.id
+    group_attributes[:iteration] = doc.iteration
     group = Group.create(group_attributes)
-
-    doc = Document.find(params[:document_id])
 
     #If a template was used and we are in DE, create the attributes
     if group.template_id != nil && doc.in_de?
@@ -76,7 +77,8 @@ class GroupsController < ApplicationController
           :annotation_id  => anno.id,
           :group_id       => group.id,
           :created_by     => current_account.id,
-          :approved_count => 0
+          :approved_count => 0,
+          :iteration      => doc.iteration
         })
       end
     end
@@ -102,6 +104,13 @@ class GroupsController < ApplicationController
   def clone
     to_clone = Group.find(params[:group_id])
     doc = Document.find(to_clone.document_id)
-    json to_clone.clone(params[:parent_id], false, !doc.in_qc?)
+    json to_clone.clone(params[:parent_id], false, !doc.in_qc?, doc.iteration)
+  end
+
+  def update_approval
+    group = Group.find(params[:id])
+    group.update_qa_status(params[:approved], params[:qa_reject_note], current_account.id)
+
+    json({"success" => true})
   end
 end

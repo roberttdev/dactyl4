@@ -4,11 +4,16 @@ dc.ui.ViewerSuppDEControlPanel = dc.ui.ViewerDEControlPanel.extend({
 
     initialize: function(options) {
         dc.ui.ViewerDEControlPanel.prototype.initialize.apply(this, arguments);
+
+        _.bindAll(this, 'releaseFileNote');
+
+        this.noteList = new dc.model.FileNotes({document_id: this.docModel.id});
+        this.noteList.fetch();
     },
 
     render : function(annoId) {
     var _deView           = this;
-    var _mainJST = JST['de_control_panel'];
+    var _mainJST = JST['supp_de_control_panel'];
     var templateName    = this.model.get('group_template') == null ? null : this.model.get('group_template').name;
     $(this.el).html(_mainJST({template_name: templateName ? templateName.substring(0,39) : null}));
 
@@ -110,6 +115,17 @@ dc.ui.ViewerSuppDEControlPanel = dc.ui.ViewerDEControlPanel.extend({
           _view = _.find(this.pointViewList, function(view){ return view.model.get('location') == anno.location; });
           _view.highlight(anno);
       }
+    },
+
+
+    //handleFileNote: blank placeholder to be overridden if class wishes to handle file notes
+    handleFileNote: function() {
+        if( !this.fileNoteDialog ){ this.fileNoteDialog = new dc.ui.FileNoteDialog(this.docModel, this.noteList, this.releaseFileNote); }
+    },
+
+    //Function to trigger that file note dialog is gone
+    releaseFileNote: function() {
+        this.fileNoteDialog = null;
     }
 
 });

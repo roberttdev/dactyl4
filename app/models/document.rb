@@ -46,7 +46,7 @@ class Document < ActiveRecord::Base
   has_many :project_memberships,  :dependent   => :destroy
   has_many :projects,             :through     => :project_memberships
   has_many :annotation_notes,     :dependent   => :destroy
-  has_many :qc_reviews,           :dependent   => :destroy
+  has_many :reviews,              :dependent   => :destroy
 
 
   has_many :reviewer_projects,     -> { where( :hidden => true) },
@@ -206,6 +206,7 @@ class Document < ActiveRecord::Base
       :remote_url         => params[:published_url] || params[:remote_url],
       :language           => params[:language] || account.language,
       :original_extension => file_ext,
+      :iteration          => 1,
       :status             => STATUS_NEW
     )
     import_options = {
@@ -862,7 +863,8 @@ class Document < ActiveRecord::Base
           :parent_id => nil,
           :document_id => self.id,
           :account_id => account.id,
-          :base => true
+          :base => true,
+          :iteration => self.iteration
       })
     end
   end
@@ -1099,10 +1101,12 @@ class Document < ActiveRecord::Base
       json[:de_one_id] = de_one_id
       json[:de_two_id] = de_two_id
     end
+
     if opts[:annotations]
       json[:annotations_url] = annotations_url if commentable?(opts[:account])
       json[:annotations] = self.annotations_with_authors(opts[:account])
     end
+
     json
   end
 

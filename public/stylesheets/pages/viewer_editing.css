@@ -160,16 +160,17 @@
         font-weight: bold;
         text-align: center;
         margin-right: 5px;
+        margin-bottom: 5px;
         padding-top: 5px;
         text-transform: none;
     }
 
-    #control_panel .new_group {
-        width: 80px;
+    #control_panel .button_panel_multirow .cp_button {
+        width: 115px;
     }
 
-    #control_panel .new_data,
-    #control_panel .save_exit {
+    #control_panel .button_panel .new_data,
+    #control_panel .button_panel .save_exit {
         width: 70px;
     }
 
@@ -206,6 +207,10 @@
         margin-top: 10px;
         margin-left: 10px;
         margin-bottom: 10px;
+    }
+
+    #control_panel #qa_notes {
+
     }
 
     .group_listing {

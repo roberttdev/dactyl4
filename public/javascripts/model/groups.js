@@ -39,6 +39,20 @@ dc.model.Group = Backbone.Model.extend({
             success     : success,
             error       : error
         })
+    },
+
+
+    //Update Approval:
+    update_approval: function(success, error) {
+        var _thisModel = this;
+        $.ajax({
+            url         : this.urlRoot + '/' + this.id + '/update_approval',
+            contentType : 'application/json; charset=utf-8',
+            type        : 'post',
+            data        : JSON.stringify(_thisModel.attributes),
+            success     : success,
+            error       : error
+        })
     }
 });
 
