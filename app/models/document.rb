@@ -779,7 +779,7 @@ class Document < ActiveRecord::Base
     end
 
     #Check that all groups have been addressed
-    grp = Group.where({:document_id => self.id, :account_id => self.qc_id, :qa_approved_by => nil}).take
+    grp = Group.where({:document_id => self.id, :account_id => self.qc_id, :qa_approved_by => nil, :base => false}).take
     if grp
       return {
           'errorText' => 'Completion failed because a group has not been addressed.  Please address all points.',

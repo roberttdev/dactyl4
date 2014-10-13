@@ -10,13 +10,13 @@ class Group < ActiveRecord::Base
   has_one :annotation_note
 
   def attributes
-    super.merge('unapproved_count' => nil)
-
     if document.in_qa?
       super.merge({
         'approved' => nil,
         'qa_reject_note' => nil
       })
+    else
+      super.merge('unapproved_count' => nil)
     end
   end
 
@@ -78,11 +78,12 @@ class Group < ActiveRecord::Base
 
   #Clone override.. 'is_sub' determines if this is a sub-process of the original clone;
   # 'related' indicates whether to include related objects (children and annotations)
-  def clone(parent_id, is_sub, related, iteration)
+  def clone(parent_id, account_id, is_sub, related, iteration)
     cloned = Group.create({
         :document_id => document_id,
         :parent_id => parent_id,
         :template_id => template_id,
+        :account_id => account_id,
         :name => is_sub ? name : "#{name} (copy)",
         :extension => extension,
         :iteration => iteration
