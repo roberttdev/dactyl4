@@ -9,6 +9,16 @@ class Group < ActiveRecord::Base
 
   has_one :annotation_note
 
+  #Base group for document/user
+  scope :base, ->(document, account_id) {
+    where({
+      :document_id => document.id,
+      :iteration  => document.iteration,
+      :account_id => account_id,
+      :base => true
+    }).first
+  }
+
   def attributes
     if document.in_qa?
       super.merge({

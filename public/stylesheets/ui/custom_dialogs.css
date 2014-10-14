@@ -7,6 +7,10 @@
     position: relative;
     text-align: left;
   }
+    .tempalog .row.med {
+        height: 60px;
+    }
+
     .docalog .row.tall, .tempalog .row.tall {
       height: 90px;
     }

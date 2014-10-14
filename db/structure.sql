@@ -886,7 +886,8 @@ CREATE TABLE reviews (
     updated_at timestamp without time zone,
     qa_id integer,
     qc_rating integer,
-    iteration integer
+    iteration integer,
+    qa_note text
 );
 
 
@@ -1916,4 +1917,6 @@ INSERT INTO schema_migrations (version) VALUES ('20140929133607');
 INSERT INTO schema_migrations (version) VALUES ('20141010155400');
 
 INSERT INTO schema_migrations (version) VALUES ('20141010180742');
+
+INSERT INTO schema_migrations (version) VALUES ('20141014200020');
 

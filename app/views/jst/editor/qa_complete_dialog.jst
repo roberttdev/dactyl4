@@ -1,11 +1,27 @@
-
+<div class="row">
+      <%= _.t('review_qc_instruct') %>
+      <select id="qc_rating" style="float:right; position:static;">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+          </select>
+</div>
 <div class="row tall">
+    <%=_.t('file_note')%>:
+    <textarea id="qa_note" class="text_area dark small content attribute"></textarea>
+</div>
+
+<%if(to_supp_de){%>
+<div class="row med">
       <%= _.t('qa_complete_instruct') %>
 </div>
 <div class="row">
     <%=_.t('assign_to_self')%>
     <input type="checkbox" id="self_assign">
 </div>
+<%}%>
 
 
 

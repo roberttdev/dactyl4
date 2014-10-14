@@ -696,21 +696,118 @@ class Document < ActiveRecord::Base
     end
   end
 
-  #Checks to see if current user's work can be marked as completed; is so, does it, if not, returns first field needing
-  #to be addressed
-  def mark_complete(params)
+
+  #Checks to see if current user's work can be marked as completed; if not, returns error and reference to problem
+  def verify_mark_complete(account)
+    case self.status
+      ###########DATA ENTRY############
+      when STATUS_DE1, STATUS_DE2
+        #Check that there are any annotations for this user
+        annoCount = Annotation.where("document_id=#{self.id} AND account_id=#{account.id}").count
+        if annoCount == 0
+          return {
+              'errorText' => 'Completion failed because no data points have been saved.  Please save a data point before marking complete.',
+              'data' => {}
+          }
+        end
+
+        #Check that all points are completed
+        anno = Annotation.where("document_id=#{self.id} AND account_id=#{account.id} AND (title IS NULL OR title='' OR content IS NULL OR content='')").take
+        if anno
+          return {
+              'errorText' => 'Completion failed because a data point is incomplete.  Please populate or delete the incomplete point.',
+              'data' => {id: anno.id, group_id: anno.annotation_groups[0].group_id}
+          }
+        end
+      #########QUALITY ASSURANCE#########
+      when STATUS_IN_QA
+        #Check that all annotation groups have been addressed
+        ag = AnnotationGroup.joins(:group).where({"groups.document_id" => self.id, :created_by => self.qc_id, "qa_approved_by" => nil}).take
+        if ag
+          return {
+              'errorText' => 'Completion failed because a data point has not been addressed.  Please address all points.',
+              'data' => {id: ag.annotation_id, group_id: ag.group_id}
+          }
+        end
+
+        #Check that all groups have been addressed
+        grp = Group.where({:document_id => self.id, :account_id => self.qc_id, :qa_approved_by => nil, :base => false}).take
+        if grp
+          return {
+              'errorText' => 'Completion failed because a group has not been addressed.  Please address all points.',
+              'data' => {group_id: grp.parent_id}
+          }
+        end
+
+        #Check that rejected groups contain no approved points or subgroups
+        rej_grps = self.groups.joins(:annotation_note).includes(:annotation_note, :children).where('annotation_notes.note IS NOT NULL')
+        rej_grps.each do |group|
+          group.children.each do |child|
+            if child.annotation_note.nil?
+              return {
+                  'errorText' => 'Completion failed because a rejected group contained an approved subgroup.  Please address to continue.',
+                  'data' => {group_id: group.id}
+              }
+            end
+          end
+
+          group.annotation_groups.each do |child|
+            if child.annotation_note.nil?
+              return {
+                  'errorText' => 'Completion failed because a rejected group contained an approved point. Please address to continue.',
+                  'data' => {id: child.annotation_id, group_id: group.id}
+              }
+            end
+          end
+        end
+    end
+
+    return nil
+  end
+
+
+  #Mark a certain status's work as complete for a user
+  def mark_complete(account)
     history_status = 0
 
     case self.status
+      ##########DATA ENTRY#########
       when STATUS_DE1, STATUS_DE2
-        error = mark_de_complete(params[:account])
-      when STATUS_IN_QC
-        error = mark_qc_complete
-      when STATUS_IN_QA
-        error = mark_qa_complete(params[:account], params[:self_assign])
-    end
+        updateFields = {}
+        if self.de_one_id==account.id
+          updateFields[:de_one_complete] = true
+          history_status = STATUS_DE1
+        end
+        if self.de_two_id==account.id
+          updateFields[:de_two_complete] = true
+          history_status = STATUS_DE2
+        end
+        updateFields[:status] = STATUS_READY_QC if (self.de_one_id==account.id && self.de_two_complete) || (self.de_two_id==account.id && self.de_one_complete)
+        self.update updateFields
 
-    return error if error
+      ########QUALITY CONTROL#######
+      when STATUS_IN_QC
+        self.update_attributes({:status => STATUS_READY_QA})
+
+      #######QUALITY ASSURANCE######
+      when STATUS_IN_QA
+        if self.has_rejections?
+            #If rejection notes, send to Supp DE
+            self.update({
+                status: STATUS_READY_SUPP_DE,
+                de_one_id: nil,
+                de_two_id: nil,
+                qc_id: nil,
+                qa_id: nil,
+                de_one_complete: nil,
+                de_two_complete: nil,
+                iteration: self.iteration + 1
+            })
+        else
+          #If no rejections, complete
+          self.update({status: STATUS_READY_EXT})
+        end
+    end
 
     #Add history event
     history_status = self.status if history_status == 0
@@ -718,99 +815,6 @@ class Document < ActiveRecord::Base
         :user => account.id,
         :status => history_status
     })
-
-    return nil
-  end
-
-
-  #Mark DE work as complete
-  def mark_de_complete(account)
-    #Check that there are any annotations for this user
-    annoCount = Annotation.where("document_id=#{self.id} AND account_id=#{account.id}").count
-    if annoCount == 0
-      return {
-          'errorText' => 'Completion failed because no data points have been saved.  Please save a data point before marking complete.',
-          'data' => {}
-      }
-    end
-
-    #Check that all points are completed
-    anno = Annotation.where("document_id=#{self.id} AND account_id=#{account.id} AND (title IS NULL OR title='' OR content IS NULL OR content='')").take
-    if anno
-      return {
-          'errorText' => 'Completion failed because a data point is incomplete.  Please populate or delete the incomplete point.',
-          'data' => {id: anno.id, group_id: anno.annotation_groups[0].group_id}
-      }
-    else
-      updateFields = {}
-      if self.de_one_id==account.id
-        updateFields[:de_one_complete] = true
-        history_status = STATUS_DE1
-      end
-      if self.de_two_id==account.id
-        updateFields[:de_two_complete] = true
-        history_status = STATUS_DE2
-      end
-      updateFields[:status] = STATUS_READY_QC if (self.de_one_id==account.id && self.de_two_complete) || (self.de_two_id==account.id && self.de_one_complete)
-      self.update updateFields
-    end
-
-    return nil
-  end
-
-
-  #Mark QC work as complete
-  def mark_qc_complete
-    self.update_attributes({:status => STATUS_READY_QA})
-
-    return nil
-  end
-
-
-  #Mark QA work as complete
-  def mark_qa_complete(account, self_assigned)
-    #Check that all annotation groups have been addressed
-    ag = AnnotationGroup.joins(:group).where({"groups.document_id" => self.id, :created_by => self.qc_id, "qa_approved_by" => nil}).take
-    if ag
-      return {
-          'errorText' => 'Completion failed because a data point has not been addressed.  Please address all points.',
-          'data' => {id: ag.annotation_id, group_id: ag.group_id}
-      }
-    end
-
-    #Check that all groups have been addressed
-    grp = Group.where({:document_id => self.id, :account_id => self.qc_id, :qa_approved_by => nil, :base => false}).take
-    if grp
-      return {
-          'errorText' => 'Completion failed because a group has not been addressed.  Please address all points.',
-          'data' => {group_id: grp.id}
-      }
-    end
-
-    #If document contains rejections..
-    if (!self.qa_note.nil? && self.qa_note != '') || self.annotation_notes
-      if self_assigned.nil?
-        #And no self assign preference is sent, error
-        return { 'errorText' => 'no_self_assigned' }
-      else
-        #Otherwise, update and re-claim if requested
-        self.update({
-            status: STATUS_READY_SUPP_DE,
-            de_one_id: nil,
-            de_two_id: nil,
-            qa_id: nil,
-            de_one_complete: nil,
-            de_two_complete: nil
-        })
-      end
-
-      self.claim(account) if self_assigned
-    else
-      #If no rejections, complete
-      self.update({status: STATUS_READY_EXT})
-    end
-
-    return nil
   end
 
 
@@ -850,6 +854,13 @@ class Document < ActiveRecord::Base
   def claimable?
     CLAIMABLE_STATUS.include?(self.status)
   end
+
+
+  #Returns where doc has attached rejections
+  def has_rejections?
+     (!self.qa_note.nil? && self.qa_note != '') || self.annotation_notes ? true : false
+  end
+
 
   #Insert claim for doc from account
   def claim(account)

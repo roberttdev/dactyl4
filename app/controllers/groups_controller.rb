@@ -14,12 +14,7 @@ class GroupsController < ApplicationController
         accountId = doc.qc_id
     end
 
-    group = Group.includes(:children, :group_template)
-      .where({
-        :document_id => params[:document_id],
-        :account_id => accountId,
-        :base => true
-      }).first
+    group = Group.includes(:children, :group_template).base(doc, accountId)
 
     responseJSON = group.as_json({
                     include: [:children, :group_template],

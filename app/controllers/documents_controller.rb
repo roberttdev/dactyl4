@@ -273,8 +273,14 @@ class DocumentsController < ApplicationController
     doc = Document.find(params[:id].to_i)
     return forbidden if !doc.has_open_claim?(current_account)
 
+    #Check for issues; if found, return
+    errorResp = doc.verify_mark_complete(current_account)
+    if errorResp
+      return json errorResp, 500
+    end
+
     #If in QC, add supplemental review
-    if doc.in_qc?
+    if doc.in_qc? || doc.in_supp_qc?
       Review.create({
         :document_id    => doc.id,
         :qc_id          => current_account.id,
@@ -287,12 +293,30 @@ class DocumentsController < ApplicationController
       })
     end
 
-    errorResp = doc.mark_complete({account: current_account, self_assign: params[:self_assign]})
-    if errorResp
-      json errorResp, 500
-    else
-      json_response
+    #If in QA, and review provided, update review.  Otherwise, return and ask for review
+    if doc.in_qa?
+      if params[:qc_rating].nil?
+        errorResp = {
+            'errorText' => 'no_qc_rating',
+            'data' => {'supp_de' => doc.has_rejections? }
+        }
+        return json errorResp, 500
+      else
+        review = Review.current(doc).update_all({
+          :qa_id      => current_account.id,
+          :qc_rating  => params[:qc_rating],
+          :qa_note    => params[:qa_note]
+        })
+      end
     end
+
+    #The actual marking complete
+    doc.mark_complete(current_account)
+
+    #If self-assign requested, do so
+    doc.claim(current_account) if params[:self_assign]
+
+    json_response
   end
 
 
