@@ -110,7 +110,9 @@ class Group < ActiveRecord::Base
         AnnotationGroup.create({
            :annotation_id => newAnno.id,
            :group_id => cloned.id,
-           :iteration => iteration
+           :iteration => iteration,
+           :created_by => account_id,
+           :approved_count => 0
         })
       end
 

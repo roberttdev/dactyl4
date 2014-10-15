@@ -19,7 +19,7 @@ dc.ui.QCAnnotationListing = dc.ui.BaseAnnotationListing.extend({
             $(_thisAnno.el).remove();
         };
 
-        if( this.model.changedAttributes ) {
+        if( this.model.changedAttributes() ) {
             //If not changed, then never saved.. just wipe from front end
             success({group_id: this.model.get('based_on_group_id')});
         }else{

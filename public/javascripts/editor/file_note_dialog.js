@@ -20,7 +20,12 @@ dc.ui.FileNoteDialog = dc.ui.Dialog.extend({
     this.events         = _.extend({}, this.events, this.dataEvents);
     this._mainJST = JST['file_note_dialog'];
     _.bindAll(this, 'render');
-    dc.ui.Dialog.call(this, {mode : 'custom', title : _.t('file_note'), saveText : _.t('save') });
+    dc.ui.Dialog.call(this, {
+        mode : 'custom',
+        title : _.t('paragraph_description_of_document'),
+        saveText : _.t('save'),
+        noOverlay: true
+    });
 
     _thisView = this;
 
@@ -38,7 +43,7 @@ dc.ui.FileNoteDialog = dc.ui.Dialog.extend({
     this._container = this.$('.custom');
 
     //Main template
-    var qa_note = this.document.get('qa_note') ? this.document.get('qa_note').replace(/(?:\r\n|\r|\n)/g, '<br />') : nil;
+    var qa_note = this.document.get('qa_note') ? this.document.get('qa_note').replace(/(?:\r\n|\r|\n)/g, '<br />') : null;
     this._container.html(this._mainJST({qa_note: qa_note}));
 
     //Notes
@@ -48,7 +53,7 @@ dc.ui.FileNoteDialog = dc.ui.Dialog.extend({
         _thisView.noteViewList.push(_view);
         _view.render();
     });
-    $('#note_section').html(_.pluck(this.noteViewList,'el'));
+    $('#note_section table').html(_.pluck(this.noteViewList,'el'));
 
     return this;
   },

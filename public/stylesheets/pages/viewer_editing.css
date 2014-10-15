@@ -716,3 +716,12 @@ body.redact_editing .DV-annotationRegion {
   .access_info span:hover {
     text-decoration: underline;
   }
+
+
+/*--------Table styles-----------*/
+
+.table_icons {
+    padding-left: 5px;
+    padding-right: 10px;
+    padding-bottom: 5px;
+}
