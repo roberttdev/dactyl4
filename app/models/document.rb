@@ -1231,6 +1231,10 @@ class Document < ActiveRecord::Base
     status == STATUS_IN_SUPP_QC
   end
 
+  def in_supp_qa?
+    status == STATUS_IN_SUPP_QA
+  end
+
   private
   
   def ensure_language_is_valid

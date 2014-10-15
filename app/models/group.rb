@@ -13,7 +13,6 @@ class Group < ActiveRecord::Base
   scope :base, ->(document, account_id) {
     where({
       :document_id => document.id,
-      :iteration  => document.iteration,
       :account_id => account_id,
       :base => true
     }).first
