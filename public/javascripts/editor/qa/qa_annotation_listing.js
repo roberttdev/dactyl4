@@ -3,10 +3,12 @@ dc.ui.QAAnnotationListing = dc.ui.BaseAnnotationListing.extend({
     showApprove: true,
     showReject:  true,
 
-    events : {
-        'click .approve_item'  : 'handleApprove',
-        'click .reject_item'   : 'handleReject',
-        'click .point_note'    : 'handleEditNote'
+    initialize: function() {
+      dc.ui.BaseAnnotationListing.prototype.initialize.apply(this, arguments);
+
+      this.events['click .approve_item'] = 'handleApprove';
+      this.events['click .reject_item'] = 'handleReject';
+      this.events['click .point_note'] = 'handleEditNote';
     },
 
     render : function() {

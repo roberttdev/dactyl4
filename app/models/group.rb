@@ -87,13 +87,14 @@ class Group < ActiveRecord::Base
 
   #Clone override.. 'is_sub' determines if this is a sub-process of the original clone;
   # 'related' indicates whether to include related objects (children and annotations)
-  def clone(parent_id, account_id, is_sub, related, iteration)
+  # 'same_name' overrides the default behavior of adding '(copy)' to the name of the copy
+  def clone(parent_id, account_id, is_sub, related, iteration, same_name)
     cloned = Group.create({
         :document_id => document_id,
         :parent_id => parent_id,
         :template_id => template_id,
         :account_id => account_id,
-        :name => is_sub ? name : "#{name} (copy)",
+        :name => is_sub || same_name ? name : "#{name} (copy)",
         :extension => extension,
         :iteration => iteration
     })
@@ -117,7 +118,7 @@ class Group < ActiveRecord::Base
       end
 
       children.each do |child|
-        child.clone(cloned.id, true, related)
+        child.clone(cloned.id, account_id, true, related, iteration, same_name)
       end
     end
 

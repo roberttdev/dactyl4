@@ -37,7 +37,6 @@ dc.ui.Document = Backbone.View.extend({
     'click .icon.doc'               : 'select',
     'contextmenu .icon.doc'         : 'showMenu',
     'dblclick .icon.doc'            : 'viewDocument',
-    'click .show_notes'             : 'toggleNotes',
     'click .title .edit_glyph'      : 'openDialog',
     'click .datalines .edit_glyph'  : 'openDataDialog',
     'click .title .published'       : 'viewPublishedDocuments',

@@ -1,12 +1,12 @@
 <div class="row">
       <%= _.t('review_qc_instruct') %>
       <select id="qc_rating" style="float:right; position:static;">
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-          </select>
+           <option value="1">Poor</option>
+           <option value="2">OK</option>
+           <option value="3" selected="selected">Normal</option>
+           <option value="4">Very Good</option>
+           <option value="5">Fantastic</option>
+       </select>
 </div>
 <div class="row tall">
     <%=_.t('file_note')%>:

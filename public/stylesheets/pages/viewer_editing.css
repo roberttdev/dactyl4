@@ -296,7 +296,7 @@
 
     .annotation_name, .annotation_value {
         display: inline-block;
-        width: 150px;
+        width: 37%;
     }
 
     .annotation_separator {
@@ -323,7 +323,6 @@ div input.error {
     border-right-style: double;
     border-color: black;
     border-width: 3px;
-    min-width: 400px;
 }
 
 .qc_editor_view {
@@ -331,10 +330,7 @@ div input.error {
     vertical-align: top;
     height: 100%;
     overflow: auto;
-}
-
-.qc_editor_view.de_review_view {
-    width: 400px;
+    width: 32%;
 }
 
 

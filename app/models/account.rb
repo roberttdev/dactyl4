@@ -197,17 +197,18 @@ class Account < ActiveRecord::Base
   end
 
   #Checks whether user has claims for docs in the status being requested.  Optional, exclude a doc ID
-  def has_claims?(status, excludeId)
+  def has_claims?(status, excludeId=nil)
     where = []
     where << "id<>#{excludeId}" if excludeId
 
     case status
-      when STATUS_DE1 || STATUS_DE2
-        where << "(status=#{STATUS_DE1} OR status=#{STATUS_DE2}) AND ((de_one_id=#{self.id} AND de_one_complete IS NOT true) OR (de_two_id=#{self.id} AND de_two_complete IS NOT true))"
-      when STATUS_IN_QC
-        where << "status=#{STATUS_IN_QC} AND qc_id=#{self.id}"
-      when STATUS_IN_QA
-        where << "status=#{STATUS_IN_QA} AND qa_id=#{self.id}"
+      when STATUS_DE1, STATUS_DE2, STATUS_IN_SUPP_DE
+        where << "(status=#{STATUS_DE1} OR status=#{STATUS_DE2} OR status=#{STATUS_IN_SUPP_DE})
+                  AND ((de_one_id=#{self.id} AND de_one_complete IS NOT true) OR (de_two_id=#{self.id} AND de_two_complete IS NOT true))"
+      when STATUS_IN_QC, STATUS_IN_SUPP_QC
+        where << "(status=#{STATUS_IN_QC} OR status=#{STATUS_IN_SUPP_QC}) AND qc_id=#{self.id}"
+      when STATUS_IN_QA, STATUS_IN_SUPP_QA
+        where << "(status=#{STATUS_IN_QA} OR status=#{STATUS_IN_SUPP_QA}) AND qa_id=#{self.id}"
       else
         return false
     end

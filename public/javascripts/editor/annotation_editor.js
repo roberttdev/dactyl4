@@ -37,7 +37,7 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
     if( annotation.get('location') ){ return this.showAnnotation(annotation, showEdit); }
 
     if( annotation != null ){
-        annotation.groups = [groupId];
+        annotation.groups = [{group_id: groupId, approved_count: 0}];
         this._active_annotation = annotation;
     }
 

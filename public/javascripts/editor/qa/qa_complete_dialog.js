@@ -17,7 +17,7 @@ dc.ui.QACompleteDialog = dc.ui.Dialog.extend({
     this.to_supp_de  = to_supp_de;
     this.events      = _.extend({}, this.events, this.dataEvents);
     this._mainJST = JST['qa_complete_dialog'];
-    _.bindAll(this, 'render');
+    _.bindAll(this, 'render', 'handleMarkCompleteError');
     dc.ui.Dialog.call(this, {mode : 'custom', title : _.t('complete_qa'), saveText : _.t('save') });
 
     _thisView = this;
@@ -55,8 +55,16 @@ dc.ui.QACompleteDialog = dc.ui.Dialog.extend({
             'qc_rating': qc_rating,
             'qa_note': qa_note
         },
-        success: window.close
+        success: window.close,
+        error: this.handleMarkCompleteError
       });
+  },
+
+
+  handleMarkCompleteError: function(responseData){
+    if( responseData.errorText == 'has_supp_de_claim' ){
+        this.error(_.t('existing_supp_de_claim'));
+    }
   }
 
 }, {

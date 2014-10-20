@@ -106,5 +106,11 @@ dc.ui.ViewerQAControlPanel = dc.ui.ViewerBaseControlPanel.extend({
     //If anno approved/rejected, mark as addressed in DV
     handleQAAddress: function(annoView){
         dc.app.editor.annotationEditor.markApproval(annoView.model.id, this.model.id, true);
+    },
+
+
+    //Handle clicking of file note
+    handleFileNote: function(){
+        dc.ui.QAFileNoteDialog.open(this.docModel);
     }
 });

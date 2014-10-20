@@ -101,7 +101,7 @@ class GroupsController < ApplicationController
   def clone
     to_clone = Group.find(params[:group_id])
     doc = Document.find(to_clone.document_id)
-    json to_clone.clone(params[:parent_id], current_account.id, false, !doc.in_qc?, doc.iteration)
+    json to_clone.clone(params[:parent_id], current_account.id, false, !doc.in_qc?, doc.iteration, doc.in_qc?)
   end
 
   def update_approval

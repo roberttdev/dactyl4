@@ -302,6 +302,15 @@ class DocumentsController < ApplicationController
         }
         return json errorResp, 500
       else
+        #If self-assign requested, but user already has claimed a Supp DE file, error
+        if params[:self_assign] && current_account.has_claims?(STATUS_IN_SUPP_DE)
+          errorResp = {
+              'errorText' => 'has_supp_de_claim',
+              'data' => {}
+          }
+          return json errorResp, 500
+        end
+
         review = Review.current(doc).update_all({
           :qa_id      => current_account.id,
           :qc_rating  => params[:qc_rating],

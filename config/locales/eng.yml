@@ -307,10 +307,11 @@
       that match your search. Select an entity to filter your search results.
   - entities_unavailable: Entities are temporarily unavailable.
   - error: Error
+  - existing_supp_de_claim:  You already have a claim on a document in Data Entry.  Please complete that document or remove your request to auto-assign this one.
   - explain_disable_account: "%1$s will not be able to log in to DocumentCloud. Public
       documents and annotations provided by %1$s will remain available. %2$sContact
       support%3$s to completely purge %1$s's account."
-  - explain_rating_error: Please leave a note to explain any rating lower than 4.
+  - explain_rating_error: Please leave a note to explain any rating lower than 'Very Good'.
   - export: Export
   - export_to_overview_explain: You are about to export to Overview. You must create
       an Overview account, and you must provide Overview with your DocumentCloud username
