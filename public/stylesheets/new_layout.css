@@ -1,0 +1,77 @@
+/*
+ * HEADERS / TEXT
+ */
+h1 {
+    text-align: center;
+    font: bold 20px Arial;
+    color: #000;
+    padding: 14px 30px 20px;
+}
+
+h2 {
+    font: bold 16px Arial;
+}
+
+p.field_instructions {
+    font: italic 10px Arial;
+    margin-top: -5px;
+}
+
+
+/*
+ * INPUTS (GENERAL)
+ */
+input {
+    margin-bottom: 10px;
+}
+
+button {
+    font: bold 12px Arial;
+    min-width: 50px;
+    cursor: pointer;
+    margin-bottom: 5px;
+}
+
+select[multiple] {
+    min-width: 200px;
+    height: 100px;
+}
+
+
+/*
+ * INPUTS (SPECIFIC)
+ */
+input.lookup_box {
+    background: white url(/images/embed/icons/search_glyph.png) no-repeat scroll right center;
+}
+
+
+/*
+ * TABLES (GENERAL)
+ */
+td {
+    padding: 5px;
+    vertical-align: middle;
+}
+
+
+/*
+ * TABLES (SPECIFIC)
+ */
+table.bordered {
+    border-width: 1px;
+    border-color: black;
+    border-style: solid;
+    margin-bottom: 10px;
+}
+
+
+/*
+ * STRUCTURAL DIVS
+ */
+div.centered_tab_content {
+    display: inline-block;
+    margin: auto;
+    background: lightgray;
+    padding: 10px;
+}

@@ -1,11 +1,12 @@
 dc.ui.Navigation = Backbone.View.extend({
 
   SECTIONS : {
-    documents : 'sidebar',
-    search    : 'panel',
-    help      : 'panel',
-    accounts  : 'panel',
-    templates : 'panel'
+    documents  : 'sidebar',
+    search     : 'panel',
+    help       : 'panel',
+    accounts   : 'panel',
+    templates  : 'panel',
+    extraction : 'panel'
   },
 
   constructor : function() {

@@ -147,6 +147,10 @@ class Account < ActiveRecord::Base
     end
   end
 
+  def can_extract?()
+    has_role?(ADMINISTRATOR) || has_role?(DATA_EXTRACTION)
+  end
+
   def admin?(org=self.organization)
     has_role?(ADMINISTRATOR, org)
   end

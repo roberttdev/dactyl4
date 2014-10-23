@@ -43,7 +43,8 @@
 }
 
 .template_list {
-    padding-left: 120px;
+    max-width: 600px;
+    margin: auto;
 }
 
 .template_row {

@@ -127,7 +127,10 @@ class DocumentImport < DocumentAction
     pages = document.reload.pages
     Sunspot.index pages
     Sunspot.commit
-    DC::Import::EntityExtractor.new.extract(document, text) unless options['secure'] or not DC::Language::SUPPORTED.include? document.language
+
+    #Calais call disabled; not using OpenCalais
+    #DC::Import::EntityExtractor.new.extract(document, text) unless options['secure'] or not DC::Language::SUPPORTED.include? document.language
+
     document.upload_text_assets(pages, access)
     document.id
   end

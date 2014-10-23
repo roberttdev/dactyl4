@@ -317,6 +317,7 @@
       an Overview account, and you must provide Overview with your DocumentCloud username
       and password.
   - extension: Extension
+  - extraction: Extraction
   - featured_examples_list: You can find plenty of examples of embedded documents
       on our list of %sfeatured reporting%s.
   - featured_reporting_list: You can find examples of embedded searches on our list

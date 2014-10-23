@@ -5,7 +5,8 @@ dc.controllers.Workspace = Backbone.Router.extend({
     'help/:page': 'help',
     'help':       'help',
     'accounts':   'accounts',
-    'templates':  'templates'
+    'templates':  'templates',
+    'extraction': 'extraction'
   },
 
   // Initializes the workspace, binding it to <body>.
@@ -26,6 +27,10 @@ dc.controllers.Workspace = Backbone.Router.extend({
     dc.app.templates.open();
   },
 
+  extraction: function() {
+    dc.app.extraction.open();
+  },
+
   help : function(page) {
     this.help.openPage(page || '');
   },
@@ -37,6 +42,7 @@ dc.controllers.Workspace = Backbone.Router.extend({
     dc.app.toolbar        = new dc.ui.Toolbar();
     dc.app.organizer      = new dc.ui.Organizer();
     dc.app.templates      = new dc.ui.TemplateManager();
+    dc.app.extraction     = new dc.ui.ExtractionManager();
     dc.ui.notifier        = new dc.ui.Notifier();
     dc.ui.tooltip         = new dc.ui.Tooltip();
     dc.app.visualSearch   = new VS.VisualSearch(this.searchOptions());

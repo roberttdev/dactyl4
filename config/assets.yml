@@ -59,6 +59,7 @@ stylesheets:
     - public/stylesheets/pages/workspace.css
   workspace:
     - public/stylesheets/pages/workspace.css
+    - public/stylesheets/new_layout.css
   empty:
     - public/stylesheets/pages/empty.css
   admin:

@@ -132,6 +132,7 @@ label {
     color: #000;
     padding: 14px 30px 20px;
   }
+}
 
 #spinner {
   display: none;
@@ -323,6 +324,7 @@ div.full_page_background {
 .publish_tab_content,
 .accounts_tab_content,
 .templates_tab_content,
+.extraction_tab_content,
 .help_tab_content {
   display: none;
 }
@@ -330,8 +332,13 @@ div.full_page_background {
   body.publish_panel_tab .publish_tab_content,
   body.accounts_panel_tab .accounts_tab_content,
   body.templates_panel_tab .templates_tab_content,
+  body.extraction_panel_tab .extraction_tab_content,
   body.help_panel_tab .help_tab_content {
     display: block;
+  }
+
+  .extraction_tab_content {
+      text-align: center;
   }
 
 div.active_search,

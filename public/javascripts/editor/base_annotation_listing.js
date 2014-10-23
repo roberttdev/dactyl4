@@ -22,11 +22,19 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
 
 
   render : function() {
-    _thisView           = this;
+    var _thisView           = this;
+
+    var _title = this.model.get('title') ? this.model.get('title') : '(no title)';
+    var _content = this.model.get('content') ? this.model.get('content') : '';
+
+    //Trimming
+    if( _title.length > 50 ){ _title = _title.substring(0,45) + "[...]"; }
+    if( _content.length > 50 ){ _content = _content.substring(0,45) + "[...]"; }
+
     $(this.el).html(this._mainJST({
         annotation_id:  this.model.id,
-        title:          this.model.get('title') ? this.model.get('title').substring(0,49) : '(no title)',
-        content:        this.model.get('content') ? this.model.get('content').substring(0,49) : ''
+        title:          _title,
+        content:        _content
     }));
 
     if( !this.showApprove ){ this.$('.approve_item').hide(); }

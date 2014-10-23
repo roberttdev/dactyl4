@@ -18,6 +18,13 @@
       <div class="tab_corner right"></div>
     </div>
   <% } %>
+  <% if (dc.account && dc.account.canExtract()) { %>
+    <div id="extraction_tab" data-tab="template" class="tab trailing">
+        <%= _.t('extraction') %>
+        <div class="tab_corner left"></div>
+        <div class="tab_corner right"></div>
+      </div>
+    <% } %>
   <div id="help_tab" data-tab="help" class="tab trailing">
     <%= _.t('help') %>
     <div class="tab_corner left"></div>
@@ -41,6 +48,9 @@
   </div>
 
   <div id="template_manager_container" class="templates_tab_content">
+  </div>
+
+  <div id="extraction_manager_container" class="extraction_tab_content">
   </div>
 
   <div id="help" class="help_tab_content">

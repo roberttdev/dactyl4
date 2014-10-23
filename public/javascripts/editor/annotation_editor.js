@@ -187,10 +187,11 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
         }
         this.region = null;
       } else {
-        // Close the editor
-        this.close();
         // Instruct the viewer to create a note, if the region is large enough.
         if (loc.width > 5 && loc.height > 5) {
+          // Close the editor
+          this.close();
+
           currentDocument.api.addAnnotation({
             id              : _annotation.id,
             title           : _annotation.get('title'),

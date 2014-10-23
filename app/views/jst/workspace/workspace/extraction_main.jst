@@ -1,0 +1,37 @@
+<h1><%= _.t('extraction') %></h1>
+
+<div class="centered_tab_content">
+  <form action="/extraction" method="post">
+    <h2>Endpoint</h2>
+    <input type="text" class="lookup_box" name="endpoint">
+
+    <h2>Filter Points</h2>
+    <table class="bordered">
+      <tr>
+        <td>
+          <p>Point Name</p>
+          <input type="text" class="lookup_box" name="filter_lookup" id="filter_lookup">
+          <p>Point Value(s)</p>
+          <input type="text" name="filter_value" id="filter_value">
+          <p class="field_instructions">Comma separated, delimited by apostrophes.<br>
+          No spaces between items. Escape apostrophes <br>
+          inside strings with a preceding backslash: &#92;'</p>
+        </td>
+        <td>
+          <button id="add_filter_point" type="button">&nbsp;&nbsp;&nbsp;&nbsp;Add >>&nbsp;&nbsp;&nbsp;</button>
+          <br>
+          <button id="remove_filter_point" type="button"><< Remove</button>
+        </td>
+        <td>
+          <p>Selected</p>
+          <select multiple name="selected_filters" id="selected_filters"></select>
+        </td>
+      </tr>
+    </table>
+
+    <button id="submit_extraction">Go</button>
+  </form>
+</div>
+
+
+

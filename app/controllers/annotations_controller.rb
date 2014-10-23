@@ -158,6 +158,11 @@ class AnnotationsController < ApplicationController
     json based
   end
 
+  #Return top 10 annotation names that match search term
+  def search
+    return 'ha'
+  end
+
   private
 
 

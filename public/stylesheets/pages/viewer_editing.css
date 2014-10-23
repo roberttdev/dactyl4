@@ -297,6 +297,7 @@
     .annotation_name, .annotation_value {
         display: inline-block;
         width: 37%;
+        word-wrap: break-word;
     }
 
     .annotation_separator {
