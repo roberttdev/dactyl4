@@ -24,8 +24,8 @@ class Annotation < ActiveRecord::Base
   after_destroy :reset_public_note_count
 
   # Sanitizations:
-  text_attr :title
-  html_attr :content, :level=>:super_relaxed
+  #text_attr :title
+  #html_attr :content, :level=>:super_relaxed
 
   scope :accessible, lambda { |doc_status, account|
     access = []
