@@ -94,8 +94,8 @@ class Group < ActiveRecord::Base
         :parent_id => parent_id,
         :template_id => template_id,
         :account_id => account_id,
-        :name => is_sub || same_name ? name : "#{name} (copy)",
-        :extension => extension,
+        :name => name,
+        :extension => is_sub || same_name ? extension : 'COPY',
         :iteration => iteration
     })
 

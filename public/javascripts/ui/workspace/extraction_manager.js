@@ -1,7 +1,6 @@
 dc.ui.ExtractionManager = Backbone.View.extend({
   id          : 'extraction_manager_container',
   className   : 'extraction_tab_content',
-  autocomplete: [],
 
   events: {
     'click #add_filter_point'     : 'addFilterPoint',
@@ -11,7 +10,7 @@ dc.ui.ExtractionManager = Backbone.View.extend({
   initialize: function(options){
     this.options = _.extend(this.options, options);
     this._mainJST = JST['workspace/extraction_main'];
-    _.bindAll(this, 'open', 'render', 'addFilterPoint', 'removeFilterPoint', 'requestAutocompleteUpdate', 'updateAutocomplete');
+    _.bindAll(this, 'open', 'render', 'addFilterPoint', 'removeFilterPoint');
     dc.app.navigation.bind('tab:extraction', this.open);
   },
 
@@ -21,8 +20,7 @@ dc.ui.ExtractionManager = Backbone.View.extend({
     //Main
     this.$el.html(this._mainJST(this.options));
 
-    $('.lookup_box').keyup(this.requestAutocompleteUpdate);
-    $('.lookup_box').autocomplete({source: this.autocomplete});
+    $('.lookup_box').autocomplete({source: '/annotations/search'});
 
     this.delegateEvents();
 
@@ -76,28 +74,6 @@ dc.ui.ExtractionManager = Backbone.View.extend({
     }
 
     return true;
-  },
-
-
-  requestAutocompleteUpdate: function(event) {
-    var searchTerm = $(event.target).val();
-    if(searchTerm.length > 1) {
-      $.ajax({
-        url: '/annotations/search',
-        contentType: 'application/json; charset=utf-8',
-        type: 'get',
-        data: JSON.stringify({'search_term': searchTerm}),
-        success: function (response) {
-          this.updateAutocomplete(response);
-        }
-      })
-    }else{
-      this.autocomplete = [];
-    }
-  },
-
-
-  updateAutocomplete: function(response) {
-
   }
+
 });

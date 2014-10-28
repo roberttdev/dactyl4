@@ -158,9 +158,12 @@ class AnnotationsController < ApplicationController
     json based
   end
 
-  #Return top 10 annotation names that match search term
+  #Return top 10 unique annotation names that match search term
   def search
-    return 'ha'
+    searchTerm = params[:term] + '%'
+    json Annotation.uniq.joins(:annotation_groups)
+              .where("annotation_groups.qa_approved_by IS NOT NULL AND title ILIKE ?", searchTerm )
+              .order(:title).limit(10).pluck(:title)
   end
 
   private
