@@ -71,5 +71,7 @@ stylesheets:
     - public/stylesheets/pages/embedded_login.css
   viewer_editing:
     - public/stylesheets/pages/viewer_editing.css
+    - public/stylesheets/new_layout.css
+    - public/stylesheets/new_layout_dialogs.css
   ie_only:
     - public/stylesheets/common/ie.css

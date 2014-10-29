@@ -166,7 +166,8 @@ class Annotation < ActiveRecord::Base
       'annotation_group_id' => anno_group.id,
       'approved_count'      => anno_group.approved_count,
       'approved'            => anno_group.qa_approved_by ? true : false,
-      'qa_reject_note'      => anno_group.association_cache.keys.include?(:annotation_note) ? anno_group.annotation_note.note : nil
+      'qa_reject_note'      => anno_group.association_cache.keys.include?(:annotation_note) ? anno_group.annotation_note.note : nil,
+      'templated'           => templated
     })
   end
 

@@ -21,10 +21,6 @@ p.field_instructions {
 /*
  * INPUTS (GENERAL)
  */
-input {
-    margin-bottom: 10px;
-}
-
 button {
     font: bold 12px Arial;
     min-width: 50px;
@@ -42,7 +38,7 @@ select[multiple] {
  * INPUTS (SPECIFIC)
  */
 input.lookup_box {
-    background: white url(/images/embed/icons/search_glyph.png) no-repeat scroll right center;
+    background: white url(/images/embed/icons/search_glyph.png) no-repeat scroll right center !important;
 }
 
 
@@ -50,7 +46,7 @@ input.lookup_box {
  * TABLES (GENERAL)
  */
 td {
-    padding: 5px;
+    padding: 5px 10px;
     vertical-align: middle;
 }
 

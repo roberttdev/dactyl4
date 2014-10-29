@@ -1,7 +1,7 @@
 dc.ui.CreateGroupDialog = dc.ui.Dialog.extend({
 
   id                : 'create_group_dialog',
-  className         : 'dialog tempalog',
+  className         : 'dialog new_css_dialog',
   mode              : 'create',
 
   dataEvents : {
@@ -44,6 +44,8 @@ dc.ui.CreateGroupDialog = dc.ui.Dialog.extend({
     }));
 
     this.populateTemplateSelect();
+
+    $('.lookup_box').autocomplete({source: '/templates/search'});
 
     return this;
   },

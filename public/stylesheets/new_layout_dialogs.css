@@ -1,0 +1,19 @@
+.dialog input {
+    background: #1e1e1e;
+    border: 1px solid #393939;
+    color: #ccc;
+    font-size: 11px;
+    padding: 3px 3px;
+}
+
+.dialog input:focus {
+    background: #fff;
+    border-color: #fff;
+    color: #333;
+}
+
+.dialog p {
+    background-color: #000;
+    color: #ccc;
+    font-size: 11px;
+}

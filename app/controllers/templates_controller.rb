@@ -75,4 +75,11 @@ class TemplatesController < ApplicationController
     json({"success" => true})
   end
 
+
+  #Return top 10 unique template names that match search term
+  def search
+    searchTerm = params[:term] + '%'
+    json GroupTemplate.matching_name(searchTerm)
+  end
+
 end

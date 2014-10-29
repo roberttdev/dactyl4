@@ -47,7 +47,7 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
 
   //Show popup confirming template delete
   confirmDelete: function(event) {
-      if( !this.model.get('title') && !this.model.get('content') ){ this.deletePoint(); }
+      if( (!this.model.get('title') || this.model.get('templated')) && !this.model.get('content') ){ this.deletePoint(); }
       else{ dc.ui.Dialog.confirm(_.t('confirm_point_delete'), this.deletePoint); }
   },
 

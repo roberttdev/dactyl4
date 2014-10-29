@@ -1,31 +1,24 @@
 
-<div class="row">
-  <label for="group_name" title="<%= _.t('group_name_explanation') %>">
-      <%= _.t('group_name') %>:
-  </label>
-  <div class="text_input dark small">
-    <input name="group_name" id="group_name" class="attribute" type="text" value="<%=name%>"/>
-  </div>
-</div>
-<div class="row">
-  <label for="extension" title="<%= _.t('extension') %>">
-      <%= _.t('extension') %>:
-  </label>
-  <div class="text_input dark small">
-    <input name="extension" id="extension" class="attribute" type="text" value="<%=extension%>" maxlength="10"/>
-  </div>
-</div>
+<table>
+  <tr>
+    <td><p><%- _.t('group_name') %>:</p></td>
+    <td><input name="group_name" id="group_name" class="attribute" type="text" value="<%=name%>"/></td>
+  </tr>
+  <tr>
+    <td><p><%- _.t('extension') %>:</p></td>
+    <td><input name="extension" id="extension" class="attribute" type="text" value="<%=extension%>" maxlength="10"/></td>
+  </tr>
 
 <%if( mode == 'create' ) {%>
-<div class="row">
-     <label for="template_name" title="<%= _.t('name_explanation') %>">
-          <%= _.t('template_name') %>:
-      </label>
-      <div class="dark small">
-        <select name="template_name" id="template_name" class="attribute"/>
-      </div>
-</div>
+  <tr>
+    <td><p><%= _.t('template_name') %>:</p></td>
+    <td><select name="template_name" id="template_name" class="attribute"/></td>
+    <td>-or-</td>
+    <td><input type="text" class="lookup_box" name="filter_lookup" id="filter_lookup"></td>
+  </tr>
 <%}%>
+
+</table>
 
 
 

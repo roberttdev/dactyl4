@@ -168,6 +168,7 @@ DC::Application.routes.draw do
 
   #Templates
   get '/templates/index.json' => 'templates#index'
+  get '/templates/search' => 'templates#search'
   put '/templates/:template_id/template_fields' => 'template_fields#bulk_update'
   resources :templates do
     resources :template_fields
