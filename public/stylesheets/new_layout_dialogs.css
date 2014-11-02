@@ -12,8 +12,19 @@
     color: #333;
 }
 
-.dialog p {
+.dialog label {
     background-color: #000;
     color: #ccc;
     font-size: 11px;
+    text-align: right;
+    display: block;
+}
+
+/*
+ * TYPEAHEAD.BUNDLE.JS
+ */
+.dialog #scrollable-dropdown-menu .tt-dropdown-menu {
+    background-color: #000;
+    font-size: 11px;
+    cursor: pointer;
 }

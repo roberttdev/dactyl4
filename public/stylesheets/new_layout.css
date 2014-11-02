@@ -41,6 +41,10 @@ input.lookup_box {
     background: white url(/images/embed/icons/search_glyph.png) no-repeat scroll right center !important;
 }
 
+input.long {
+    min-width: 200px;
+}
+
 
 /*
  * TABLES (GENERAL)
@@ -70,4 +74,15 @@ div.centered_tab_content {
     margin: auto;
     background: lightgray;
     padding: 10px;
+}
+
+
+/*
+ * TYPEAHEAD.BUNDLE.JS
+ */
+#scrollable-dropdown-menu .tt-dropdown-menu {
+    max-height: 150px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-width: 200px;
 }

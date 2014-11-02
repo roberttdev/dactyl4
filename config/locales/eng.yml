@@ -657,6 +657,7 @@
   - study_of_document: The study this file pertains to
   - template_fields: Template Fields
   - template_name: Template Name
+  - template_name_invalid: The template name you entered is invalid.
   - template_name_required: The template name is required.
   - templates: Templates
   - term: " Terms"

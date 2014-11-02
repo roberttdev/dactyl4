@@ -43,25 +43,18 @@ dc.ui.CreateGroupDialog = dc.ui.Dialog.extend({
         mode:      this.mode
     }));
 
-    this.populateTemplateSelect();
-
-    $('.lookup_box').autocomplete({source: '/templates/search'});
+    $('.typeahead').typeahead({
+          hint: true,
+          highlight: true,
+          minLength: 0
+        },
+        {
+          name: 'templateArray',
+          displayKey: 'value',
+          source: FuncUtils.substringMatcher(dc.app.editor.templateArray)
+        });
 
     return this;
-  },
-
-
-  //populateTemplateSelect: Get template list from editor and convert into drop-down options
-  populateTemplateSelect: function() {
-    _thisView = this;
-    _thisView.$('#template_name').append('<option value="0:0">-none-</option>') ;
-    $(dc.app.editor.templateList).each(function(index, template) {
-        _thisView.$('#template_name').append('<option value="' + template.id + '">' + template.name.substring(0,70) + '</option>');
-        $(template.subtemplates).each(function(index, subtemplate){
-            _thisView.$('#template_name').append('<option value="' + template.id + ':0' + subtemplate.id +
-                '">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--' + subtemplate.sub_name.substring(0,60) + '</option>');
-        });
-    });
   },
 
 
@@ -73,22 +66,38 @@ dc.ui.CreateGroupDialog = dc.ui.Dialog.extend({
 
     //Validate that group name is not blank.
     if( _thisDialog.$('#group_name').val() == null || _thisDialog.$('#group_name').val().length == 0 ){
-        _thisDialog.$('#group_name').addClass('error');
-        return _thisDialog.error(_.t('blank_field_error'));
+      _thisDialog.$('#group_name').addClass('error');
+      return _thisDialog.error(_.t('blank_field_error'));
     }
 
     //Push template name to model
     _thisDialog.model.set({
-        name: _thisDialog.$('#group_name').val(),
-        extension: _thisDialog.$('#extension').val()
+      name: _thisDialog.$('#group_name').val(),
+      extension: _thisDialog.$('#extension').val()
     });
 
     //If creating, also push template data to model
     if( this.mode == 'create' ) {
-        _thisDialog.model.set({
-            template_id: this.$('#template_name').val().split(':')[0],
-            subtemplate_id: this.$('#template_name').val().split(':')[1]
-        });
+      var templateName = _thisDialog.$('#template_name').val();
+
+      //Validate that group name is not blank.
+      if(  templateName == null || templateName.length == 0 ){
+        _thisDialog.$('#template_name').addClass('error');
+        return _thisDialog.error(_.t('blank_field_error'));
+      }
+
+      var templateIDs = dc.app.editor.getIDsForTemplateString(templateName);
+
+      //Error if template name fails to match
+      if( templateIDs[0] == null || ((templateName.indexOf('::') > -1) && templateIDs[1] == null)){
+        _thisDialog.$('#template_name').addClass('error');
+        return _thisDialog.error(_.t('template_name_invalid'));
+      }
+
+      _thisDialog.model.set({
+        template_id: templateIDs[0],
+        subtemplate_id: templateIDs[1]
+      });
     }
 
     //Trigger save

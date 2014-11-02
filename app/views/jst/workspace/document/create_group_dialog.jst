@@ -1,20 +1,18 @@
 
 <table>
   <tr>
-    <td><p><%- _.t('group_name') %>:</p></td>
-    <td><input name="group_name" id="group_name" class="attribute" type="text" value="<%=name%>"/></td>
+    <td><label><%- _.t('group_name') %>:</label></td>
+    <td><input name="group_name" id="group_name" size="40" type="text" value="<%=name%>"/></td>
   </tr>
   <tr>
-    <td><p><%- _.t('extension') %>:</p></td>
-    <td><input name="extension" id="extension" class="attribute" type="text" value="<%=extension%>" maxlength="10"/></td>
+    <td><label><%- _.t('extension') %>:</label></td>
+    <td><input name="extension" id="extension" size="40" value="<%=extension%>" maxlength="10"/></td>
   </tr>
 
 <%if( mode == 'create' ) {%>
   <tr>
-    <td><p><%= _.t('template_name') %>:</p></td>
-    <td><select name="template_name" id="template_name" class="attribute"/></td>
-    <td>-or-</td>
-    <td><input type="text" class="lookup_box" name="filter_lookup" id="filter_lookup"></td>
+    <td><label><%= _.t('template_name') %>:</label></td>
+    <td><div id="scrollable-dropdown-menu"><input class="typeahead" size="40" type="text" id="template_name" ></div></td>
   </tr>
 <%}%>
 
