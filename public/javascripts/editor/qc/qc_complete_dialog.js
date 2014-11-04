@@ -46,7 +46,7 @@ dc.ui.QCCompleteDialog = dc.ui.Dialog.extend({
     var rating_one = parseInt($("#de_one_review").val());
     var rating_two = parseInt($("#de_two_review").val());
     var file_note = $('#qc_file_note').val();
-    if( (rating_one <= 3 || rating_two <= 3) && file_note.length == 0 ){
+    if( (rating_one < 3 || rating_two < 3) && file_note.length == 0 ){
         this.error(_.t('explain_rating_error'));
         return false;
     }

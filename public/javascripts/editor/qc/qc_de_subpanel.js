@@ -21,22 +21,28 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
         this.$('.group_navigation').html(this.generateGroupNav());
 
         //Group Listings
-        this.model.children.each(function(model, index){
+        if(!this.model.children || this.model.children.length <= 0){ this.$('#group_section').html('<div class="group_listing">(no groups)</div>'); }
+        else {
+          this.model.children.each(function (model, index) {
             _deView.addGroup({
-                model: model,
-                showEdit: false,
-                showDelete: false,
-                complete: (model.get('unapproved_count') == 0)
+              model: model,
+              showEdit: false,
+              showDelete: false,
+              complete: (model.get('unapproved_count') == 0)
             });
-        });
-        this.$('#group_section').html(_.pluck(this.groupViewList, 'el'));
+          });
+          this.$('#group_section').html(_.pluck(this.groupViewList, 'el'));
+        }
 
         //Annotations
-        this.model.annotations.each(function(model, index) {
-           _annoView = _deView.addDataPoint(model, (model.id == annoId));
-           _deView.listenTo(_annoView, 'requestAnnotationClone', _deView.passAnnoCloneRequest);
-        });
-        this.$('#annotation_section').html(_.pluck(this.pointViewList,'el'));
+        if(!this.model.annotations || this.model.annotations.length <= 0){  this.$('#annotation_section').html('<div class="group_listing">(no points)</div>'); }
+        else {
+          this.model.annotations.each(function (model, index) {
+            _annoView = _deView.addDataPoint(model, (model.id == annoId));
+            _deView.listenTo(_annoView, 'requestAnnotationClone', _deView.passAnnoCloneRequest);
+          });
+          this.$('#annotation_section').html(_.pluck(this.pointViewList, 'el'));
+        }
 
         return this.el;
     },

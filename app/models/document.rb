@@ -48,6 +48,7 @@ class Document < ActiveRecord::Base
   has_many :annotation_notes,     :dependent   => :destroy
   has_many :reviews,              :dependent   => :destroy
 
+  has_many :annotation_groups,    through: :annotations
 
   has_many :reviewer_projects,     -> { where( :hidden => true) },
                                      :through     => :project_memberships,
@@ -821,7 +822,7 @@ class Document < ActiveRecord::Base
   #Cancel QC and reject one or more DE's work; return status to DE
   def reject_de(account_id, de_num)
     #Check that user is QC or QA, and therefore has permission
-    if( account_id == qc_id || account_id == qa_id )
+    if( account_id == qc_id )
       #Generate values for actions (anno/group delete step, doc status update step)
       delWhere = {document_id: id, account_id: [qc_id]}
       upValues = {qc_id: nil, de_two_id: nil, de_two_complete: nil}
@@ -842,8 +843,8 @@ class Document < ActiveRecord::Base
 
       Annotation.destroy_all(delWhere)
       Group.destroy_all(delWhere)
+      self.annotation_groups.where(iteration: self.iteration).update_all({approved_count: 0})
       self.update_attributes(upValues)
-      annotations.update_all({qc_approved: false})
     else
       return false
     end
