@@ -35,7 +35,6 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
     //Annotations
     this.model.annotations.each(function(model, index) {
        var _view = _deView.addDataPoint(model, (model.id == annoId));
-       _deView.listenTo(_view, 'pointDeleted', _deView.handlePointDelete);
     });
     $('#annotation_section').html(_.pluck(this.pointViewList,'el'));
 
@@ -77,6 +76,14 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
         //If not, just pass along to success function
         success.call();
     }
+  },
+
+
+  //Override for adding a data point.. adds additional listener
+  addDataPoint: function(model, highlight){
+    var _view = dc.ui.ViewerBaseControlPanel.prototype.addDataPoint.apply(this, [model, highlight]);
+    this.listenTo(_view, 'pointDeleted', this.handlePointDelete);
+    return _view;
   },
 
 

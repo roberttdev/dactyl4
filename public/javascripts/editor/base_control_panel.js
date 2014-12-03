@@ -78,7 +78,6 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
     //changeGroup: reload navigation to display new group
     changeGroupView: function(id) {
         var _thisView = this;
-        dc.app.editor.annotationEditor.hideActiveAnnotations();
         dc.app.editor.annotationEditor.close();
         this.save(function(){
             _thisView.reloadPoints(id);
