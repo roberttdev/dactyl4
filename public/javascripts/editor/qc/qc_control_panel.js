@@ -35,43 +35,50 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
 
 
   handleAnnotationSelect: function(anno) {
-      this.deOneSubpanel.clearAnnotations();
-      this.deTwoSubpanel.clearAnnotations();
-      if( anno.account_id == window.currentDocumentModel.de_one_id ){ this.deOneSubpanel.handleAnnotationSelect(anno); }
-      if( anno.account_id == window.currentDocumentModel.de_two_id ){ this.deTwoSubpanel.handleAnnotationSelect(anno); }
+    this.deOneSubpanel.clearAnnotations();
+    this.deTwoSubpanel.clearAnnotations();
+    if( anno.account_id == window.currentDocumentModel.de_one_id ){ this.deOneSubpanel.handleAnnotationSelect(anno); }
+    if( anno.account_id == window.currentDocumentModel.de_two_id ){ this.deTwoSubpanel.handleAnnotationSelect(anno); }
   },
 
 
   //Hear clone request from DE panel; create anno in QC panel
-  passAnnoCloneRequest: function(anno, group_id){
-      if( this.qcSubpanel.approveDEPoint(anno, group_id) ){
-        anno.set({approved_count: anno.get('approved_count') + 1});
+  passAnnoCloneRequest: function(annos, group_id){
+    var failedTitleString = "";
+    for(var i=0; i < annos.length; i++) {
+      if (this.qcSubpanel.approveDEPoint(annos[i], group_id)) {
+        annos[i].set({approved_count: annos[i].get('approved_count') + 1});
+        dc.app.editor.annotationEditor.markApproval(annos[i].id, group_id, true);
+      }else{
+        failedTitleString += "<br>\'" + annos[i].get('title') + "\'";
       }
-      dc.app.editor.annotationEditor.markApproval(anno.id, group_id, true);
+    }
+
+    if(failedTitleString.length > 0){ dc.ui.Dialog.alert(_.t('duplicate_titles_fail', failedTitleString)); }
   },
 
 
   //Pass along group clone request and reload this view to cloned group
   handleGroupCloneRequest: function(group) {
-      var _thisView = this;
-      group.clone(this.qcSubpanel.model.id, function(response){
-         _thisView.qcSubpanel.save(function() {
-             _thisView.qcSubpanel.reloadPoints(response.id);
-         });
-      });
+    var _thisView = this;
+    group.clone(this.qcSubpanel.model.id, function(response){
+       _thisView.qcSubpanel.save(function() {
+           _thisView.qcSubpanel.reloadPoints(response.id);
+       });
+    });
   },
 
 
   //If anno is passed, have DV show it as unapproved.  Refresh DE views.
   handleRemoveFromQC: function(anno, group_id){
-      if( anno ){ dc.app.editor.annotationEditor.markApproval(anno.id, group_id, false); }
-      this.refreshDE(anno);
+    if( anno ){ dc.app.editor.annotationEditor.markApproval(anno.id, group_id, false); }
+    this.refreshDE(anno);
   },
 
 
   //Refresh DE views
   refreshDE: function(anno){
-      this.deOneSubpanel.reloadCurrent();
-      this.deTwoSubpanel.reloadCurrent();
+    this.deOneSubpanel.reloadCurrent();
+    this.deTwoSubpanel.reloadCurrent();
   }
 });

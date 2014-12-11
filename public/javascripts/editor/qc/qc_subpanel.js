@@ -54,10 +54,8 @@ dc.ui.ViewerQcSubpanel = dc.ui.ViewerBaseControlPanel.extend({
 
   //Take in DE point, and make an approved copy if it doesn't already exist
   approveDEPoint: function(anno, group_id){
-    if( this.hasTitle(anno.get('title')) ){
-        dc.ui.Dialog.alert(_.t('duplicate_titles_fail'));
-        return false;
-    }else {
+    if( this.hasTitle(anno.get('title')) ){ return false; }
+    else {
         anno.set({based_on: anno.get('annotation_group_id'), based_on_group_id: group_id});
         var _view = this.createDataPointCopy(anno.attributes);
         this.listenTo(_view, 'removeFromQC', this.passRemoveFromQC);

@@ -144,17 +144,10 @@ class AnnotationsController < ApplicationController
   #Remove approval for anno+group; if last group, removal approval for anno. Supported approval "type" parameter values: "qc","qa"
   def unapprove
     ag = AnnotationGroup.where({group_id: params[:group_id], annotation_id: params[:id]}).first
-
-    #Decrement anno count of based on AG relationship, if exists
-    based = {}
-    if ag.based_on
-      based = AnnotationGroup.find(ag.based_on)
-      based.update_attributes({:approved_count => based.approved_count - 1})
-    end
-
     ag.destroy
 
     #Return data for the original relationship that the unapproved relationship was based on
+    based = AnnotationGroup.find(ag.based_on)
     json based
   end
 
