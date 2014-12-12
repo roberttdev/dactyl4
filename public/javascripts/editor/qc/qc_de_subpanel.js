@@ -119,7 +119,7 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
     }
 
     if( groupsApproved && annosApproved ){
-      this.reloadPoints(this.model.get('parent_id'));
+      this.changeGroupView(this.model.get('parent_id'));
     }
   }
 
