@@ -859,7 +859,7 @@ class Document < ActiveRecord::Base
 
   #Returns where doc has attached rejections
   def has_rejections?
-     (!self.qa_note.nil? && self.qa_note != '') || self.annotation_notes ? true : false
+     (!self.qa_note.nil? && self.qa_note != '') || (self.annotation_notes && self.annotation_notes.length > 0) ? true : false
   end
 
 
