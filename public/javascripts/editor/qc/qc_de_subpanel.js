@@ -93,6 +93,34 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
   handleRemoveFromQC: function(anno){
     _view = _.find(this.pointViewList, function(view){ return view.model.id == anno.id; });
     if( _view ){ _view.model.set({approved: false}); }
+  },
+
+
+  //Handle message from QC that approval succeeded
+  handleApprovalSuccess: function(){
+    var groupsApproved = true;
+    var annosApproved = true;
+
+    //If all groups are approved and all annos are approved, refresh to parent group
+    for(var i=0; i < this.model.children.models.length; i++){
+      if( this.model.children.models[i].get('unapproved_count') > 0 ){
+        groupsApproved = false;
+        break;
+      }
+    }
+
+    if( groupsApproved ){
+      for(var i=0; i < this.pointViewList.length; i++){
+        if( this.pointViewList[i].model.get('approved_count') == 0 ){
+          annosApproved = false;
+          break;
+        }
+      }
+    }
+
+    if( groupsApproved && annosApproved ){
+      this.reloadPoints(this.model.get('parent_id'));
+    }
   }
 
 });

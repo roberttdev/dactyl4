@@ -55,6 +55,12 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
     }
 
     if(failedTitleString.length > 0){ dc.ui.Dialog.alert(_.t('duplicate_titles_fail', failedTitleString)); }
+    else{
+      //If multiple IDs passed, save
+      if( annos.length > 1 ){ this.qcSubpanel.save(function(){}); }
+      if( annos[0].get('account_id') == window.currentDocumentModel.de_one_id ){ this.deOneSubpanel.handleApprovalSuccess(); }
+      if( annos[0].get('account_id') == window.currentDocumentModel.de_two_id ){ this.deTwoSubpanel.handleApprovalSuccess(); }
+    }
   },
 
 
