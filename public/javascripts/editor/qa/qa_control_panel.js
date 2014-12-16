@@ -90,8 +90,8 @@ dc.ui.ViewerQAControlPanel = dc.ui.ViewerBaseControlPanel.extend({
     var _deView = this;
 
     //If the group selected is this group, find and highlight point; otherwise save and reload proper group
-    _view = _.find(this.pointViewList, function(view){ return view.model.id == anno.id; });
-    if( _view ){
+    if( anno.group_id == this.model.id ){
+      _view = _.find(this.pointViewList, function(view){ return view.model.id == anno.id; });
       _view.highlight();
     }else {
       this.save(function () {

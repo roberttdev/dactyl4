@@ -43,7 +43,7 @@ dc.ui.QACompleteDialog = dc.ui.Dialog.extend({
   save : function(success) {
     var qc_rating = parseInt($("#qc_rating").val());
     var qa_note = $('#qa_note').val();
-    if( qc_rating <= 3 && qa_note.length == 0 ){
+    if( qc_rating < 3 && qa_note.length == 0 ){
         this.error(_.t('explain_rating_error'));
         return false;
     }
