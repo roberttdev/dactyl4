@@ -3,20 +3,7 @@ class GroupsController < ApplicationController
   def index
     #Pull base-level groups/annotations and create group-like JSON
     doc = Document.find(params[:document_id])
-
-    if doc.in_de?
-      accountId = current_account.id
-    elsif doc.in_qc?
-      accountId = doc.de_one_id if params[:de] == "1"
-      accountId = doc.de_two_id if params[:de] == "2"
-      accountId = doc.qc_id if params[:qc] == "true"
-    elsif doc.in_qa?
-      accountId = doc.qc_id
-    elsif doc.in_supp_de? || doc.in_supp_qc? || doc.in_supp_qa?
-      accountId = doc.reviews.where({iteration: 1}).first.qc_id
-    end
-
-    group = Group.includes(:children, :group_template).base(doc, accountId)
+    group = Group.includes(:children, :group_template).base(doc, current_account.id, params[:de], params[:qc])
 
     responseJSON = group.as_json({
       include: [:children, :group_template],

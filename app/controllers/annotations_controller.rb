@@ -96,7 +96,7 @@ class AnnotationsController < ApplicationController
     group_id = params[:group_id]
     account_id = doc.in_qa? ? doc.qc_id : current_account.id
     #If no group ID passed, use base group
-    group_id = Group.where({document_id: doc.id, account_id: account_id, base: true}).first.id if group_id.nil?
+    group_id = Group.base(doc, current_account.id, nil, nil).id if group_id.nil?
 
     params[:bulkData].each do |field|
       submitHash = pick(field, :document_id, :page_number, :title, :content, :location, :templated)

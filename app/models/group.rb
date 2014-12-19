@@ -10,10 +10,23 @@ class Group < ActiveRecord::Base
   has_one :annotation_note
 
   #Base group for document/user
-  scope :base, ->(document, account_id) {
+  scope :base, ->(doc, account_id, de, qc) {
+    if doc.in_de?
+      accountId = account_id
+    elsif doc.in_qc?
+      accountId = doc.de_one_id if de == "1"
+      accountId = doc.de_two_id if de == "2"
+      accountId = doc.qc_id if qc == "true"
+      accountId = account_id if accountId.nil?
+    elsif doc.in_qa?
+      accountId = doc.qc_id
+    elsif doc.in_supp_de? || doc.in_supp_qc? || doc.in_supp_qa?
+      accountId = doc.reviews.where({iteration: 1}).first.qc_id
+    end
+
     where({
-      :document_id => document.id,
-      :account_id => account_id,
+      :document_id => doc.id,
+      :account_id => accountId,
       :base => true
     }).first
   }

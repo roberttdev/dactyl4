@@ -316,8 +316,9 @@ class Document < ActiveRecord::Base
     whereClause = {"annotation_groups.created_by" => account.id} if in_de?
     whereClause = {"annotation_groups.created_by" => [de_one_id, de_two_id]} if in_qc?
     whereClause = {"annotation_groups.created_by" => qc_id} if in_qa?
+    whereClause = "(annotation_groups.created_by=#{account.id} AND annotation_groups.iteration=#{self.iteration}) OR annotation_groups.qa_approved_by IS NOT NULL" if in_supp_de?
 
-    self.annotations.includes(:annotation_groups).where(whereClause).order('page_number asc, location asc nulls first')
+    self.annotations.joins(:annotation_groups).includes(:annotation_groups).where(whereClause).order('page_number asc, location asc nulls first')
   end
 
   def annotations_with_authors(account, annotations=nil)
@@ -694,6 +695,11 @@ class Document < ActiveRecord::Base
         annotation_notes.destroy_all
         AnnotationGroup.joins(:group).where({"groups.document_id" => self.id}).update_all({qa_approved_by: nil})
         self.update({status: STATUS_READY_QA, qa_id: nil, qa_note: nil})
+      when STATUS_IN_SUPP_DE
+        Group.destroy_all({document_id: self.id, account_id: account.id, iteration: self.iteration})
+        AnnotationGroup.joins(:annotation).destroy_all({"annotations.document_id" => self.id, :iteration => self.iteration, :created_by => account.id})
+        self.annotation_notes.where({:document_id => self.id}).update_all({:addressed => false})
+        self.update({status: STATUS_READY_SUPP_DE, de_one_id: nil})
     end
   end
 
