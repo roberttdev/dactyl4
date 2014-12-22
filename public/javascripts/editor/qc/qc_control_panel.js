@@ -44,6 +44,7 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
 
   //Hear clone request from DE panel; create anno in QC panel
   passAnnoCloneRequest: function(annos, group_id){
+    var thisView = this;
     var failedTitleString = "";
     for(var i=0; i < annos.length; i++) {
       if (this.qcSubpanel.approveDEPoint(annos[i], group_id)) {
@@ -54,12 +55,15 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
       }
     }
 
+    var handleSuccess = function(){
+      if( annos[0].get('account_id') == window.currentDocumentModel.de_one_id ){ thisView.deOneSubpanel.handleApprovalSuccess(); }
+      if( annos[0].get('account_id') == window.currentDocumentModel.de_two_id ){ thisView.deTwoSubpanel.handleApprovalSuccess(); }
+    };
+
     if(failedTitleString.length > 0){ dc.ui.Dialog.alert(_.t('duplicate_titles_fail', failedTitleString)); }
     else{
       //If multiple IDs passed, save
-      if( annos.length > 1 ){ this.qcSubpanel.save(function(){}); }
-      if( annos[0].get('account_id') == window.currentDocumentModel.de_one_id ){ this.deOneSubpanel.handleApprovalSuccess(); }
-      if( annos[0].get('account_id') == window.currentDocumentModel.de_two_id ){ this.deTwoSubpanel.handleApprovalSuccess(); }
+      if( annos.length > 1 ){ this.qcSubpanel.save(handleSuccess); }else{ handleSuccess; }
     }
   },
 

@@ -217,7 +217,7 @@ class Account < ActiveRecord::Base
         return false
     end
 
-    Document.where(where.join(' AND ')).count > 0
+    Document.where(where.join(' AND ')).count > 1
   end
 
   # An account owns a resource if it's tagged with the account_id.

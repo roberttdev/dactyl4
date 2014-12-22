@@ -28,3 +28,7 @@
     font-size: 11px;
     cursor: pointer;
 }
+
+.tt-suggestion.tt-cursor {
+    background-color: lightslategray;
+}
