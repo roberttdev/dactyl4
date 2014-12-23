@@ -204,6 +204,8 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
             access          : 'public',
             owns_note       : true
           });
+        }else{
+          this.clearAnnotation();
         }
       }
       return false;
