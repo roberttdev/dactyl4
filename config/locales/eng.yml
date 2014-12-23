@@ -652,6 +652,7 @@
   - source: Source Type
   - source_of_document: The type of source that classifies this document
   - state: " States"
+  - status: Status
   - step_x_of_x: Step %d of %d
   - study: Study
   - study_of_document: The study this file pertains to

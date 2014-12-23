@@ -93,8 +93,8 @@ dc.controllers.Workspace = Backbone.Router.extend({
     project:   _.t('project'),
     text:      _.t('text'),
     title:     _.t('title'),
-    source:    _.t('source')
-
+    source:    _.t('source'),
+    status:    _.t('status')
   },
 
   // Translated pre-defined search values
@@ -170,6 +170,9 @@ dc.controllers.Workspace = Backbone.Router.extend({
             case keys.document:
               cb(Documents.map(function(d){ return {value: d.canonicalId(), label: d.get('title')}; }));
               break;
+            case keys.status:
+              cb(dc.app.workspace.documentList.DOC_STATUS);
+              break;
             default:
               // Meta data
               cb(_.compact(_.uniq(Documents.reduce(function(memo, doc) {
@@ -184,6 +187,7 @@ dc.controllers.Workspace = Backbone.Router.extend({
             { label: keys.text,        category: '' },
             { label: keys.title,       category: '' },
             { label: keys.source,      category: '' },
+            { label: keys.status,      category: '' }
           ];
           var metadata = _.map(_.keys(Documents.reduce(function(memo, doc) {
             if (_.size(doc.get('data'))) _.extend(memo, doc.get('data'));

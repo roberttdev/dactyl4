@@ -10,13 +10,14 @@ module DC
     # http://www.google.com/help/cheatsheet.html
     class Parser
       include DC::Access
+      include DC::DocumentStatus
 
       # Parse a raw query_string, returning a DC::Search::Query that knows
       # about the text, fields, projects, and attributes it's composed of.
       def parse(query_string='')
         @text, @access = nil, nil
-        @fields, @accounts, @groups, @projects, @project_ids, @doc_ids, @attributes, @filters, @data =
-          [], [], [], [], [], [], [], [], []
+        @fields, @accounts, @groups, @projects, @project_ids, @doc_ids, @attributes, @filters, @statuses, @data =
+          [], [], [], [], [], [], [], [], [], []
 
         fields        = query_string.scan(Matchers::FIELD).map {|m| [m[0], m[3]] }
         search_text   = query_string.gsub(Matchers::FIELD, '').squeeze(' ').strip
@@ -27,7 +28,7 @@ module DC
         Query.new(:text => @text, :fields => @fields, :projects => @projects,
           :accounts => @accounts, :groups => @groups, :project_ids => @project_ids,
           :doc_ids => @doc_ids, :attributes => @attributes, :access => @access,
-          :filters => @filters, :data => @data)
+          :filters => @filters, :statuses => @statuses, :data => @data)
       end
 
       # Extract the portions of the query that are fields, attributes,
@@ -37,13 +38,14 @@ module DC
           type  = pair.first.gsub(/(^['"]|['"]$)/, '')
           value = pair.last.gsub(/(^['"]|['"]$)/, '')
           case type.downcase
-          when 'account'    then @accounts << value.to_i
-          when 'group'      then @groups << value.downcase
-          when 'filter'     then @filters << value.downcase.to_sym
-          when 'access'     then @access = ACCESS_MAP[value.strip.to_sym]
-          when 'project'    then @projects << value
-          when 'projectid'  then @project_ids << value.to_i
-          when 'document'   then @doc_ids << value.to_i
+            when 'account'    then @accounts << value.to_i
+            when 'group'      then @groups << value.downcase
+            when 'filter'     then @filters << value.downcase.to_sym
+            when 'access'     then @access = ACCESS_MAP[value.strip.to_sym]
+            when 'project'    then @projects << value
+            when 'projectid'  then @project_ids << value.to_i
+            when 'document'   then @doc_ids << value.to_i
+            when 'status'     then @statuses << STATUS_TEXT[value]
           else
             process_field(type, value)
           end

@@ -35,6 +35,23 @@ module DC
         :status_in_supp_qa      => STATUS_IN_SUPP_QA
     }
 
+    STATUS_TEXT = {
+      'New'                         => 1,
+      'In Data Entry (1 Claim)'     => 2,
+      'In Data Entry (2 Claims)'    => 3,
+      'Ready for Quality Control'   => 4,
+      'In Quality Control'          => 5,
+      'Ready for Quality Assurance' => 6,
+      'In Quality Assurance'        => 7,
+      'Ready for Extraction'        => 8,
+      'Ready for Supplemental Data Entry' => 9,
+      'In Supplemental Data Entry' => 10,
+      'Ready for Supplemental Quality Control' => 11,
+      'In Supplemental Quality Control' => 12,
+      'Ready for Supplemental Quality Assurance' => 13,
+      'In Supplemental Quality Assurance' => 14
+    }
+
     #Which statuses are accessible to which roles
     DE_ACCESS = [STATUS_NEW, STATUS_DE1, STATUS_READY_SUPP_DE]
     QC_ACCESS = [STATUS_NEW, STATUS_DE1, STATUS_READY_QC, STATUS_READY_SUPP_DE, STATUS_READY_SUPP_QC]

@@ -1,24 +1,5 @@
 // A tile view for previewing a Document in a listing.
 dc.ui.Document = Backbone.View.extend({
-
-  // Status text
-  DOC_STATUS : [
-      'New',
-      'In Data Entry (1 Claim)',
-      'In Data Entry (2 Claims)',
-      'Ready for Quality Control',
-      'In Quality Control',
-      'Ready for Quality Assurance',
-      'In Quality Assurance',
-      'Ready for Extraction',
-      'Ready for Supplemental Data Entry',
-      'In Supplemental Data Entry',
-      'Ready for Supplemental Quality Control',
-      'In Supplemental Quality Control',
-      'Ready for Supplemental Quality Assurance',
-      'In Supplemental Quality Assurance'
-  ],
-
   // Number of pages to show at a time.
   PAGE_LIMIT : 50,
 
@@ -94,7 +75,7 @@ dc.ui.Document = Backbone.View.extend({
       icon          : this._iconAttributes(),
       thumbnail_url : this._thumbnailURL(),
       data          : this.model.sortedData(),
-      status_text   : this.DOC_STATUS[parseInt(this.model.get('status')) - 1].toUpperCase()
+      status_text   : dc.app.workspace.documentList.DOC_STATUS[parseInt(this.model.get('status')) - 1].toUpperCase()
     });
     if (dc.app.paginator && dc.app.paginator.mini) data.title = dc.inflector.truncateWords(data.title, 50);
     $(this.el).html(JST['document/tile'](data));

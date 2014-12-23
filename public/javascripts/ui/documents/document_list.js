@@ -2,6 +2,24 @@
 // in a number of different sizes.
 dc.ui.DocumentList = Backbone.View.extend({
 
+  // Status text
+  DOC_STATUS : [
+    'New',
+    'In Data Entry (1 Claim)',
+    'In Data Entry (2 Claims)',
+    'Ready for Quality Control',
+    'In Quality Control',
+    'Ready for Quality Assurance',
+    'In Quality Assurance',
+    'Ready for Extraction',
+    'Ready for Supplemental Data Entry',
+    'In Supplemental Data Entry',
+    'Ready for Supplemental Quality Control',
+    'In Supplemental Quality Control',
+    'Ready for Supplemental Quality Assurance',
+    'In Supplemental Quality Assurance'
+  ],
+
   // Threshold for dragging empty space in the document list. When below
   // this threshold, do not deselect documents.
   SLOP      : 3,

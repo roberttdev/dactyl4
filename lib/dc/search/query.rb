@@ -38,6 +38,7 @@ module DC
         @doc_ids                = opts[:doc_ids]      || []
         @attributes             = opts[:attributes]   || []
         @filters                = opts[:filters]      || []
+        @statuses               = opts[:statuses]     || []
         @data                   = opts[:data]         || []
         @from, @to, @total      = nil, nil, nil
         @account, @organization = nil, nil
@@ -47,7 +48,7 @@ module DC
       end
 
       # Series of attribute checks to determine the kind and state of query.
-      [:text, :fields, :projects, :accounts, :groups, :project_ids, :doc_ids, :attributes, :data, :results, :filters, :access].each do |att|
+      [:text, :fields, :projects, :accounts, :groups, :project_ids, :doc_ids, :attributes, :data, :results, :filters, :statuses, :access].each do |att|
         class_eval "def has_#{att}?; @has_#{att} ||= @#{att}.present?; end"
       end
 
@@ -71,6 +72,7 @@ module DC
         build_attributes   if     has_attributes?
         build_filters      if     has_filters?
         # build_facets       if     @include_facets
+        build_statuses     if     has_statuses?
         build_access       unless @unrestricted
       end
 
@@ -134,6 +136,7 @@ module DC
           'project_ids' => @project_ids,
           'doc_ids'     => @doc_ids,
           'attributes'  => @attributes,
+          'statuses'    => @statuses,
           'data'        => @data.map {|f| [f.kind, f.value] }
         }
       end
@@ -383,6 +386,19 @@ module DC
               @interpolations << [PRIVATE, ORGANIZATION, PENDING, INVISIBLE, ERROR, DELETED, EXCLUSIVE]
             end
           end
+        end
+      end
+
+      # Generate the Solr or SQL to restrict the search to specific statuses.
+      def build_statuses
+        stauses = @statuses
+        if needs_solr?
+          @solr.build do
+            with :statuses, statuses
+          end
+        else
+          @sql << 'documents.status in (?)'
+          @interpolations << @statuses
         end
       end
 
