@@ -1,10 +1,10 @@
 <div id="floating_toolbar">
-  <div id="open_viewers" class="minibutton"><%= _.t('open') %></div>
-  <% if( dc.account.canUpload() ){ %>
-    <div class="edit_menu_container"></div>
+  <% if( dc.account.canOpenDocument() ){ %>
+    <div id="open_viewers" class="minibutton"><%= _.t('open') %></div>
   <% } %>
   <div class="sort_menu_container"></div>
   <% if( dc.account.isAdmin() ){ %>
+    <div class="edit_menu_container"></div>
     <div class="project_menu_container"></div>
     <div class="analyze_menu_container"></div>
     <div class="publish_menu_container"></div>

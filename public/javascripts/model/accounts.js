@@ -113,7 +113,11 @@ dc.model.Account = Backbone.Model.extend({
 
   canUpload : function() {
     var role = this.attributes.role;
-    return role == this.ADMINISTRATOR || role == this.FILE_UPLOADING
+    return role == this.ADMINISTRATOR || role == this.FILE_UPLOADING;
+  },
+
+  canOpenDocument : function() {
+    return this.attributes.role != this.FILE_UPLOADING;
   },
 
   isPending : function() {

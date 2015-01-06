@@ -126,7 +126,9 @@ class Document < ActiveRecord::Base
       access << qcFmt
       access << qaFmt
     end
+
     access << "(documents.status in (#{EXTRACT_ACCESS.join(",")}))" if account.data_extraction?
+    access << "1=0" if account.file_uploading? #No docs shown to file uploaders
     query = where( access.join(' or ') )
     query.readonly(false)
   }
