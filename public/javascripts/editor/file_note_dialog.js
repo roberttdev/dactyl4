@@ -24,7 +24,8 @@ dc.ui.FileNoteDialog = dc.ui.Dialog.extend({
         mode : 'custom',
         title : _.t('paragraph_description_of_document'),
         saveText : _.t('save'),
-        noOverlay: true
+        noOverlay: true,
+        noOK: document.get('status') != 7 //Don't show OK if status is not In QA
     });
 
     _thisView = this;

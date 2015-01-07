@@ -347,6 +347,8 @@
   - has_no_entities: "%s has no entities to display."
   - height: Height
   - help: Help
+  - help_url: Help URL
+  - help_url_explanation: The URL to a help page describing the template.
   - help_pages: help pages
   - home: Home
   - in_project: in this project

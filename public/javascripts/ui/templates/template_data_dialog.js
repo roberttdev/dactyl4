@@ -47,7 +47,8 @@ dc.ui.TemplateDataDialog = dc.ui.Dialog.extend({
 
     //Main template
     this._container.html(this._mainJST({
-      name          : this.template.get('name') ? this.template.get('name').replace(/\"/g,'&quot;') : ''
+      name      : this.template.get('name') ? this.template.get('name').replace(/\"/g,'&quot;') : '',
+      help_url  : this.template.get('help_url') ? this.template.get('help_url').replace(/\"/g,'&quot;') : ''
     }));
 
     //Field listings
@@ -128,8 +129,11 @@ dc.ui.TemplateDataDialog = dc.ui.Dialog.extend({
         return _thisView.error(_.t('blank_field_error'));
     }
 
-    //Push template name from view to model
-    this.template.set({name: this.$('#template_name').val()});
+    //Push template name and URL from view to model
+    this.template.set({
+      name:     this.$('#template_name').val(),
+      help_url: this.$('#help_url').val()
+    });
     //Reset collection and re-push edited fields from view to model
     if( this.template.template_fields != null && this.template.template_fields.length > 0 ){
         this.template.template_fields.reset();

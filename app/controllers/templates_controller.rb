@@ -52,7 +52,7 @@ class TemplatesController < ApplicationController
 
   # Create new template
   def create
-    template_attributes = pick(params, :name, :parent_id)
+    template_attributes = pick(params, :name, :parent_id, :help_url)
     json GroupTemplate.create(template_attributes)
   end
 
@@ -60,7 +60,7 @@ class TemplatesController < ApplicationController
   # Update template
   def update
     template = GroupTemplate.find(params[:id])
-    unless template.update_attributes pick(params, :name)
+    unless template.update_attributes pick(params, :name, :help_url)
       return json({ "errors" => template.errors.to_a.map{ |field, error| "#{field} #{error}" } }, 409)
     end
 

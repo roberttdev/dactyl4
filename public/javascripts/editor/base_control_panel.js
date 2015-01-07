@@ -18,7 +18,8 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
         'click .mark_complete':     'markComplete',
         'click .group_title':       'handleGroupClick',
         'click .group_name':        'handleGroupClick',
-        'click .file_note':         'handleFileNote'
+        'click .file_note':         'handleFileNote',
+        'click .help_url_icon':     'launchHelpWindow'
     },
 
 
@@ -217,6 +218,11 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
             if( this.pointViewList[i].model.get('title') == title ){ return true; }
         }
         return false;
+    },
+
+    //launchHelpWindow: Open Help URL in separate window
+    launchHelpWindow: function(){
+      if( this.model.get('group_template') ){ window.open(this.model.get('group_template').help_url); }
     },
 
     //markComplete: blank placeholder to be overridden if class wishes to handle mark complete

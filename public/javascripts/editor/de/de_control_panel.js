@@ -18,7 +18,10 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
     var _deView           = this;
     var _mainJST = JST['de_control_panel'];
     var templateName    = this.model.get('group_template') == null ? null : this.model.get('group_template').name;
-    $(this.el).html(_mainJST({template_name: templateName ? templateName.substring(0,39) : null}));
+    $(this.el).html(_mainJST({
+      template_name: templateName ? templateName.substring(0,39) : null,
+      help_url: this.model.get('help_url')
+    }));
 
     //Group Navigation
     $('.group_navigation').html(this.generateGroupNav());

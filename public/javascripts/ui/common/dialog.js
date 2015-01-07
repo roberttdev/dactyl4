@@ -46,6 +46,7 @@ dc.ui.Dialog = Backbone.View.extend({
     $(document.body).bind('keydown', this._maybeClose);
     if (cel[0]) _.defer(function(){ cel.focus(); });
     if (!this.options.noOverlay) $(document.body).addClass('overlay');
+    if (this.options.noOK) $('.minibutton.ok').hide();
     return this;
   },
 

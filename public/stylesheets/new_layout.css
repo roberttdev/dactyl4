@@ -77,6 +77,17 @@ div.centered_tab_content {
 
 
 /*
+ * ICONS
+ */
+div.help_url_icon {
+    float: right;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    background: url('/images/embed/icons/info_button_16.png');
+}
+
+/*
  * TYPEAHEAD.BUNDLE.JS
  */
 #scrollable-dropdown-menu .tt-dropdown-menu {

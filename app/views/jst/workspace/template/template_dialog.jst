@@ -8,6 +8,14 @@
   </div>
 </div>
 <div class="row">
+  <label for="help_url" title="<%= _.t('help_url_explanation') %>">
+    <%= _.t('help_url') %>:
+  </label>
+  <div class="text_input dark small">
+      <input name="help_url" id="help_url" class="attribute" type="text" value="<%=help_url%>"/>
+  </div>
+</div>
+<div class="row">
     <label class="title"><%= _.t('template_fields') %></label>
     <div id="new_field" class="minibutton plus float_right dark"><div class="icon white_plus"></div><%= _.t('new')%></div>
 </div>
