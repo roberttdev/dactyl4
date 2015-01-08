@@ -103,8 +103,8 @@ class AnnotationsController < ApplicationController
       submitHash[:access] = DC::Access::PUBLIC
       submitHash[:location] = submitHash[:location] ? submitHash[:location][:image] : nil
 
-      #In DE mode, create/update the base annotation
-      if doc.in_de? || doc.in_supp_de?
+      #In DE or Extract mode, create/update the base annotation
+      if doc.in_de? || doc.in_supp_de? || doc.in_extraction?
         if field[:id].nil?
           submitHash[:account_id] = current_account.id
           anno = Annotation.create(submitHash)
@@ -132,9 +132,11 @@ class AnnotationsController < ApplicationController
           ag.update_attributes({:approved_count => ag.approved_count + 1})
         end
       else
-        #Update with new data if in QA (only current status that needs to bother)
+        #Update with new data if in QA
         if doc.in_qa?
           anno_group.update_qa_status(field[:approved], field[:qa_reject_note], current_account.id, doc.id)
+        elsif doc.in_extraction?
+          anno_group.update_attributes({:qa_approved_by => current_account.id})
         end
       end
     end

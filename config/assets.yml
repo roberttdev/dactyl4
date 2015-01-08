@@ -25,10 +25,7 @@ javascripts:
   editor:
     - public/javascripts/editor/editor_toolbar.js
     - public/javascripts/editor/*.js
-    - public/javascripts/editor/de/*.js
-    - public/javascripts/editor/qc/*.js
-    - public/javascripts/editor/qa/*.js
-    - public/javascripts/editor/supp_de/*.js
+    - public/javascripts/editor/**/*.js
     - app/views/jst/editor/*.jst
   search_embed:
     - app/views/jst/embed/search_*.jst

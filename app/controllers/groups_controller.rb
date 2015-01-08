@@ -78,7 +78,11 @@ class GroupsController < ApplicationController
 
   def update
     group = Group.find(params[:id])
-    unless group.update_attributes pick(params, :name, :extension)
+    doc = Document.find(group.document_id)
+    submitHash = pick(params, :name, :extension)
+    submitHash[:qa_approved_by] = current_account.id if doc.in_extraction?
+
+    unless group.update_attributes submitHash
       return json({ "errors" => template.errors.to_a.map{ |field, error| "#{field} #{error}" } }, 409)
     end
 

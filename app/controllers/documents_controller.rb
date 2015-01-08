@@ -271,7 +271,7 @@ class DocumentsController < ApplicationController
   #Mark the current user's work on the document as completed
   def mark_complete
     doc = Document.find(params[:id].to_i)
-    return forbidden if !doc.has_open_claim?(current_account)
+    return forbidden if !doc.has_open_claim?(current_account)  && !doc.in_extraction?
 
     #Check for issues; if found, return
     errorResp = doc.verify_mark_complete(current_account)

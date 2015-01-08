@@ -49,6 +49,9 @@ _.extend(dc.app.editor, {
       case 7:
           this.controlPanel = new dc.ui.ViewerQAControlPanel();
           break;
+      case 8:
+          this.controlPanel = new dc.ui.ViewerExtractControlPanel();
+          break;
       case 10:
           this.controlPanel = new dc.ui.ViewerSuppDEControlPanel();
           break;

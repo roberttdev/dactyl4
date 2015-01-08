@@ -581,6 +581,7 @@
   - resend_instructions: Resend Instructions
   - resend_welcome_email: Resend Welcome Email
   - restricted: Restricted
+  - return_to_de: Are you sure you want to send this document back for supplemental data entry?
   - review_de_instruct: Please review the Data Entry work for each user.
   - review_qc_instruct: Please review the Quality Control work.
   - review_x_documents:

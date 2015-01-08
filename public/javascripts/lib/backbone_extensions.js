@@ -64,10 +64,10 @@ Backbone.BulkSubmitCollection = Backbone.Collection.extend({
     pushAll: function(options){
         _thisColl = this;
 
-        _hasChanged = _.find(this.models, function(model){ return model.isNew() || model.changedAttributes(); });
+        _hasChanged = _.filter(this.models, function(model){ return model.isNew() || model.changedAttributes(); });
 
-        if( _hasChanged ) {
-            _bulkJSON = {bulkData: this.toJSON()};
+        if( _hasChanged && _hasChanged.length > 0 ) {
+            _bulkJSON = {bulkData: _.map(_hasChanged, function(model){ return model.toJSON(); })};
             $.ajax({
                 url: this.url,
                 contentType: 'application/json; charset=utf-8',

@@ -59,7 +59,7 @@ module DC
     EXTRACT_ACCESS = [STATUS_READY_EXT]
 
     #Which statuses allow claims
-    CLAIMABLE_STATUS = [STATUS_NEW, STATUS_DE1, STATUS_READY_QC, STATUS_READY_QA, STATUS_READY_SUPP_DE, STATUS_READY_SUPP_QC]
+    CLAIMABLE_STATUS = [STATUS_NEW, STATUS_DE1, STATUS_READY_QC, STATUS_READY_QA, STATUS_READY_EXT, STATUS_READY_SUPP_DE, STATUS_READY_SUPP_QC]
 
     #Returns what the status will be when the current status is claimed
     def claimed_status(current)

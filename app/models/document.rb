@@ -670,6 +670,9 @@ class Document < ActiveRecord::Base
 
   #Returned whether passed account has a completed claim on the file
   def has_completed_claim?(account)
+    #Skip all logic if document has made it to Ready For Extraction
+    return false if self.status == STATUS_READY_EXT
+
     return true if (self.de_one_id == account.id && self.de_one_complete) || (self.de_two_id == account.id && self.de_two_complete)
     return true if self.status > STATUS_IN_QC && self.qc_id == account.id
     return true if self.status > STATUS_IN_QA && self.qa_id == account.id
@@ -769,6 +772,16 @@ class Document < ActiveRecord::Base
             end
           end
         end
+
+      ###### READY FOR EXTRACTION ######
+      when STATUS_READY_EXT
+        if self.qa_note.nil? || self.qa_note == ''
+          #Error if no file note
+          return {
+            'errorText' => 'Please enter a file note describing the desired supplemental data entry work before returning the document to Supplemental Data Entry.',
+            'data' => {}
+          }
+        end
     end
 
     return nil
@@ -798,8 +811,8 @@ class Document < ActiveRecord::Base
       when STATUS_IN_QC
         self.update_attributes({:status => STATUS_READY_QA})
 
-      #######QUALITY ASSURANCE######
-      when STATUS_IN_QA
+      #######QUALITY ASSURANCE / READY FOR EXTRACTION######
+      when STATUS_IN_QA, STATUS_READY_EXT
         if self.has_rejections?
             #If rejection notes, send to Supp DE
             self.update({
@@ -884,6 +897,8 @@ class Document < ActiveRecord::Base
         self.update({status: STATUS_IN_QA, qa_id: account.id})
       when STATUS_READY_SUPP_DE
         self.update({status: STATUS_IN_SUPP_DE, de_one_id: account.id})
+      when STATUS_READY_EXT
+        #Do nothing -- grant access but place no claim on file
     end
 
     #Create a base group for the user in group-creating statuses
@@ -1230,6 +1245,10 @@ class Document < ActiveRecord::Base
 
   def in_qa?
     status == STATUS_IN_QA
+  end
+
+  def in_extraction?
+    status == STATUS_READY_EXT
   end
 
   def in_supp_de?

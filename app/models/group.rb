@@ -18,7 +18,7 @@ class Group < ActiveRecord::Base
       accountId = doc.de_two_id if de == "2"
       accountId = doc.qc_id if qc == "true"
       accountId = account_id if accountId.nil?
-    elsif doc.in_qa?
+    elsif doc.in_qa? || doc.in_extraction?
       accountId = doc.qc_id
     elsif doc.in_supp_de? || doc.in_supp_qc? || doc.in_supp_qa?
       accountId = doc.reviews.where({iteration: 1}).first.qc_id
