@@ -67,8 +67,7 @@ class AccountsController < ApplicationController
   # a password.
   def create
     # Check the requester's permissions
-    return forbidden unless current_account.admin? or
-      (current_account.real?(current_organization) and params[:role] == Account::REVIEWER)
+    return forbidden unless current_account.admin?
 
     # Find or create the appropriate account
     account_attributes = pick(params, :first_name, :last_name, :email, :language, :document_language).merge({
@@ -85,8 +84,6 @@ class AccountsController < ApplicationController
     if membership.nil?
       membership_attributes[:default] = true unless account.memberships.exists?
       membership = current_organization.memberships.create(membership_attributes.merge(:account_id => account.id))
-    elsif membership.role == Account::REVIEWER # or if account is a reviewer in this organization
-      account.upgrade_reviewer_to_real(current_organization, membership_attributes[:role])
     elsif membership.role == Account::DISABLED
       return json({:errors => ['That email address belongs to an inactive account.']}, 409)
     else

@@ -23,6 +23,7 @@ DC::Application.routes.draw do
   scope( controller: 'authentication' ) do
     get '/signup',                        action: 'signup_info'
     match '/login',                       action: 'login', :via=>[:get,:post]
+    match '/view-only-login',             action: 'view_only_login', :via=>[:get]
     get '/logout',                        action: 'logout'
     get '/auth/remote_data/:document_id', action: 'remote_data'
 

@@ -15,7 +15,6 @@ class DocumentsController < ApplicationController
   PAGE_NUMBER_EXTRACTOR = /-p(\d+)/
 
   def show
-    Account.login_reviewer(params[:key], session, cookies) if params[:key]
     doc = current_document(true)
     return forbidden if doc.nil? && Document.exists?(params[:id].to_i)
     #Block if another doc of this status already claimed
@@ -84,6 +83,20 @@ class DocumentsController < ApplicationController
     end
     doc.destroy
     json nil
+  end
+
+  def view_point
+    @current_anno_id = params[:id]
+    anno = Annotation.find(@current_anno_id)
+    @current_document = Document.find(anno.document_id)
+
+    return render :file => "#{Rails.root}/public/doc_404.html", :status => 404 unless @current_document
+
+    @no_sidebar = true
+    @edits_enabled = false
+    @allowed_to_edit = false
+    @orientation = 'horizontal'
+
   end
 
   def redact_pages
@@ -350,8 +363,6 @@ class DocumentsController < ApplicationController
     else
       @orientation = 'horizontal'
     end
-    @allowed_to_review = current_account.reviews?(current_document)
-    @reviewer_inviter = @allowed_to_review && current_document.reviewer_inviter(current_account) || nil
     @template_list =  GroupTemplate.includes(:subtemplates).order(:name).all()
     @template_list = @template_list.to_json(:include => :subtemplates)
   end

@@ -141,7 +141,6 @@ ol {
   z-index: 3;
 }
   body.homepage #sky {
-    height: 350px;
     background: transparent url(/images/embed/home/sky.png) repeat-x 0 0;
   }
 
@@ -234,9 +233,6 @@ ol {
   width: 960px;
   margin: 170px auto 0;
 }
-  body.homepage {
-    margin: 425px auto 0;
-  }
 
 #content {
   width: 620px;

@@ -14,7 +14,7 @@ class AuthenticationController < ApplicationController
 
   # /login handles both the login form and the login request.
   def login
-    return redirect_to '/' if current_account && current_account.refresh_credentials(cookies) && !current_account.reviewer? && current_account.active?
+    return redirect_to '/' if current_account && current_account.refresh_credentials(cookies) && current_account.active?
     return render(:layout => "workspace") unless request.post?
     next_url = (params[:next] && CGI.unescape(params[:next])) || '/'
     account = Account.log_in(params[:email], params[:password], session, cookies)
@@ -35,6 +35,15 @@ class AuthenticationController < ApplicationController
   def logout
     clear_login_state
     redirect_to '/'
+  end
+
+  def view_only_login
+    account = Account.hashed_login(params[:id], params[:p])
+    if account && account.active?
+      return redirect_to("/documents/view_point/#{params[:aid]}")
+    else
+      return forbidden
+    end
   end
 
 # This controller deals with the concept of identities which are provided/verified
@@ -201,7 +210,7 @@ class AuthenticationController < ApplicationController
     if logged_in?
       data[:account] = current_account.canonical
       if document = Document.accessible(current_account,current_organization).find( document_id )
-        data[:document][:annotations_url] = document.annotations_url if document.commentable?( current_account )
+        data[:document][:annotations_url] = document.annotations_url
         data[:document][:annotations]     = document.annotations_with_authors( current_account ).map do | note |
           note.canonical.merge({ :editable=> current_account.owns?( note ) })
         end

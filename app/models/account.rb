@@ -43,7 +43,6 @@ class Account < ActiveRecord::Base
   scope :admin,   -> { with_memberships.where( ["memberships.role = ?",  ADMINISTRATOR] )  }
   scope :active,  -> { with_memberships.where( ["memberships.role is NULL or memberships.role != ?", DISABLED] ) }
   scope :real,    -> { with_memberships.where( ["memberships.role in (?)", REAL_ROLES] ) }
-  scope :reviewer,-> { with_memberships.where( ["memberships.role = ?",    REVIEWER] ) }
   scope :with_identity, lambda { | provider, id |
      where("identities @> hstore(:provider, :id)", :provider=>provider.to_s,:id=>id.to_s )
   }
@@ -61,10 +60,10 @@ class Account < ActiveRecord::Base
     account
   end
 
-  def self.login_reviewer(key, session=nil, cookies=nil)
-    security_key = SecurityKey.find_by_key(key)
-    return nil unless security_key
-    account = security_key.securable
+  #Attempt login with an ID and hashed password
+  def self.hashed_login(id, hashed_pw, session=nil, cookies=nil)
+    account = Account.find(id)
+    return false unless account.password.bytes.pack("C*") == hashed_pw
     account.authenticate(session, cookies) if session && cookies
     account
   end
@@ -155,18 +154,6 @@ class Account < ActiveRecord::Base
     has_role?(ADMINISTRATOR, org)
   end
 
-  def contributor?(org=self.organization)
-    has_role?(CONTRIBUTOR, org)
-  end
-
-  def reviewer?(org=self.organization)
-    has_role?(REVIEWER, org)
-  end
-
-  def freelancer?(org=self.organization)
-    has_role?(FREELANCER, org)
-  end
-
   def data_entry?(org=self.organization)
     has_role?(DATA_ENTRY, org)
   end
@@ -187,8 +174,8 @@ class Account < ActiveRecord::Base
     has_role?(DATA_EXTRACTION, org)
   end
 
-  def real?(org=self.organization)
-    admin?(org) || contributor?(org) || freelancer?(org)
+  def view_only?(org=self.organization)
+    has_role?(VIEW_ONLY, org)
   end
 
   def disabled?(org=self.organization)
@@ -225,78 +212,14 @@ class Account < ActiveRecord::Base
     resource.account_id == id
   end
 
-  def collaborates?(resource) # Flagged to rewrite
-    (admin? || contributor?) &&
-      resource.organization_id == organization_id
-  end
-
-  # Heavy-duty SQL.
-  # A document is shared with you if it's in any project of yours, and that
-  # project is in collaboration with an owner or and administrator of the document.
-  # Note that shared? is not the same as reviews?, as it ignores hidden projects.
-  def shared?(resource)
-    # organization_id will no long be returned on account queries
-    collaborators = Account.find_by_sql(<<-EOS
-      select distinct on (a.id)
-      a.id as id, m.organization_id as organization_id, m.role as role
-      from accounts as a
-      inner join collaborations as c1
-        on c1.account_id = a.id
-      inner join collaborations as c2
-        on c2.account_id = #{id} and c2.project_id = c1.project_id
-      inner join projects as p
-        on p.id = c1.project_id and p.hidden = false
-      inner join project_memberships as pm
-        on pm.project_id = c1.project_id and pm.document_id = #{resource.document_id}
-      left outer join memberships as m on m.account_id = #{id}
-      where a.id != #{id}
-    EOS
-    )
-    # check for knockon effects in identifying whether an account owns/collabs on a resource.
-    collaborators.any? {|account| account.owns_or_collaborates?(resource) }
-  end
-
-  def allowed_to_comment?( resource )
-    [PREMODERATED,POSTMODERATED].include?( resource.access ) or allowed_to_edit?(resource) or reviews?(resource)
-  end
-
-  def owns_or_collaborates?(resource)
-    owns?(resource) || collaborates?(resource)
-  end
-
-  # Effectively the same as Account#shares?, but for hidden projects used for reviewers.
-  def reviews?(resource)
-    project = resource.projects.hidden.first
-    project && project.collaborators.exists?(id)
-  end
-
-  def allowed_to_edit?(resource)
-    resource.status
-  end
-
   def allowed_to_edit_account?(account, org=self.organization)
     (self.id == account.id) ||
-    ((self.admin?(org) && account.member_of?(org)) || (self.member_of?(org) && account.reviewer?(org)))
-  end
-
-  def shared_document_ids
-    return @shared_document_ids if @shared_document_ids
-    @shared_document_ids ||= accessible_project_ids.empty? ? [] :
-      ProjectMembership.connection.select_values(
-        "select distinct document_id from project_memberships where project_id in (#{accessible_project_ids.join(',')})"
-      ).map {|id| id.to_i }
-  end
-
-  # The list of all of the projects that have been shared with this account
-  # through collaboration.
-  def accessible_project_ids
-    @accessible_project_ids ||=
-      Collaboration.owned_by(self).pluck(:project_id)
+    ((self.admin?(org) && account.member_of?(org)) || (self.member_of?(org)))
   end
 
   # is the account considered an DocumentCloud Administrator?
   def dcloud_admin?
-    organization.id == 1 && ! reviewer?
+    organization.id == 1
   end
 
   # When an account is created by a third party, send an email with a secure
@@ -309,22 +232,6 @@ class Account < ActiveRecord::Base
   def ensure_security_key!
     create_security_key if security_key.nil?
   end
-
-  def send_reviewer_instructions(documents, inviter_account, message=nil)
-    key = nil
-    if self.has_role?( Account::REVIEWER )
-      ensure_security_key!
-      key = '?key=' + self.security_key.key
-    end
-    LifecycleMailer.reviewer_instructions(documents, inviter_account, self, message, key).deliver
-  end
-
-  # Upgrading a reviewer account to a newsroom account also moves their                 #
-  # notes over to the (potentially different) organization.                             # Move to Organization
-  def upgrade_reviewer_to_real(organization, role)                                      #
-    update_attributes :organization => organization, :role => role                      #
-    Annotation.update_all("organization_id = #{organization.id}", "account_id = #{id}") #
-  end                                                                                   #
 
   # When a password reset request is made, send an email with a secure key to
   # reset the password.
@@ -343,14 +250,9 @@ class Account < ActiveRecord::Base
     "\"#{full_name}\" <#{email}>"
   end
 
-  # MD5 hash of processed email address, for use in Gravatar URLs.
-  def hashed_email
-    @hashed_email ||= Digest::MD5.hexdigest(email.downcase.gsub(/\s/, '')) if email
-  end
-
   # Has this account been assigned, but never logged into, with no password set?
   def pending?
-    !hashed_password && !reviewer? && identities.blank?
+    !hashed_password && identities.blank?
   end
 
   # It's slo-o-o-w to compare passwords. Which is a mixed bag, but mostly good.
@@ -409,8 +311,7 @@ class Account < ActiveRecord::Base
       'last_name'         => last_name,
       'language'          => language,
       'document_language' => document_language,
-      'hashed_email'      => hashed_email,
-      'pending'           => pending?,
+      'pending'           => pending?
     }
 
     if options[:include_memberships]

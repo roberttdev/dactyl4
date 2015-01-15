@@ -3,7 +3,7 @@
   <%= render :partial => 'home/help_navigation' if @nav == 'guide' %>
   
 
-  <% if @current_account && !@current_account.reviewer? %>
+  <% if @current_account %>
 
     <div class="sidebar_section">
       Welcome, <%= @current_account.full_name %>.
@@ -27,7 +27,7 @@
     </div>
   </div>
 
-  <% if !@current_account || @current_account.reviewer? %>
+  <% if !@current_account  %>
 
     <div class="sidebar_section login_section">
       <% if flash[:error] %>
@@ -81,7 +81,7 @@
     </ul>
   </div>
 
-  <% if @title != 'Contact' && (!@current_account || @current_account.reviewer?) %> 
+  <% if @title != 'Contact' && (!@current_account ) %>
 
     <div id="join" class="sidebar_section">
       DocumentCloud is a tool for journalists.<br />

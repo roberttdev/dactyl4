@@ -128,7 +128,7 @@ class Document < ActiveRecord::Base
     end
 
     access << "(documents.status in (#{EXTRACT_ACCESS.join(",")}))" if account.data_extraction?
-    access << "1=0" if account.file_uploading? #No docs shown to file uploaders
+    access << "1=0" if account.file_uploading? || account.view_only? #No docs shown to file uploaders or view only
     query = where( access.join(' or ') )
     query.readonly(false)
   }
@@ -384,10 +384,6 @@ class Document < ActiveRecord::Base
 
   def published_url
     remote_url || detected_remote_url
-  end
-
-  def commentable?(account)
-    [ PREMODERATED, POSTMODERATED ].include?(access) or ( account && account.allowed_to_comment?(self) )
   end
 
   # When the access level changes, all sub-resource and asset permissions
@@ -1148,7 +1144,7 @@ class Document < ActiveRecord::Base
     end
 
     if opts[:annotations]
-      json[:annotations_url] = annotations_url if commentable?(opts[:account])
+      json[:annotations_url] = annotations_url
       json[:annotations] = self.annotations_with_authors(opts[:account])
     end
 
@@ -1208,7 +1204,7 @@ class Document < ActiveRecord::Base
     res['page']['image']      = page_image_url_template({ :local => options[:local], :cache_busting => options[:cache_busting] })
     res['page']['text']       = page_text_url_template(:local => options[:local])
     res['related_article']    = related_article if related_article
-    res['annotations_url']    = annotations_url if commentable?(options[:account])
+    res['annotations_url']    = annotations_url
     res['qa_note']            = qa_note
     if options[:allow_detected]
       res['published_url']    = published_url if published_url
@@ -1219,7 +1215,11 @@ class Document < ActiveRecord::Base
     doc['data']               = data if options[:data]
     doc['language']           = language
     if options[:annotations]
-      doc['annotations']      = ordered_annotations(options[:account]).map {|a| a.canonical}
+      if options[:view_only_id]
+        doc['annotations'] = self.annotations.where(:id => options[:view_only_id])
+      else
+        doc['annotations'] = ordered_annotations(options[:account]).map {|a| a.canonical}
+      end
     end
     if self.mentions
       doc['mentions']         = self.mentions

@@ -8,10 +8,5 @@ dc.account.organizations().each(function(organization){
 Accounts.add(dc.account);
 
 dc.account.set({
-  hasDocuments  : <%=raw @has_documents.to_json %>,
-  <% if @allowed_to_edit || @allowed_to_review %>
-  isOwner       : <%=raw !!@allowed_to_edit %>,
-  isReviewer    : <%=raw !!@allowed_to_review %>,
-  <% end %>
-  isReal        : <%=raw @current_account.real? %>
+  hasDocuments  : <%=raw @has_documents.to_json %>
 });
