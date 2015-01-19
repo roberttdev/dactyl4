@@ -65,9 +65,7 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
     }
 
     //Remove any blank points
-    this.model.annotations.each(function(model, index) {
-        if(model.get('title') == null && model.get('content') == null){ _deView.model.annotations.remove(model); }
-    });
+    this.model.annotations.remove(this.model.annotations.where({title: (null || undefined), content: (null || undefined)}));
 
     //If there are non-blank annotations, attempt to sync them with DB.
     if( this.model.annotations.length > 0 ) {
@@ -149,7 +147,7 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
 
 
   handlePointDelete: function(annoView){
-      this.pointViewList = this.pointViewList.filter(function (val) { return val.model.id != annoView.model.id; });
+      this.pointViewList = this.pointViewList.filter(function (val) { return val != annoView; });
   },
 
 

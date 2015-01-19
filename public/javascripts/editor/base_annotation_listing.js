@@ -54,6 +54,7 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
 
   deletePoint: function() {
     dc.app.editor.annotationEditor.deleteAnnotation(this.model, this.group_id);
+    dc.app.editor.annotationEditor.close();
     if( this.model.get('annotation_group_id') ) {
       //If this has been saved before, initiate deletion from DB
       this.model.destroy({data: {group_id: this.group_id}, processData: true});
@@ -93,8 +94,14 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
 
   //setWaitingForClone: turn setting and highlight on/off
   setWaitingForClone: function(turnOn) {
-      this.waitingForClone = turnOn;
-      turnOn ? this.$el.addClass('copyHighlighting') : this.$el.removeClass('copyHighlighting');
+    if( turnOn ){
+      //Clear any existing mid-annotation rows
+      this.trigger('requestAnnotationClear');
+      this.$el.addClass('copyHighlighting');
+    }else{
+      this.$el.removeClass('copyHighlighting');
+    }
+    this.waitingForClone = turnOn;
   },
 
 
