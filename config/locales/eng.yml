@@ -149,6 +149,7 @@
   - choose_note: Choose note
   - city: City
   - claimed: Claimed
+  - claimed_by: Claimed By
   - close: Close
   - close_while_redacting: The document is being redacted. It will close while processing.
   - close_while_text_reprocess: The text is being processed. Please close this document.

@@ -29,9 +29,9 @@
     <span class="quiet_link search_account"><%= account_name %></span>,
     <span class="quiet_link search_group"><%= organization_name %></span> -
     <%= created_at %>
-    <% if (publish_at) { %>
-      - (<%= _.t('public_on') %>
-      <span class="quiet_link change_publish_at"><%= model.formattedPublishAtDate() %></span>)
+    <%if( claimed_by && claimed_by.length > 0 ){ %>
+      , <%= _.t('claimed_by') %>
+      <%= claimed_by %>
     <% } %>
   </span>
 </div>

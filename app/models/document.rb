@@ -1136,7 +1136,8 @@ class Document < ActiveRecord::Base
       :language            => language,
       :file_hash           => file_hash,
       :original_file_path  => original_url,
-      :qa_note             => qa_note
+      :qa_note             => qa_note,
+      :claimed_by          => self.claimant_names
     }
     if self.status == STATUS_IN_QC
       json[:de_one_id] = de_one_id
@@ -1206,6 +1207,7 @@ class Document < ActiveRecord::Base
     res['related_article']    = related_article if related_article
     res['annotations_url']    = annotations_url
     res['qa_note']            = qa_note
+    res['claimed_by']         = self.claimant_names
     if options[:allow_detected]
       res['published_url']    = published_url if published_url
     else
@@ -1261,6 +1263,29 @@ class Document < ActiveRecord::Base
 
   def in_supp_qa?
     status == STATUS_IN_SUPP_QA
+  end
+
+  def claimant_names
+    account_ids = []
+    account_names = ''
+    case self.status
+      when STATUS_DE1, STATUS_IN_SUPP_DE
+        account_ids.push(self.de_one_id)
+      when STATUS_DE2
+        account_ids.push(self.de_one_id)
+        account_ids.push(self.de_two_id)
+      when STATUS_IN_QC, STATUS_IN_SUPP_QC
+        account_ids.push(self.qc_id)
+      when STATUS_IN_QA, STATUS_IN_SUPP_QA
+        account_ids.push(self.qa_id)
+    end
+
+    if account_ids.length > 0
+      accounts = Account.where(:id => account_ids)
+      account_names = accounts.map { |a| a.first_name + ' ' + a.last_name }.join ', '
+    end
+
+    return account_names
   end
 
   private
