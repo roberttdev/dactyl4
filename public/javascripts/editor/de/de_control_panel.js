@@ -137,7 +137,11 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
 
   handleGroupCloneRequest: function(group) {
     var _thisView = this;
-    group.clone(this.model.id, function(){ _thisView.reloadPoints(_thisView.model.id); });
+    var _cloningDialog = dc.ui.Dialog.progress('Cloning..');
+    group.clone(this.model.id, function(){
+      _cloningDialog.close();
+      _thisView.reloadPoints(_thisView.model.id);
+    });
   },
 
 
