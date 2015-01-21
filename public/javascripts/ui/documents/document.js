@@ -75,7 +75,8 @@ dc.ui.Document = Backbone.View.extend({
       icon          : this._iconAttributes(),
       thumbnail_url : this._thumbnailURL(),
       data          : this.model.sortedData(),
-      status_text   : dc.app.workspace.documentList.DOC_STATUS[parseInt(this.model.get('status')) - 1].toUpperCase()
+      status_text   : dc.app.workspace.documentList.DOC_STATUS[parseInt(this.model.get('status')) - 1].toUpperCase(),
+      admin_view    : dc.account.isAdmin()
     });
     if (dc.app.paginator && dc.app.paginator.mini) data.title = dc.inflector.truncateWords(data.title, 50);
     $(this.el).html(JST['document/tile'](data));

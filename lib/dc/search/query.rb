@@ -159,8 +159,11 @@ module DC
         @sql, @interpolations, @joins = [], [], []
         @proxy = Document
         generate_search
+        select            = "((status=2 or status=3 or status=10) and ((de_one_id=#{@account.id} and not de_one_complete) or (de_two_id=#{@account.id} and not de_two_complete))) OR
+              ((status=5 or status=12) and qc_id=#{@account.id}) OR
+              ((status = 7 or status=14) and qa_id=#{@account.id}) as claimed "
         conditions        = [@sql.join(' and ')] + @interpolations
-        order             = "documents.created_at desc"
+        order             = "claimed desc, documents.status desc, documents.updated_at asc"
         direction         = [:page_count, :hit_count].include?(@order.to_sym) ? 'desc' : 'asc'
         order             = "documents.#{@order} #{direction}, #{order}" unless [:created_at, :score].include?(@order.to_sym)
         query             = @proxy
@@ -168,11 +171,11 @@ module DC
           .includes(:account, :organization)
           .references(:account, :organization)
           .where( conditions )
-        @total            = query.count
         # options[:order]   = order
         # options[:limit]   = @per_page
         # options[:offset]  = @from
-        @results          = query.order( order ).limit( @per_page ).offset( @from )
+        @total            = query.count
+        @results          = query.select( select ).order( order ).limit( @per_page ).offset( @from )
       end
 
       # Construct the correct pagination for the current query.

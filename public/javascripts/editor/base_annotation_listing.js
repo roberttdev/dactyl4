@@ -56,7 +56,7 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
     dc.app.editor.annotationEditor.deleteAnnotation(this.model, this.group_id);
     dc.app.editor.annotationEditor.close();
     if( this.model.get('annotation_group_id') ) {
-      //If this has been saved before, initiate deletion from DB
+      //If this has been saved before, initiate deletion from DB.  Must check ag_id first, as this is the relevant one (as opposed to 'id' that Backbone uses, which is anno id to sync w/ DV)
       this.model.destroy({data: {group_id: this.group_id}, processData: true});
     }
     this.trigger('pointDeleted', this, this.model.id);

@@ -29,7 +29,7 @@
     <span class="quiet_link search_account"><%= account_name %></span>,
     <span class="quiet_link search_group"><%= organization_name %></span> -
     <%= created_at %>
-    <%if( claimed_by && claimed_by.length > 0 ){ %>
+    <%if( admin_view && claimed_by && claimed_by.length > 0 ){ %>
       , <%= _.t('claimed_by') %>
       <%= claimed_by %>
     <% } %>

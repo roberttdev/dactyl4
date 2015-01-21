@@ -94,6 +94,11 @@ dc.ui.ViewerQcSubpanel = dc.ui.ViewerBaseControlPanel.extend({
   markComplete: function(){
       var _thisView = this;
       this.save(function(){ dc.ui.QCCompleteDialog.open(_thisView.docModel); });
-  }
+  },
 
+
+  //Handle message from QC that approval succeeded
+  handleApprovalSuccess: function(){
+      this.changeGroupView(this.model.get('parent_id'));
+  }
 });

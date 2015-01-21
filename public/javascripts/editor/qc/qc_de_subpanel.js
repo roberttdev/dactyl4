@@ -65,20 +65,31 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
 
   //Listens for an annotation to request to be cloned and passes it to anything
   //listening to events from this control panel
-  //Takes in an array of annotations
-  passAnnoCloneRequest: function(annos){
-    this.trigger('requestAnnotationClone', annos, this.model.id);
+  //Takes in an array of annotations, and whether to indicate you want to back up a level if approval succeeds
+  passAnnoCloneRequest: function(annos, backup){
+    this.trigger('requestAnnotationClone', annos, this.model.id, backup);
   },
 
 
   handleAnnoCloneRequest: function(annoView){
-    this.passAnnoCloneRequest([annoView]);
+    this.passAnnoCloneRequest([annoView], false);
   },
 
 
   //Request approval/clone for all current annotations
   approveAll: function(anno){
-    this.passAnnoCloneRequest(this.model.annotations.models);
+    //Calculate whether you would like to back up a level if approval succeeds
+    var groupsApproved = true;
+
+    //If all groups are approved and all annos are approved, refresh to parent group
+    for(var i=0; i < this.model.children.models.length; i++){
+      if( this.model.children.models[i].get('unapproved_count') > 0 ){
+        groupsApproved = false;
+        break;
+      }
+    }
+
+    this.passAnnoCloneRequest(this.model.annotations.models, groupsApproved);
   },
 
 
@@ -98,29 +109,7 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
 
   //Handle message from QC that approval succeeded
   handleApprovalSuccess: function(){
-    var groupsApproved = true;
-    var annosApproved = true;
-
-    //If all groups are approved and all annos are approved, refresh to parent group
-    for(var i=0; i < this.model.children.models.length; i++){
-      if( this.model.children.models[i].get('unapproved_count') > 0 ){
-        groupsApproved = false;
-        break;
-      }
-    }
-
-    if( groupsApproved ){
-      for(var i=0; i < this.pointViewList.length; i++){
-        if( this.pointViewList[i].model.get('approved_count') == 0 ){
-          annosApproved = false;
-          break;
-        }
-      }
-    }
-
-    if( groupsApproved && annosApproved ){
-      this.changeGroupView(this.model.get('parent_id'));
-    }
+    this.changeGroupView(this.model.get('parent_id'));
   }
 
 });
