@@ -319,6 +319,7 @@ class Document < ActiveRecord::Base
     whereClause = {"annotation_groups.created_by" => [de_one_id, de_two_id]} if in_qc?
     whereClause = {"annotation_groups.created_by" => qc_id} if in_qa?
     whereClause = "(annotation_groups.created_by=#{account.id} AND annotation_groups.iteration=#{self.iteration}) OR annotation_groups.qa_approved_by IS NOT NULL" if in_supp_de?
+    whereClause = "(annotation_groups.qa_approved_by IS NOT NULL)" if in_extraction?
 
     self.annotations.joins(:annotation_groups).includes(:annotation_groups).where(whereClause).order('page_number asc, location asc nulls first')
   end
