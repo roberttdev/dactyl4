@@ -97,7 +97,7 @@ class GroupsController < ApplicationController
 
   def update_approval
     group = Group.find(params[:id])
-    group.update_qa_status(params[:approved], params[:qa_reject_note], current_account.id)
+    group.update_qa_status(params[:approved], params[:qa_reject_note], current_account.id, params[:subitems_too])
 
     json({"success" => true})
   end

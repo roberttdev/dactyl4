@@ -660,6 +660,7 @@
   - step_x_of_x: Step %d of %d
   - study: Study
   - study_of_document: The study this file pertains to
+  - subitems_too: Apply this rejection note to all sub-items as well?
   - template_fields: Template Fields
   - template_name: Template Name
   - template_name_invalid: The template name you entered is invalid.

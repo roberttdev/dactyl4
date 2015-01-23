@@ -122,7 +122,7 @@ dc.ui.ViewerQAControlPanel = dc.ui.ViewerBaseControlPanel.extend({
     if( allAnnosApproved && allGroupsApproved && !this.model.get('base') ){
       //If all approved, and group isn't approved, approve it
       if( !this.model.get('approved') ){ this.model.set({approved: true, qa_reject_note: null}); }
-      this.model.update_approval(this.changeGroupView(this.model.get('parent_id')));
+      this.model.update_approval(false, this.changeGroupView(this.model.get('parent_id')));
     }
   },
 

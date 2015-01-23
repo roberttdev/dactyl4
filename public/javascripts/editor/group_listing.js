@@ -10,12 +10,12 @@ dc.ui.GroupListing = Backbone.View.extend({
   complete: false,
 
   events : {
-      'click .edit_group'   : 'openEditGroupDialog',
-      'click .delete_group' : 'confirmDelete',
-      'click .clone_item'   : 'cloneGroup',
-      'click .approve_item' : 'approveGroup',
-      'click .reject_item'  : 'rejectGroup',
-      'click .point_note'   : 'openNote'
+    'click .edit_group'   : 'openEditGroupDialog',
+    'click .delete_group' : 'confirmDelete',
+    'click .clone_item'   : 'cloneGroup',
+    'click .approve_item' : 'approveGroup',
+    'click .reject_item'  : 'rejectGroup',
+    'click .point_note'   : 'openNote'
   },
 
   initialize : function(options) {
@@ -65,23 +65,23 @@ dc.ui.GroupListing = Backbone.View.extend({
 
 
   openEditGroupDialog: function() {
-      dc.ui.CreateGroupDialog.open(this.model);
+    dc.ui.CreateGroupDialog.open(this.model);
   },
 
 
   //Show popup confirming template delete
   confirmDelete: function(event) {
-      dc.ui.Dialog.confirm(_.t('confirm_group_delete'), this.deleteGroup);
+    dc.ui.Dialog.confirm(_.t('confirm_group_delete'), this.deleteGroup);
   },
 
 
   deleteGroup: function() {
-      _thisView = this;
-      this.model.destroy({success: function() {
-          $(_thisView.el).remove();
-          _thisView.trigger('groupDeleted');
-      }});
-      return true;
+    _thisView = this;
+    this.model.destroy({success: function() {
+        $(_thisView.el).remove();
+        _thisView.trigger('groupDeleted');
+    }});
+    return true;
   },
 
 
@@ -89,45 +89,43 @@ dc.ui.GroupListing = Backbone.View.extend({
     this.trigger('requestGroupClone', this.model);
   },
 
-    approveGroup: function() {
-        var _thisView = this;
-        this.model.set({approved: true, qa_reject_note: null});
-        this.model.update_approval(_thisView.setApprove);
-    },
+  approveGroup: function() {
+    var _thisView = this;
+    this.model.set({approved: true, qa_reject_note: null});
+    this.model.update_approval(false, _thisView.setApprove);
+  },
 
-    rejectGroup: function() {
-        var _thisView = this;
-        dc.ui.QARejectDialog.open(_thisView.model, function(){
-            _thisView.model.update_approval(_thisView.setReject);
-        });
-    },
+  rejectGroup: function() {
+    var _thisView = this;
+    dc.ui.QARejectDialog.open(_thisView.model, true, function(subitems_too){
+        _thisView.model.update_approval(subitems_too, _thisView.setReject);
+    });
+  },
 
-    openNote: function() {
-        var _thisView = this;
-        dc.ui.QARejectDialog.open(_thisView.model, function(){
-            _thisView.model.update_approval();
-        });
-    },
+  openNote: function() {
+    var _thisView = this;
+    dc.ui.QARejectDialog.open(_thisView.model, true, function(subitems_too){
+        _thisView.model.update_approval(subitems_too);
+    });
+  },
 
-    //setApprove: Sets UI to approved
-    setApprove: function(){
-      this.$('.approve_item').hide();
-      this.$('.point_note').hide();
-      this.$('.row_status').removeClass('incomplete');
-      this.$('.row_status').removeClass('rejected');
-      this.$('.row_status').addClass('complete');
-      this.$('.reject_item').show().css('display', 'inline-block');
-    },
+  //setApprove: Sets UI to approved
+  setApprove: function(){
+    this.$('.approve_item').hide();
+    this.$('.point_note').hide();
+    this.$('.row_status').removeClass('incomplete');
+    this.$('.row_status').addClass('complete');
+    this.$('.reject_item').show().css('display', 'inline-block');
+  },
 
 
-    //setReject: Sets UI to rejected
-    setReject: function(){
-      this.$('.reject_item').hide();
-      this.$('.row_status').removeClass('incomplete');
-      this.$('.row_status').removeClass('complete');
-      this.$('.row_status').addClass('rejected');
-      this.$('.approve_item').show().css('display', 'inline-block');
-      this.$('.point_note').show().css('display', 'inline-block');
-    }
+  //setReject: Sets UI to rejected
+  setReject: function(){
+    this.$('.reject_item').hide();
+    this.$('.row_status').removeClass('complete');
+    this.$('.row_status').removeClass('incomplete');
+    this.$('.approve_item').show().css('display', 'inline-block');
+    this.$('.point_note').show().css('display', 'inline-block');
+  }
 
 });

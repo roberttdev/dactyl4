@@ -1,12 +1,17 @@
 
 <div class="row">
-      <%= _.t('reject_point_explanation') %>
+  <%= _.t('reject_point_explanation') %>
 </div>
 <div class="row tall">
-    <textarea id="qa_point_note" class="text_area dark small content attribute"><%=qa_point_note%></textarea>
+  <textarea id="qa_point_note" class="text_area dark small content attribute"><%=qa_point_note%></textarea>
 </div>
 
-
+<% if(is_group){ %>
+<div class="row">
+  <input type="checkbox" id="subitems_too">
+  <%= _.t('subitems_too') %>
+</div>
+<% } %>
 
 
 

@@ -28,15 +28,15 @@ class AnnotationGroup < ActiveRecord::Base
     }
   end
 
-  #Take in approval marker and qa rejection note and set proper status
-  #Not approved + No note = Not addressed by QA
-  #Approved + No note = Approved
-  #Approved + Note = Rejected
-  def update_qa_status(approved, note, account_id, doc_id)
-    if approved && !qa_approved_by
+  #Take in addressing marker and qa rejection note and set proper status
+  #Not addressed + No note = Not addressed by QA
+  #Addressed + No note = Approved
+  #Addressed + Note = Rejected
+  def update_qa_status(addressed, note, account_id, doc_id)
+    if addressed && !qa_approved_by
       #If approved and we haven't stored approved by, store it
       self.update_attributes({:qa_approved_by => account_id})
-    elsif !approved && qa_approved_by
+    elsif !addressed && qa_approved_by
       #If for some reason approval is revoked, remove id ref
       self.update_attributes({:qa_approved_by => nil})
     end

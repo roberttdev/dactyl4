@@ -55,7 +55,7 @@ dc.ui.QAAnnotationListing = dc.ui.BaseAnnotationListing.extend({
 
     handleReject: function(){
         var _thisView = this;
-        dc.ui.QARejectDialog.open(_thisView.model, function(){
+        dc.ui.QARejectDialog.open(_thisView.model, false, function(){
             _thisView.setReject();
             _thisView.trigger('qaAddress', _thisView);
         });

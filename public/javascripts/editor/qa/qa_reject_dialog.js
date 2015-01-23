@@ -12,8 +12,9 @@ dc.ui.QARejectDialog = dc.ui.Dialog.extend({
   },
 
 
-  constructor : function(anno, success) {
+  constructor : function(anno, is_group, success) {
     this.annotation   = anno;
+    this.is_group = is_group;
     this.success = success;
     this.events         = _.extend({}, this.events, this.dataEvents);
     this._mainJST = JST['qa_reject_dialog'];
@@ -34,7 +35,10 @@ dc.ui.QARejectDialog = dc.ui.Dialog.extend({
     this._container = this.$('.custom');
 
     //Main template
-    this._container.html(this._mainJST({qa_point_note: this.annotation.get('qa_reject_note') ? this.annotation.get('qa_reject_note') : ''}));
+    this._container.html(this._mainJST({
+      qa_point_note: this.annotation.get('qa_reject_note') ? this.annotation.get('qa_reject_note') : '',
+      is_group: this.is_group
+    }));
 
     return this;
   },
@@ -42,6 +46,7 @@ dc.ui.QARejectDialog = dc.ui.Dialog.extend({
 
   save : function(success) {
     var qa_note = $('#qa_point_note').val();
+    var subitems_too = $('#subitems_too') ? $('#subitems_too').is(':checked') : false;
 
     //If no note is entered, error
     if( qa_note.length <= 0 ){
@@ -50,7 +55,7 @@ dc.ui.QARejectDialog = dc.ui.Dialog.extend({
     }
 
     this.annotation.set({approved: true, qa_reject_note: qa_note});
-    this.success.call();
+    this.success.call(this, subitems_too);
     this.close();
   }
 
@@ -58,8 +63,8 @@ dc.ui.QARejectDialog = dc.ui.Dialog.extend({
 
   // This static method is used for conveniently opening the dialog for
   // any selected template.
-  open : function(anno, success) {
-    new dc.ui.QARejectDialog(anno, success);
+  open : function(anno, is_group, success) {
+    new dc.ui.QARejectDialog(anno, is_group, success);
   }
 
 });

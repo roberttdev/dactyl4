@@ -43,16 +43,18 @@ dc.model.Group = Backbone.Model.extend({
 
 
     //Update Approval:
-    update_approval: function(success, error) {
-        var _thisModel = this;
-        $.ajax({
-            url         : this.urlRoot + '/' + this.id + '/update_approval',
-            contentType : 'application/json; charset=utf-8',
-            type        : 'post',
-            data        : JSON.stringify(_thisModel.attributes),
-            success     : success,
-            error       : error
-        })
+    update_approval: function(subitems_too, success, error) {
+      var _thisModel = this;
+      var _thisData = _thisModel.attributes;
+      _thisData.subitems_too = subitems_too;
+      $.ajax({
+          url         : this.urlRoot + '/' + this.id + '/update_approval',
+          contentType : 'application/json; charset=utf-8',
+          type        : 'post',
+          data        : JSON.stringify(_thisData),
+          success     : success,
+          error       : error
+      })
     }
 });
 
