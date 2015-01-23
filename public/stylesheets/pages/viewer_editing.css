@@ -274,12 +274,16 @@
         background-color: orange;
     }
 
+    .row_status.rejected {
+        background: url(/images/embed/icons/red_light.png) no-repeat center center;
+    }
+
     .row_status.incomplete {
-        background: url(/images/embed/icons/alert_yellow.png) no-repeat center center;
+        background: url(/images/embed/icons/yellow_light.png) no-repeat center center;
     }
 
     .row_status.complete {
-        background: url(/images/embed/icons/dark_check.png) no-repeat center center;
+        background: url(/images/embed/icons/green_light.png) no-repeat center center;
     }
 
     .annotation_listing {

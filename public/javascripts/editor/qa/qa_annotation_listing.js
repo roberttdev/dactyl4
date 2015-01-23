@@ -26,11 +26,12 @@ dc.ui.QAAnnotationListing = dc.ui.BaseAnnotationListing.extend({
 
     //setApprove: Sets UI to approved
     setApprove: function(){
-        this.$('.approve_item').hide();
-        this.$('.point_note').hide();
-        this.$('.row_status').removeClass('incomplete');
-        this.$('.row_status').addClass('complete');
-        this.$('.reject_item').show().css('display', 'inline-block');
+      this.$('.approve_item').hide();
+      this.$('.point_note').hide();
+      this.$('.row_status').removeClass('incomplete');
+      this.$('.row_status').removeClass('rejected');
+      this.$('.row_status').addClass('complete');
+      this.$('.reject_item').show().css('display', 'inline-block');
     },
 
 
@@ -38,7 +39,8 @@ dc.ui.QAAnnotationListing = dc.ui.BaseAnnotationListing.extend({
     setReject: function(){
         this.$('.reject_item').hide();
         this.$('.row_status').removeClass('incomplete');
-        this.$('.row_status').addClass('complete');
+        this.$('.row_status').removeClass('complete');
+        this.$('.row_status').addClass('rejected');
         this.$('.approve_item').show().css('display', 'inline-block');
         this.$('.point_note').show().css('display', 'inline-block');
     },

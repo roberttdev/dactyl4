@@ -159,7 +159,7 @@ module DC
         @sql, @interpolations, @joins = [], [], []
         @proxy = Document
         generate_search
-        select            = "((status=2 or status=3 or status=10) and ((de_one_id=#{@account.id} and not de_one_complete) or (de_two_id=#{@account.id} and not de_two_complete))) OR
+        select            = "((status=2 or status=3 or status=10) and ((de_one_id=#{@account.id} and not de_one_complete) or (de_two_id=#{@account.id} and de_two_id is not null and not de_two_complete))) OR
               ((status=5 or status=12) and qc_id=#{@account.id}) OR
               ((status = 7 or status=14) and qa_id=#{@account.id}) as claimed "
         conditions        = [@sql.join(' and ')] + @interpolations
