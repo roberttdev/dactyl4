@@ -37,9 +37,9 @@ class Group < ActiveRecord::Base
         'approved' => nil,
         'qa_reject_note' => nil
       })
-    else
-      super.merge('unapproved_count' => nil)
     end
+
+    super.merge('unapproved_count' => nil)
   end
 
 
@@ -79,6 +79,14 @@ class Group < ActiveRecord::Base
             FROM get_descendants(#{sqlID}) grps
             INNER JOIN annotation_groups ag ON grps.group_id=ag.group_id
             WHERE ag.approved_count=0"
+      annos = ActiveRecord::Base.connection.exec_query(sql)
+      unapproved = annos.count
+    elsif document.in_qa?
+      sqlID = ActiveRecord::Base.connection.quote(id)
+      sql = "SELECT ag.id
+            FROM get_descendants(#{sqlID}) grps
+            INNER JOIN annotation_groups ag ON grps.group_id=ag.group_id
+            WHERE ag.qa_approved_by IS NULL"
       annos = ActiveRecord::Base.connection.exec_query(sql)
       unapproved = annos.count
     else

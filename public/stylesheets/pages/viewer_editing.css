@@ -259,11 +259,11 @@
         background: url(/images/embed/icons/tag_yellow_16.png) no-repeat center center;
     }
 
-    .row_status {
+    .row_status,
+    .subitem_status {
         display: inline-block;
         width: 16px;
         height: 16px;
-        margin-right: 5px;
     }
 
     .highlighting {
@@ -284,6 +284,14 @@
 
     .row_status.complete {
         background: url(/images/embed/icons/green_light.png) no-repeat center center;
+    }
+
+    .subitem_status.incomplete {
+        background: url(/images/embed/icons/alert_yellow.png) no-repeat center center;
+    }
+
+    .subitem_status.complete {
+        background: url(/images/embed/icons/dark_check.png) no-repeat center center;
     }
 
     .annotation_listing {

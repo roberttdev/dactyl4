@@ -24,13 +24,12 @@ dc.ui.GroupListing = Backbone.View.extend({
 
     this.model.on('change', this.render);
 
-    this.showStatus = options['showStatus'] != null ? options['showStatus'] : true;
+    this.showSubitemStatus = options['showSubitemStatus'] != null ? options['showSubitemStatus'] : false;
     this.complete = options['complete'] != null ? options['complete'] : false;
     this.showEdit = options['showEdit'] != null ? options['showEdit'] : true;
     this.showDelete = options['showDelete'] != null ? options['showDelete'] : true;
     this.showClone = options['showClone'] != null ? options['showClone'] : true;
-    this.showApprove = options['showApprove'] != null ? options['showApprove'] : false;
-    this.showReject = options['showReject'] != null ? options['showReject'] : false;
+    this.showApproval = options['showApproval'] != null ? options['showApproval'] : false;
     this.showNote = options['showNote'] != null ? options['showNote'] : false;
 
     this._mainJST = JST['group_listing'];
@@ -44,20 +43,27 @@ dc.ui.GroupListing = Backbone.View.extend({
         name:       this.model.get('extension') ? this.model.get('name') + '[' + this.model.get('extension') + ']' : this.model.get('name')
     }));
 
-    if( !this.showStatus ){ this.$('.row_status').hide(); }
+    if( !this.showSubitemStatus ){ this.$('.subitem_status').hide(); }
     if( !this.showEdit ){ this.$('.edit_group').hide(); }
     if( !this.showDelete ){ this.$('.delete_item').hide(); }
     if( !this.showClone ){ this.$('.clone_item').hide(); }
-    if( !this.showApprove ){ this.$('.approve_item').hide(); }
-    if( !this.showReject ){ this.$('.reject_item').hide(); }
     if( !this.showNote ){ this.$('.point_note').hide(); }
+    if( !this.showApproval ){
+      this.$('.row_status').hide();
+      this.$('.approve_item').hide();
+      this.$('.reject_item').hide();
+    }
 
-    if( this.complete ){
-        this.$('.row_status').removeClass('incomplete');
-        this.$('.row_status').addClass('complete');
+    if( this.showSubitemStatus && this.model.get('unapproved_count') == 0 ){
+        this.$('.subitem_status').removeClass('incomplete');
+        this.$('.subitem_status').addClass('complete');
     } else {
-        this.$('.row_status').removeClass('complete');
-        this.$('.row_status').addClass('incomplete');
+        this.$('.subitem_status').removeClass('complete');
+        this.$('.subitem_status').addClass('incomplete');
+    }
+
+    if( this.showApproval && this.model.get('qa_approved_by') ){
+      this.model.get('qa_reject_note') ? this.setReject() : this.setApprove();
     }
 
     return this;
@@ -114,6 +120,7 @@ dc.ui.GroupListing = Backbone.View.extend({
     this.$('.approve_item').hide();
     this.$('.point_note').hide();
     this.$('.row_status').removeClass('incomplete');
+    this.$('.row_status').removeClass('rejected');
     this.$('.row_status').addClass('complete');
     this.$('.reject_item').show().css('display', 'inline-block');
   },
@@ -124,6 +131,7 @@ dc.ui.GroupListing = Backbone.View.extend({
     this.$('.reject_item').hide();
     this.$('.row_status').removeClass('complete');
     this.$('.row_status').removeClass('incomplete');
+    this.$('.row_status').addClass('rejected');
     this.$('.approve_item').show().css('display', 'inline-block');
     this.$('.point_note').show().css('display', 'inline-block');
   }

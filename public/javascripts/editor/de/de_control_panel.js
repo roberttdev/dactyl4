@@ -152,7 +152,13 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
 
   handlePointDelete: function(annoView){
     //Manually remove model from collection if it's still there.. as extra protection due to the fact that the anno id/anno group id dichotomy confuses model.destroy
-    this.model.annotations.remove(this.model.annotations.where({id: annoView.model.id}));
+    for(i=0; i < this.model.annotations.length; i++){
+      if( this.model.annotations.at(i) == annoView.model ){
+        this.model.annotations.remove(this.model.annotations.at(i));
+        break;
+      }
+    }
+
     //Remove view from tracking
     this.pointViewList = this.pointViewList.filter(function (val) { return val != annoView; });
   },

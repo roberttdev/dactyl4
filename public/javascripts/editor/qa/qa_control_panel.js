@@ -22,18 +22,13 @@ dc.ui.ViewerQAControlPanel = dc.ui.ViewerBaseControlPanel.extend({
 
     //Group Listings
     this.model.children.each(function(model, index){
-        var _approved = model.get('approved');
-        var _has_note = model.get('qa_reject_note') != null;
-
         var _groupView = _deView.addGroup({
             model: model,
             showClone: false,
             showEdit: false,
             showDelete: false,
-            showApprove: !_approved || _has_note,
-            showReject: !_approved || (_approved && !_has_note),
-            showNote: _has_note,
-            complete: _approved
+            showSubitemStatus: true,
+            showApproval: true
         });
     });
     this.$('#group_section').html(_.pluck(this.groupViewList, 'el'));

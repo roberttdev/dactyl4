@@ -28,7 +28,7 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
           model: model,
           showEdit: false,
           showDelete: false,
-          complete: (model.get('unapproved_count') == 0)
+          showSubitemStatus: true
         });
       });
       this.$('#group_section').html(_.pluck(this.groupViewList, 'el'));
@@ -81,7 +81,7 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
     //Calculate whether you would like to back up a level if approval succeeds
     var groupsApproved = true;
 
-    //If all groups are approved and all annos are approved, refresh to parent group
+    //If all groups are approved, refresh to parent group
     for(var i=0; i < this.model.children.models.length; i++){
       if( this.model.children.models[i].get('unapproved_count') > 0 ){
         groupsApproved = false;

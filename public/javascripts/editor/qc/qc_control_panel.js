@@ -64,10 +64,8 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
     };
 
     if(failedTitleString.length > 0){ dc.ui.Dialog.alert(_.t('duplicate_titles_fail', failedTitleString)); }
-    else{
-      //If multiple IDs passed, save
-      if( annos.length > 1 ){ this.qcSubpanel.save(handleSuccess); }else{ handleSuccess; }
-    }
+    else{ this.qcSubpanel.save(handleSuccess); }
+
   },
 
 
