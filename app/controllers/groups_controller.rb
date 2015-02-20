@@ -101,4 +101,10 @@ class GroupsController < ApplicationController
 
     json({"success" => true})
   end
+
+  def search
+    searchTerm = params[:term] + '%'
+    json Group.uniq.where("qa_approved_by IS NOT NULL AND name ILIKE ?", searchTerm )
+           .order(:name).limit(10).pluck(:name)
+  end
 end

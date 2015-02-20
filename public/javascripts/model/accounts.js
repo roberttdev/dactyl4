@@ -12,9 +12,10 @@ dc.model.Account = Backbone.Model.extend({
   QUALITY_ASSURANCE  : 7,
   FILE_UPLOADING     : 8,
   DATA_EXTRACTION    : 9,
+  VIEW_ONLY          : 10,
 
   ROLE_NAMES         : ['disabled', 'administrator', 'contributor', 'reviewer', 'freelancer', 'data_entry',
-        'quality_control', 'quality_assurance', 'file_uploading', 'data_extraction'], // NB: Indexed by role number.
+        'quality_control', 'quality_assurance', 'file_uploading', 'data_extraction', 'view_only'], // NB: Indexed by role number.
 
   GRAVATAR_BASE      : location.protocol + (location.protocol == 'https:' ? '//secure.' : '//www.') + 'gravatar.com/avatar/',
 

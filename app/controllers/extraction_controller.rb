@@ -2,9 +2,7 @@
 class ExtractionController < ApplicationController
   layout 'workspace'
 
-  before_filter :secure_only, :only => [:enable, :reset]
   before_filter :login_required, :except => [:enable, :reset, :logged_in]
-  before_filter :bouncer, :only => [:enable, :reset] if Rails.env.staging?
 
   #The index is a simple listing of templates.
   def index
@@ -12,11 +10,7 @@ class ExtractionController < ApplicationController
       respond_to do |format|
         format.html do
           if logged_in?
-            if current_account.real?
               return render :layout => 'workspace'
-            else
-              return redirect_to '/public/search'
-            end
           end
           redirect_to '/home'
         end
@@ -44,35 +38,25 @@ class ExtractionController < ApplicationController
   end
 
 
-  # Pull a specific template
-  def show
-    json GroupTemplate.find(params[:id])
-  end
-
-
-  # Create new template
+  # Create new extraction.  Takes parameters:
+  # account_name: (optional) "Last Name, First Name" to grant access of results to
+  # filters: (optional) Hash, of format {col_name1: [val1, val2..]} to filter doc lookup by
+  # endpoint: String representing name of column forming rightmost column of resulting table
   def create
-    template_attributes = pick(params, :name, :parent_id)
-    json GroupTemplate.create(template_attributes)
-  end
-
-
-  # Update template
-  def update
-    template = GroupTemplate.find(params[:id])
-    unless template.update_attributes pick(params, :name)
-      return json({ "errors" => template.errors.to_a.map{ |field, error| "#{field} #{error}" } }, 409)
+    #Turn username into ID
+    if params[:account_name] && params[:account_name].length > 0
+      vo_name = params[:account_name].split(",")
+      vo_acct = Account.by_name(vo_name[1].strip, vo_name[0].strip)
+      return json 'Account not found.  Please try again.', 500 if !vo_acct.exists?
     end
+    vo_id = vo_acct ? vo_acct.id : nil
 
-    json({"success" => true})
+    if params[:file_format] == 'csv'
+      resultFile = Extraction.new.assemble_csv_from_query(params[:endpoints], params[:filters], vo_id ).filename
+    else
+      resultFile = Extraction.new.assemble_json_from_query(params[:endpoints], params[:filters], vo_id ).filename
+    end
   end
 
-
-  # Delete template
-  def destroy
-    template = GroupTemplate.find(params[:id])
-    template.destroy()
-    json({"success" => true})
-  end
 
 end

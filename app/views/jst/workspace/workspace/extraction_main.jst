@@ -1,14 +1,40 @@
 <h1><%= _.t('extraction') %></h1>
 
 <div class="centered_tab_content">
-  <form action="/extraction" method="post">
-    <h2>Endpoint</h2>
-    <input type="text" class="lookup_box" name="endpoint">
+    <div class="two_column_split">
+      <h2>View Only Account</h2>
+      <input type="text" class="lookup_box" id="account_name">
+      <p class="field_instructions">Last Name, First Name</p>
+    </div>
+    <div class="two_column_split">
+      <h2>File Format</h2>
+      <input type="radio" id="file_format" name="file_format" value="csv" checked><label for="file_format">CSV</label>
+      <input type="radio" id="file_format" name="file_format" value="json"><label for="file_format">JSON</label>
+    </div>
+
+    <h2>Endpoints</h2>
+    <table class="bordered">
+      <tr>
+        <td width="40%">
+          <p>Endpoint</p>
+          <input type="text" class="lookup_box" name="endpoint_lookup" id="endpoint_lookup">
+        </td>
+        <td width="20%">
+          <button id="add_endpoint" type="button">&nbsp;&nbsp;&nbsp;&nbsp;Add >>&nbsp;&nbsp;&nbsp;</button>
+          <br>
+          <button id="remove_endpoint" type="button"><< Remove</button>
+        </td>
+        <td width="40%">
+          <p>Selected</p>
+          <select multiple name="selected_endpoints" id="selected_endpoints"></select>
+        </td>
+      </tr>
+    </table>
 
     <h2>Filter Points</h2>
     <table class="bordered">
       <tr>
-        <td>
+        <td width="40%">
           <p>Point Name</p>
           <input type="text" class="lookup_box" name="filter_lookup" id="filter_lookup">
           <p>Point Value(s)</p>
@@ -17,12 +43,12 @@
           No spaces between items. Escape apostrophes <br>
           inside strings with a preceding backslash: &#92;'</p>
         </td>
-        <td>
+        <td width="20%">
           <button id="add_filter_point" type="button">&nbsp;&nbsp;&nbsp;&nbsp;Add >>&nbsp;&nbsp;&nbsp;</button>
           <br>
           <button id="remove_filter_point" type="button"><< Remove</button>
         </td>
-        <td>
+        <td width="40%">
           <p>Selected</p>
           <select multiple name="selected_filters" id="selected_filters"></select>
         </td>
@@ -30,7 +56,6 @@
     </table>
 
     <button id="submit_extraction">Go</button>
-  </form>
 </div>
 
 

@@ -46,6 +46,7 @@ class Account < ActiveRecord::Base
   scope :with_identity, lambda { | provider, id |
      where("identities @> hstore(:provider, :id)", :provider=>provider.to_s,:id=>id.to_s )
   }
+  scope :by_name, ->(first_name, last_name) { where({:first_name => first_name, :last_name => last_name})}
 
   # Populates the organization#members accessor with all the organizaton's accounts
   def organizations_with_accounts

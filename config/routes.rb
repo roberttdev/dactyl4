@@ -146,6 +146,7 @@ DC::Application.routes.draw do
   resources :accounts do
     collection {
       get :logged_in
+      get :search_view_only
     }
     member {
       post :resend_welcome

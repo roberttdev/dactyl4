@@ -136,4 +136,14 @@ class AccountsController < ApplicationController
     json nil
   end
 
+  #Return top 10 unique View Only account names that match search term (expected format: 'last name, first name')
+  def search_view_only
+    searchTerm = params[:term].split(',')
+    whereClause = "memberships.role=10 AND last_name ILIKE '#{searchTerm[0].strip}%'"
+    whereClause = whereClause.concat(" AND first_name ILIKE '#{searchTerm[1].strip}%'") if searchTerm.length > 1
+    json Account.select(:first_name, :last_name).joins(:memberships)
+           .where(whereClause)
+           .order(:last_name, :first_name).limit(10).map{ |e| "#{e.last_name}, #{e.first_name}"}
+  end
+
 end
