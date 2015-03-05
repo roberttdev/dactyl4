@@ -6,7 +6,7 @@ dc.ui.ExtractionManager = Backbone.View.extend({
     'click #add_filter_point'     : 'addFilterPoint',
     'click #remove_filter_point'  : 'removeFilterPoint',
     'click #add_endpoint'         : 'addEndpoint',
-    'click #remove_filter_point'  : 'removeEndpoint',
+    'click #remove_endpoint'      : 'removeEndpoint',
     'click #submit_extraction'    : 'submitRequest'
   },
 
@@ -67,9 +67,9 @@ dc.ui.ExtractionManager = Backbone.View.extend({
       contentType: 'application/json; charset=utf-8',
       type: 'post',
       data: JSON.stringify(submitData),
-      success: function(){
+      success: function(response){
         _workingDialog.close();
-        dc.ui.Dialog.alert('Extraction Complete!')
+        dc.ui.Dialog.alert('File Complete!  <a href="' + response.filename + '">Right Click To Save</a>');
       },
       error: function(response){
         _workingDialog.close();

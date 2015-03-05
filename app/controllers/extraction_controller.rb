@@ -52,10 +52,13 @@ class ExtractionController < ApplicationController
     vo_id = vo_acct ? vo_acct.id : nil
 
     if params[:file_format] == 'csv'
-      resultFile = Extraction.new.assemble_csv_from_query(params[:endpoints], params[:filters], vo_id ).filename
+      resultFile = Extraction.new.assemble_csv_from_query(params[:endpoints], params[:filters], vo_id )
     else
-      resultFile = Extraction.new.assemble_json_from_query(params[:endpoints], params[:filters], vo_id ).filename
+      resultFile = Extraction.new.assemble_json_from_query(params[:endpoints], params[:filters], vo_id )
     end
+
+    @response = {:filename => resultFile}
+    json_response
   end
 
 

@@ -10,7 +10,7 @@ class Group < ActiveRecord::Base
   has_one :annotation_note
 
   #Base group for document/user
-  scope :base, ->(doc, account_id, de, qc) {
+  scope :base, ->(doc, account_id=nil, de=nil, qc=nil) {
     if doc.in_de?
       accountId = account_id
     elsif doc.in_qc?
