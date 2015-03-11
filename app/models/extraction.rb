@@ -88,7 +88,7 @@ class Extraction
       curr_bb_grp = @backbone_data[endpoint['document_id']][endpoint['parent_id']]
       grp_id = endpoint['parent_id']
       while !grp_id.nil?
-        flat_data = @flattened_data[grp_id]
+        flat_data = @flattened_data[endpoint['document_id']][grp_id]
         final_table.add_group_data(grp_id, curr_bb_grp, flat_data) if !(curr_bb_grp[:annos].length == 0 && flat_data.nil?)
         grp_id = curr_bb_grp[:parent_id]
         curr_bb_grp = @backbone_data[endpoint['document_id']][grp_id]
@@ -328,6 +328,8 @@ class Extraction
 end
 
 
+
+
 ###
 # ExtractionTable: Data object for storing necessary column, row, and other data for efficiently turning extracted data into CSV table.
 ###
@@ -336,16 +338,13 @@ class ExtractionTable
   attr_reader :column_data  #Single array of column headers
 
   @groups_contained #Maps group name to an array of hashes containing its first and last index
-  @groups_used      #Maps groups names to count of how many times it appears in current row
   @current_row      #Index of current row
   @endpoint         #Endpoint column name
-  @group_cache      #Cache backbone data by group ID, hash mapping group ID to starting row index and array of data
-  @flattened_cache  #Cache flattened data by group ID, hash mapping group ID to starting row index and array of data
+  @group_cache      #Cache group data by group ID, hash mapping group ID to starting row index and array of data
 
   def initialize()
     @groups_contained = {}
     @group_cache = {}
-    @flattened_cache = {}
     @current_row = -1
     @row_data = []
     @column_data = []
@@ -355,56 +354,30 @@ class ExtractionTable
   #Inserts backbone and flattened data for a group into current row.
   #Grp_Id is the key to use when pushing/pulling from the cache
   def add_group_data(grp_id, bb_data, flat_data)
-    curr_row = @row_data[@current_row]
-
-    # BACKBONE HANDLING
     if !@group_cache[grp_id].nil?
-      #If group is cached, just insert it in the right place
       cached_grp = @group_cache[grp_id]
-      last = cached_grp[:start] + (cached_grp[:data].length - 1)
-      curr_row[cached_grp[:start]..last] = cached_grp[:data]
-    else
-      #If group is not cached, calculate and add it
-      group_name = bb_data[:name]
-      add_group(group_name) if @groups_contained[group_name].nil?
-      @groups_used[group_name] += 1
-      used_count = @groups_used[group_name]
-      contained_grp = @groups_contained[bb_data[:name]][used_count - 1] #Get @groups_contained data for current group
-      group_cols =  get_col_subset(contained_grp)
-      group_name += used_count.to_s if used_count > 1
-
-      bb_data[:annos].each do |point|
-        col_name = group_name + '.' + point[:title]
-        if group_cols.nil?
-          rel_col_index = add_column(col_name, contained_grp, true)
-          group_cols =  get_col_subset(contained_grp)
-        else
-          rel_col_index = group_cols.find_index(col_name)
-          if rel_col_index.nil?
-            rel_col_index = add_column(col_name, contained_grp, true)
-            group_cols =  get_col_subset(contained_grp)
-          end
-        end
-        curr_row[rel_col_index + contained_grp[:first]] = point[:content]
+      #If group is cached and non-empty, just insert it in the right place
+      if cached_grp[:data].length > 0
+        last = cached_grp[:start] + (cached_grp[:data].length - 1)
+        @row_data[@current_row][cached_grp[:start]..last] = cached_grp[:data]
       end
-
-      @group_cache[grp_id] = {
-        :start  => contained_grp[:first],
-        :data   => Array.wrap(curr_row[contained_grp[:first]..contained_grp[:last]])
-      }
+    else
+      #Otherwise, generate the data
+      add_backbone_data(grp_id, bb_data)
+      #add_flattened_data(grp_id, bb_data, flat_data) if !flat_data.nil?
     end
   end
 
   #Flush the cache
   def clear_cache
     @group_cache = {}
-    @flattened_cache = {}
   end
 
   #Set state to a brand new row
   def new_row
-    @groups_used = @groups_contained.clone
-    @groups_used.each_key { |key| @groups_used[key] = 0 }
+    @groups_contained.each do |grp_key, grp_mapping|
+      grp_mapping.reset_current()
+    end
     @current_row += 1
     @row_data << Array.new(@column_data.length)
   end
@@ -413,75 +386,247 @@ class ExtractionTable
   private
 
 
+  #Adds backbone data to row and cache
+  def add_backbone_data(grp_id, bb_data)
+    curr_row = @row_data[@current_row]
+
+    contained_grp = increment_group_use(bb_data[:name])
+    group_cols =  get_col_subset(contained_grp)
+    numbered_name = contained_grp.get_numbered_group_name()
+    indices = contained_grp.get_indices()
+
+    bb_data[:annos].each do |point|
+      col_name = numbered_name + '.' + point[:title]
+      if group_cols.nil?
+        rel_col_index = add_column(col_name, contained_grp, true)
+        group_cols =  get_col_subset(contained_grp)
+      else
+        rel_col_index = group_cols.find_index(col_name)
+        if rel_col_index.nil?
+          rel_col_index = add_column(col_name, contained_grp, true)
+          group_cols =  get_col_subset(contained_grp)
+        end
+      end
+      curr_row[rel_col_index + indices[:first]] = point[:content]
+    end
+
+    @group_cache[grp_id] = {
+      :start  => indices[:first],
+      :data   => indices[:last].nil? ? [] : Array.wrap(curr_row[indices[:first]..indices[:last]])
+    }
+  end
+
+
   #Adds new column to a group and updates existing rows to contain it.  Returns relative index inside group
   #To_front: if set, appends to front, otherwise appends to end
   def add_column(col_name, contained_grp, to_front)
-    contained_grp[:last] = contained_grp[:last].nil? ? contained_grp[:first] : contained_grp[:last] += 1
-    first_index = contained_grp[:first]
-    last_index = contained_grp[:last]
-    to_front ? @column_data.insert(first_index, col_name) : @column_data.insert(last_index, col_name)
+    contained_grp.add_colspace()
+    indices = contained_grp.get_indices()
+
+    #Update index refs for group uses other than this one
+    @groups_contained.each do |grp_key, grp|
+      grp.shift_indices_right_after(indices[:first], contained_grp.name)
+    end
+
+    to_front ? @column_data.insert(indices[:first], col_name) : @column_data.insert(indices[:last], col_name)
 
     #Update existing rows
     @row_data.each do |row|
-      to_front ? row.insert(first_index, nil) : row.insert(last_index, nil)
-    end
-
-    #Update index refs for groups after this
-    @groups_contained.each do |grp_index, grp|
-      grp.each do |grp_ref|
-        if grp_ref[:first] > first_index
-          grp_ref[:first] += 1
-          grp_ref[:last] += 1
-        end
-      end
+      to_front ? row.insert(indices[:first], nil) : row.insert(indices[:last], nil)
     end
 
     #Update index refs/data for cached groups
     @group_cache.each do |grp_index, grp|
-      grp[:start] += 1 if grp[:start] > first_index
-      if grp[:start] <= first_index && grp[:start] + (grp[:data].length - 1) >= last_index
-        grp[:data].insert(first_index - grp[:start], nil)
+      grp[:start] += 1 if grp[:start] > indices[:first]
+      if grp[:start] <= indices[:first] && grp[:start] + (grp[:data].length - 1) >= indices[:last]
+        grp[:data].insert(indices[:first] - grp[:start], nil)
       end
     end
 
-    return to_front ? 0 : last_index - contained_grp[:first]
+    return to_front ? 0 : indices[:last] - indices[:first]
+  end
+
+
+  #Adds flattened data to row and cache
+  def add_flattened_data(grp_id, bb_data, flat_data)
+    curr_row = @row_data[@current_row]
+
+    bb_contained = @groups_contained[bb_data[:name]]
+    bb_group_name = bb_contained.get_numbered_group_name()
+    bb_indices = bb_contained.get_indices()
+
+    flat_data.each do |flat_grp|
+      contained_grp = increment_group_use(flat_grp[:name], bb_group_name)
+      group_cols =  get_col_subset(contained_grp)
+      group_name = bb_group_name == 'Home' ? '' : bb_group_name + '.'
+      group_name += contained_grp.get_numbered_group_name()
+      indices = contained_grp.get_indices()
+
+      flat_grp[:annos].each do |point|
+        col_name = group_name + '.' + point[:title]
+        if group_cols.nil?
+          rel_col_index = add_column(col_name, contained_grp, false)
+          group_cols =  get_col_subset(contained_grp)
+        else
+          rel_col_index = group_cols.find_index(col_name)
+          if rel_col_index.nil?
+            rel_col_index = add_column(col_name, contained_grp, false)
+            group_cols =  get_col_subset(contained_grp)
+          end
+        end
+        curr_row[rel_col_index + indices[:first]] = point[:content]
+      end
+
+      #Update backbone group's cached data
+      inside_bb_first = indices[:first] - bb_indices[:first]
+      inside_bb_last = indices[:last] - bb_indices[:first]
+      @group_cache[grp_id][:data][inside_bb_first..inside_bb_last] = curr_row[indices[:first]..indices[:last]]
+    end
   end
 
 
   #Adds new group name to collections and returns the leftmost index of the used groups, for use in inserting the new group's data
-  def add_group(grp_name)
-    @groups_used[grp_name] = 0 if @groups_used[grp_name].nil?
-    @groups_contained[grp_name] = [] if @groups_contained[grp_name].nil?
+  #Bb_grp_name is name of backbone group is this is a flattened group (optional)
+  #Returns the group mapping object
+  def increment_group_use(grp_name, bb_grp_name=nil)
+    if bb_grp_name.nil?
+      #If this is a backbone group..
+      @groups_contained[grp_name] = TableGroupMapping.new(grp_name) if @groups_contained[grp_name].nil?
+      contained_grp = @groups_contained[grp_name]
+      contained_grp.current += 1
 
-    #Determine left-most used column index
-    leftmost = @column_data.length > 0 ? @column_data.length - 1 : 0
-    @groups_used.each do |grp_name, grp_count|
-      if grp_count > 0
-        first = @groups_contained[grp_name][grp_count - 1][:first]
-        leftmost = first if first < leftmost
+      if !contained_grp.current_init?
+        #If this is the first time with this use #, calculate the leftmost spot to put it in
+        leftmost = @column_data.length > 0 ? @column_data.length - 1 : 0
+        @groups_contained.each do |grp_name, grp_mapping|
+          if grp_mapping.current > 0 && contained_grp != grp_mapping
+            first = grp_mapping.get_indices[:first]
+            leftmost = first if first < leftmost
+          end
+        end
+      end
+    else
+      #If this the flattened child of a backbone group..
+      contained_bb = @groups_contained[bb_grp_name]
+      contained_grp = contained_bb.get_child(grp_name).nil? ? contained_bb.add_child(grp_name) : contained_bb.get_child(grp_name)
+      contained_grp.current += 1
+
+      #If this is the first time with this use #, use parent's last spot as leftmost index
+      if !contained_grp.current_init?
+        last = contained_bb.get_indices[:last]
+        last = last.nil? ? contained_bb.get_indices[:first] : last += 1
+        leftmost = last
       end
     end
 
     #If 'left-most' ends up being the right-most in a non-empty set, add one to be after the end
     leftmost += 1 if @column_data.length > 0 && leftmost == (@column_data.length - 1)
 
-    #Update indices for groups to right of this
-    @groups_contained.each do |grp_index, grp|
-      grp.each do |grp_ref|
-        if grp_ref[:first] >= leftmost
-          grp_ref[:first] += 1
-          grp_ref[:last] += 1
-        end
-      end
-    end
-
-    @groups_contained[grp_name] << { first: leftmost, last: nil }
+    contained_grp.add_use(leftmost, nil) if !contained_grp.current_init?
+    return contained_grp
   end
 
 
   #Get subset of columns that apply to the passed @groups_contained object
   def get_col_subset(contained_grp)
-    last = contained_grp[:last].nil? ? contained_grp[:first] : contained_grp[:last]
-    return Array.wrap(@column_data[contained_grp[:first]..last])
+    indices = contained_grp.get_indices()
+    last = indices[:last].nil? ? indices[:first] : indices[:last]
+    return Array.wrap(@column_data[indices[:first]..last])
   end
+
+
+  #Increment the used count of a group -- takes group name and parent backbone group name (optional).  Return new count
+  def increment_used_count(group_name, bb_group_name=nil)
+    bb_group_name.nil? ? @groups_used[group_name][:used] += 1 : @groups_used[bb_group_name][group_name][:used] += 1
+  end
+end
+
+
+
+
+#####
+# TableGroupMapping: Object used by ExtractionTable to abstract away the details of mapping a group name to a set of columns.
+#         A mapping is used multiple different times ('uses'), with each use having its own indices and recursive children references.
+#####
+class TableGroupMapping
+  attr_accessor :current  #Tracks which use you are on in the current row.. starts at 1, so it's 1 more than the array index
+  attr_accessor :uses     #Array of 'first' and 'last' index hashes, with array index mapped to each use of group
+  attr_reader   :name     #Group name
+
+  @children #Array of Hashes mapping child group name to TableGroupMapping.  Array index matches 'uses' index
+
+  def initialize(group_name)
+    @uses = []
+    @children = []
+    @current = 0
+    @name = group_name
+  end
+
+  def add_child(group_name, use_index=@current)
+    @children[use_index - 1][group_name] = TableGroupMapping.new(group_name)
+  end
+
+  #Expands a use's indices to cover a new column
+  def add_colspace(use_index=@current)
+    @uses[use_index - 1][:last] = @uses[use_index - 1][:last].nil? ? @uses[use_index - 1][:first] : @uses[use_index - 1][:last] + 1
+  end
+
+  #Adds new use, indices are passed
+  def add_use(first, last)
+    @uses << {first: first, last: last}
+    @children << {}
+  end
+
+  #Returns whether the data for the current use has been initialized (i.e. is this the first time through, or a return?)
+  def current_init?
+    @uses.length >= @current
+  end
+
+  #Generate what the table column header will be for passed-in field title (default to current)
+  def get_numbered_group_name(use_index=@current)
+    use_index > 1 ? @name + use_index.to_s : @name
+  end
+
+  def get_child(group_name, use_index=@current)
+    @children[use_index - 1][group_name]
+  end
+
+  #Returns indices for a particular use (default to current)
+  def get_indices(use_index=@current)
+    @uses[use_index - 1]
+  end
+
+  def reset_current
+    @current = 0
+    @children.each do |child_ref|
+      child_ref.keys do |child|
+        child.reset_current
+      end
+    end
+  end
+
+  #Update any index sets that come after passed-in index.
+  # Option to take a group name in, and skip updating the current use of it.. i.e. 'Update all group uses except this one'
+  def shift_indices_right_after(start_index, skip_current_name=nil)
+    @uses.each_with_index do |index_hash, index|
+      if index == (@current - 1)
+        skip_match = skip_current_name == @name
+
+        #If this is current use, and any children match skip_current_name, we want to apply skip to parent as well
+        skip_child_match = false
+        @children[index].values.each do |child|
+          skip_child_match = true if child.name == skip_current_name
+        end
+      end
+
+      index_hash[:first] += 1 if !skip_match && !skip_child_match && index_hash[:first] >= start_index
+      index_hash[:last] += 1 if !skip_match && !index_hash[:last].nil? && index_hash[:last] >= start_index
+
+      #Update child group mappings
+      @children[index].values.each do |child|
+        child.shift_indices_right_after(start_index, skip_current_name)
+      end
+    end
+  end
+
 end
