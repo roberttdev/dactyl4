@@ -84,7 +84,7 @@ class Extraction
       final_table.new_row()
       final_table.add_group_data(endpoint['id'], curr_bb_grp, nil)
 
-      #Add backbone data
+      #Add backbone/flattened data
       curr_bb_grp = @backbone_data[endpoint['document_id']][endpoint['parent_id']]
       grp_id = endpoint['parent_id']
       while !grp_id.nil?
@@ -364,7 +364,7 @@ class ExtractionTable
     else
       #Otherwise, generate the data
       add_backbone_data(grp_id, bb_data)
-      #add_flattened_data(grp_id, bb_data, flat_data) if !flat_data.nil?
+      add_flattened_data(grp_id, bb_data, flat_data) if !flat_data.nil?
     end
   end
 
@@ -554,21 +554,24 @@ class TableGroupMapping
   attr_reader   :name     #Group name
 
   @children #Array of Hashes mapping child group name to TableGroupMapping.  Array index matches 'uses' index
+  @parent
 
-  def initialize(group_name)
+  def initialize(group_name, parent_ref=nil)
     @uses = []
     @children = []
     @current = 0
     @name = group_name
+    @parent = parent_ref
   end
 
   def add_child(group_name, use_index=@current)
-    @children[use_index - 1][group_name] = TableGroupMapping.new(group_name)
+    @children[use_index - 1][group_name] = TableGroupMapping.new(group_name, self)
   end
 
   #Expands a use's indices to cover a new column
   def add_colspace(use_index=@current)
     @uses[use_index - 1][:last] = @uses[use_index - 1][:last].nil? ? @uses[use_index - 1][:first] : @uses[use_index - 1][:last] + 1
+    @parent.add_colspace() if !@parent.nil?
   end
 
   #Adds new use, indices are passed
@@ -599,7 +602,7 @@ class TableGroupMapping
   def reset_current
     @current = 0
     @children.each do |child_ref|
-      child_ref.keys do |child|
+      child_ref.values.each do |child|
         child.reset_current
       end
     end
@@ -612,15 +615,18 @@ class TableGroupMapping
       if index == (@current - 1)
         skip_match = skip_current_name == @name
 
-        #If this is current use, and any children match skip_current_name, we want to apply skip to parent as well
-        skip_child_match = false
-        @children[index].values.each do |child|
-          skip_child_match = true if child.name == skip_current_name
+        #If any children match skip_current_name, we want to apply skip to parent as well
+        if !skip_match
+          @children[index].values.each do |child|
+            skip_match = true if child.name == skip_current_name
+          end
         end
       end
 
-      index_hash[:first] += 1 if !skip_match && !skip_child_match && index_hash[:first] >= start_index
-      index_hash[:last] += 1 if !skip_match && !index_hash[:last].nil? && index_hash[:last] >= start_index
+      if !skip_match
+        index_hash[:first] += 1 if index_hash[:first] >= start_index
+        index_hash[:last] += 1 if !index_hash[:last].nil? && index_hash[:last] >= start_index
+      end
 
       #Update child group mappings
       @children[index].values.each do |child|
