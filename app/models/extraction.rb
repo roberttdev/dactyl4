@@ -141,6 +141,8 @@ class Extraction
   # Populates @flattened_data with all non-backbone data.  Result will be a hash with a document ID key pointing to a hash where multiple keys
   # (one for each group ID composing the result) will point to a single array containing all groups/points in the tree.
   def extract_flattened_data
+    ancestry_names = {}
+
     flattened_sql = <<-EOS
       SELECT g.id AS group_id, g.parent_id, g.document_id, g.name, a.title, a.content
       FROM (SELECT g1.id, g1.parent_id, g1.document_id, g1.name
@@ -167,8 +169,19 @@ class Extraction
             @flattened_data[point['document_id']][point['parent_id']] = []
           end
 
+          if ancestry_names[point['parent_id']].nil?
+            ancestry_name = point['name']
+          else
+            if ancestry_names[point['parent_id']][:name] == point['name']
+              ancestry_name = ancestry_names[point['parent_id']][:ancestry]
+            else
+              ancestry_name = ancestry_names[point['parent_id']][:ancestry] + '.' + point['name']
+            end
+          end
+          ancestry_names[point['group_id']] = { ancestry: ancestry_name, name: point['name'] }
+
           @flattened_data[point['document_id']][point['group_id']] = @flattened_data[point['document_id']][point['parent_id']]
-          @flattened_data[point['document_id']][point['group_id']] << {name: point['name'], id: point['group_id'], annos: []}
+          @flattened_data[point['document_id']][point['group_id']] << {name: ancestry_names[point['group_id']][:ancestry], id: point['group_id'], annos: []}
 
           last_groupid = point['group_id']
           group_id_array << last_groupid
