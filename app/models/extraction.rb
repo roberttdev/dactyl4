@@ -145,8 +145,8 @@ class Extraction
       SELECT g.id AS group_id, g.parent_id, g.document_id, g.name, a.title, a.content
       FROM (SELECT g1.id, g1.parent_id, g1.document_id, g1.name
         FROM groups g1 WHERE g1.parent_id IN (#{@backbone_id_string}) AND g1.id NOT IN (#{@backbone_id_string})) g
-      INNER JOIN annotation_groups ag on g.id=ag.group_id AND ag.qa_approved_by IS NOT NULL
-      INNER JOIN annotations a ON ag.annotation_id=a.id
+      LEFT JOIN annotation_groups ag on g.id=ag.group_id AND ag.qa_approved_by IS NOT NULL
+      LEFT JOIN annotations a ON ag.annotation_id=a.id
       ORDER BY g.document_id, g.id
     EOS
     flat_point_hash = ActiveRecord::Base.connection.exec_query(flattened_sql)
@@ -175,7 +175,7 @@ class Extraction
         end
 
         group_array = @flattened_data[point['document_id']][point['group_id']]
-        group_array[group_array.length - 1][:annos] << {title: point['title'], content: point['content']}
+        group_array[group_array.length - 1][:annos] << {title: point['title'], content: point['content']} if !point['title'].nil?
       end
 
       if group_id_array.length > 0
@@ -477,10 +477,12 @@ class ExtractionTable
         curr_row[rel_col_index + indices[:first]] = point[:content]
       end
 
-      #Update backbone group's cached data
-      inside_bb_first = indices[:first] - bb_indices[:first]
-      inside_bb_last = indices[:last] - bb_indices[:first]
-      @group_cache[grp_id][:data][inside_bb_first..inside_bb_last] = curr_row[indices[:first]..indices[:last]]
+      #Update backbone group's cached data (if there is anything to update with)
+      if !indices[:last].nil?
+        inside_bb_first = indices[:first] - bb_indices[:first]
+        inside_bb_last = indices[:last] - bb_indices[:first]
+        @group_cache[grp_id][:data][inside_bb_first..inside_bb_last] = curr_row[indices[:first]..indices[:last]]
+      end
     end
   end
 
