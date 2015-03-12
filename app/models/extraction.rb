@@ -183,8 +183,8 @@ class Extraction
           SELECT g.id AS group_id, g.parent_id, g.document_id, g.name, a.title, a.content
           FROM (SELECT g1.id, g1.parent_id, g1.document_id, g1.name
             FROM groups g1 WHERE g1.parent_id IN (#{group_id_array.join(',')})) g
-          INNER JOIN annotation_groups ag on g.id=ag.group_id AND ag.qa_approved_by IS NOT NULL
-          INNER JOIN annotations a ON ag.annotation_id=a.id
+          LEFT JOIN annotation_groups ag on g.id=ag.group_id AND ag.qa_approved_by IS NOT NULL
+          LEFT JOIN annotations a ON ag.annotation_id=a.id
           ORDER BY g.document_id, g.id
         EOS
         flat_point_hash = ActiveRecord::Base.connection.exec_query(flattened_sql)
@@ -456,29 +456,29 @@ class ExtractionTable
     bb_indices = bb_contained.get_indices()
 
     flat_data.each do |flat_grp|
-      contained_grp = increment_group_use(flat_grp[:name], bb_group_name)
-      group_cols =  get_col_subset(contained_grp)
-      group_name = bb_group_name == 'Home' ? '' : bb_group_name + '.'
-      group_name += contained_grp.get_numbered_group_name()
-      indices = contained_grp.get_indices()
+      if flat_grp[:annos].length > 0
+        contained_grp = increment_group_use(flat_grp[:name], bb_group_name)
+        group_cols =  get_col_subset(contained_grp)
+        group_name = bb_group_name == 'Home' ? '' : bb_group_name + '.'
+        group_name += contained_grp.get_numbered_group_name()
+        indices = contained_grp.get_indices()
 
-      flat_grp[:annos].each do |point|
-        col_name = group_name + '.' + point[:title]
-        if group_cols.nil?
-          rel_col_index = add_column(col_name, contained_grp, false)
-          group_cols =  get_col_subset(contained_grp)
-        else
-          rel_col_index = group_cols.find_index(col_name)
-          if rel_col_index.nil?
+        flat_grp[:annos].each do |point|
+          col_name = group_name + '.' + point[:title]
+          if group_cols.nil?
             rel_col_index = add_column(col_name, contained_grp, false)
             group_cols =  get_col_subset(contained_grp)
+          else
+            rel_col_index = group_cols.find_index(col_name)
+            if rel_col_index.nil?
+              rel_col_index = add_column(col_name, contained_grp, false)
+              group_cols =  get_col_subset(contained_grp)
+            end
           end
+          curr_row[rel_col_index + indices[:first]] = point[:content]
         end
-        curr_row[rel_col_index + indices[:first]] = point[:content]
-      end
 
-      #Update backbone group's cached data (if there is anything to update with)
-      if !indices[:last].nil?
+        #Update backbone group's cached data
         inside_bb_first = indices[:first] - bb_indices[:first]
         inside_bb_last = indices[:last] - bb_indices[:first]
         @group_cache[grp_id][:data][inside_bb_first..inside_bb_last] = curr_row[indices[:first]..indices[:last]]
