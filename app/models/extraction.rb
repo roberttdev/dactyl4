@@ -4,6 +4,7 @@
 #
 class Extraction
   require 'csv'
+  require 'json'
 
   attr_reader :filename #Tracks file containing output
 
@@ -19,13 +20,88 @@ class Extraction
     @flattened_data = {}
   end
 
+
   #Take in parameters and generate new extraction in JSON format
   #Endpoint: String representing annotation title
   #Filters: Hash consisting of annotation title(s) and value(s)
   #Account_id: account to provide access to the resulting annotations to
-  def assemble_json_from_query( endpoint, filters, account_id )
+  def assemble_json_from_query( endpoints, filters, account_id )
+    grp_ids = ""
+    return_hash = {}
+    grp_id_ref = {}   #Maps grp IDs to correct hash during creation
 
+    #Step 1: Generate a SQL statement that will return the ID's of documents that match parameters, and their base groups
+    endpoints.each_with_index do |endpoint, index|
+      endpoints[index] = ActiveRecord::Base.connection.quote(endpoint)
+    end
+    sql_endpoint = "UPPER(#{endpoints.join('), UPPER(')})"
+    sql_filters = generate_filter_string(filters)
+
+    init_sql = <<-EOS
+      SELECT DISTINCT(d.id) AS document_id, bg.id AS base_id, bg.name
+      FROM (
+        SELECT DISTINCT(d1.id)
+        FROM documents d1 #{sql_filters}
+        WHERE status=8) d
+      INNER JOIN groups g on d.id=g.document_id AND g.qa_approved_by IS NOT NULL AND UPPER(g.name) IN (#{sql_endpoint})
+      INNER JOIN groups bg on d.id=bg.document_id AND bg.base=TRUE
+    EOS
+    init_hash = ActiveRecord::Base.connection.exec_query(init_sql)
+    init_hash.each do |doc_and_base|
+      grp_id_ref[doc_and_base['base_id']] = return_hash[doc_and_base['document_id']] = {
+        name: doc_and_base['name'],
+        data_points: [],
+        children: []
+      }
+      grp_ids += doc_and_base['base_id'] + ','
+    end
+    grp_ids = grp_ids.chop
+
+    #Step 2, grab annos from one horizontal slice of group trees, populate JSON, get children, repeat until finished
+    loop do
+      slice_sql = <<-EOS
+        SELECT g.id AS group_id, g.name, a.title, a.content
+        FROM (SELECT g1.id, g1.name
+        FROM groups g1 WHERE g1.id IN (#{grp_ids})) g
+        LEFT JOIN annotation_groups ag on g.id=ag.group_id AND ag.qa_approved_by IS NOT NULL
+        LEFT JOIN annotations a ON ag.annotation_id=a.id
+      EOS
+      slice_hash = ActiveRecord::Base.connection.exec_query(slice_sql)
+
+      slice_hash.each do |grp_and_anno|
+        grp_id_ref[grp_and_anno['group_id']][:data_points] << { name: grp_and_anno['title'], value: grp_and_anno['content'] } if !grp_and_anno['title'].nil?
+      end
+
+      child_sql = <<-EOS
+        SELECT g.id AS group_id, g.name, g.parent_id
+        FROM groups g WHERE parent_id IN (#{grp_ids})
+      EOS
+      child_hash = ActiveRecord::Base.connection.exec_query(child_sql)
+
+      grp_ids = ""
+      child_hash.each do |child|
+        p_children = grp_id_ref[child['parent_id']][:children]
+        p_children << {
+          name: child['name'],
+          data_points: [],
+          children: []
+        }
+        grp_id_ref[child['group_id']] = p_children[p_children.length - 1]
+        grp_ids += child['group_id'] + ','
+      end
+      grp_ids = grp_ids.chop
+
+      break if grp_ids == ""
+    end
+
+    #Turn hash into JSON, save to file
+    time = Time.new()
+    @filename = "/extraction/json/#{time.year}#{time.month}#{time.day}#{time.hour}#{time.min}#{time.sec}#{time.usec}.json"
+    File.write("public#{@filename}", return_hash.to_json)
+
+    return @filename
   end
+
 
   #Take in parameters and generate new extraction in CSV format, returning filename
   #Endpoint: String representing annotation title
@@ -50,8 +126,6 @@ class Extraction
 
     #Step 6: Convert to CSV file
     create_csv(final_table)
-
-    checkpoint_holder = true
 
     return @filename
   end
@@ -101,7 +175,7 @@ class Extraction
   #Turn an extraction table into a CSV file
   def create_csv(table)
     time = Time.new()
-    @filename = "/csv/#{time.year}#{time.month}#{time.day}#{time.hour}#{time.min}#{time.sec}#{time.usec}.csv"
+    @filename = "/extraction/csv/#{time.year}#{time.month}#{time.day}#{time.hour}#{time.min}#{time.sec}#{time.usec}.csv"
     CSV.open("public#{@filename}", "w") do |csv|
       csv << table.column_data
       table.row_data.each do |row|

@@ -13,7 +13,7 @@ db/sphinx
 raw
 /bin
 /secrets
-public/csv
+public/extraction
 public/docs
 public/asset_store
 public/document-viewer/images/*.psd
