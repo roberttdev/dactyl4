@@ -86,11 +86,17 @@ class DocumentsController < ApplicationController
   end
 
   def view_point
-    @current_anno_id = params[:id]
-    anno = Annotation.find(@current_anno_id)
-    @current_document = Document.find(anno.document_id)
+    if params[:id].nil?
+      return render :file => "documents/view_point_select.html.erb"
+    end
 
-    return render :file => "#{Rails.root}/public/doc_404.html", :status => 404 unless @current_document
+    @current_anno_id = params[:id]
+    anno = Annotation.find_by_id(@current_anno_id)
+    allowed = ViewOnlyAccess.where({document_id: anno.document_id, account_id: current_account.id}) if anno
+
+    return render :file => "#{Rails.root}/public/doc_404.html", :status => 404 unless anno && allowed.length > 0
+
+    @current_document = Document.find(anno.document_id)
 
     @no_sidebar = true
     @edits_enabled = false

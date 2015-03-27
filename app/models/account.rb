@@ -17,6 +17,7 @@ class Account < ActiveRecord::Base
   has_one  :security_key,    :dependent => :destroy, :as => :securable
   has_many :shared_projects, :through => :collaborations, :source => :project
   has_many :documents
+  has_many :view_only_accesses
 
   # Validations:
   validates  :first_name, :last_name, :presence=>true
@@ -63,8 +64,8 @@ class Account < ActiveRecord::Base
 
   #Attempt login with an ID and hashed password
   def self.hashed_login(id, hashed_pw, session=nil, cookies=nil)
-    account = Account.find(id)
-    return false unless account.password.bytes.pack("C*") == hashed_pw
+    account = Account.find_by_id(id)
+    return false if !account || account.password.bytes.pack("C*") != hashed_pw
     account.authenticate(session, cookies) if session && cookies
     account
   end

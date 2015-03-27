@@ -1,5 +1,7 @@
 # The TemplatesController is responsible for managing templates and their fields.
 class ExtractionController < ApplicationController
+  require 'zip'
+
   layout 'workspace'
 
   before_filter :login_required, :except => [:enable, :reset, :logged_in]
@@ -46,8 +48,8 @@ class ExtractionController < ApplicationController
     #Turn username into ID
     if params[:account_name] && params[:account_name].length > 0
       vo_name = params[:account_name].split(",")
-      vo_acct = Account.by_name(vo_name[1].strip, vo_name[0].strip)
-      return json 'Account not found.  Please try again.', 500 if !vo_acct.exists?
+      vo_acct = Account.by_name(vo_name[1].strip, vo_name[0].strip).first
+      return json 'View-Only Account not found.  Please try again.', 500 if !vo_acct || !vo_acct.view_only?
     end
     vo_id = vo_acct ? vo_acct.id : nil
 
@@ -55,6 +57,30 @@ class ExtractionController < ApplicationController
       resultFile = Extraction.new.assemble_csv_from_query(params[:endpoints], params[:filters], vo_id )
     else
       resultFile = Extraction.new.assemble_json_from_query(params[:endpoints], params[:filters], vo_id )
+    end
+
+    #If VO account passed, generate config file and ZIP contents
+    if vo_acct
+      time = Time.new()
+      config_file = "/extraction/#{time.year}#{time.month}#{time.day}#{time.hour}#{time.min}#{time.sec}#{time.usec}.config"
+      File.open("public#{config_file}", "w") do |file|
+        file.puts "Login URL: #{request.base_url}/view-only-login?id=#{vo_acct.id}&p=#{vo_acct.hashed_password}"
+        file.puts "Created On: #{time.year}-#{time.month}-#{time.day} #{time.hour}:#{time.min}:#{time.sec}"
+      end
+
+      zip_file = "/extraction/#{time.year}#{time.month}#{time.day}#{time.hour}#{time.min}#{time.sec}#{time.usec}.zip"
+      Zip::File.open("public#{zip_file}", Zip::File::CREATE) do |zipfile|
+        if params[:file_format] == 'csv'
+          zipfile.add("data.csv", "public#{resultFile[0]}")
+          zipfile.add("ids.csv", "public#{resultFile[1]}")
+        else
+          zipfile.add("data.json", "public#{resultFile[0]}")
+        end
+
+        zipfile.add("README", "public#{config_file}")
+      end
+
+      resultFile = zip_file
     end
 
     @response = {:filename => resultFile}

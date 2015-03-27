@@ -68,6 +68,9 @@ DC::Application.routes.draw do
     collection { post :present_order }
   end
 
+  #View Only Point Select
+  get '/documents/view_point' => 'documents#view_point'
+
   #Reject DE
   put '/documents/:id/reject_de' => 'documents#reject_de'
 

@@ -6,15 +6,17 @@ class Extraction
   require 'csv'
   require 'json'
 
-  attr_reader :filename #Tracks file containing output
+  attr_reader :filename #Tracks file(s) containing output.  Is an array (when many mid-extraction), but a string by the end of extraction (when it is one)
 
   @backbone_ids_index   #Hash of sets mapping a document ID to the set of group IDs composing its backbone
   @backbone_id_string   #Comma separated string of all backbone group ids -- better for performance to run once and store class-wide
   @backbone_data        #Hash of backbone data: key is document ID then group ID, contains group-level data and array of annotation data
   @flattened_data       #Hash of flattened data: key is document ID then backbone parent group ID, contains
+  @extract_doc_ids      #Tracks the doc ID's used in the extraction
 
 
   def initialize
+    @filename = []
     @backbone_ids_index = {}
     @backbone_data = {}
     @flattened_data = {}
@@ -60,7 +62,7 @@ class Extraction
     #Step 2, grab annos from one horizontal slice of group trees, populate JSON, get children, repeat until finished
     loop do
       slice_sql = <<-EOS
-        SELECT g.id AS group_id, g.name, a.title, a.content
+        SELECT g.id AS group_id, g.name, a.title, a.content, a.id as anno_id
         FROM (SELECT g1.id, g1.name
         FROM groups g1 WHERE g1.id IN (#{grp_ids})) g
         LEFT JOIN annotation_groups ag on g.id=ag.group_id AND ag.qa_approved_by IS NOT NULL
@@ -69,7 +71,7 @@ class Extraction
       slice_hash = ActiveRecord::Base.connection.exec_query(slice_sql)
 
       slice_hash.each do |grp_and_anno|
-        grp_id_ref[grp_and_anno['group_id']][:data_points] << { name: grp_and_anno['title'], value: grp_and_anno['content'] } if !grp_and_anno['title'].nil?
+        grp_id_ref[grp_and_anno['group_id']][:data_points] << { id: grp_and_anno['anno_id'], name: grp_and_anno['title'], value: grp_and_anno['content'] } if !grp_and_anno['title'].nil?
       end
 
       child_sql = <<-EOS
@@ -96,8 +98,11 @@ class Extraction
 
     #Turn hash into JSON, save to file
     time = Time.new()
-    @filename = "/extraction/json/#{time.year}#{time.month}#{time.day}#{time.hour}#{time.min}#{time.sec}#{time.usec}.json"
-    File.write("public#{@filename}", return_hash.to_json)
+    @filename << "/extraction/json/#{time.year}#{time.month}#{time.day}#{time.hour}#{time.min}#{time.sec}#{time.usec}.json"
+    File.write("public#{@filename[0]}", return_hash.to_json)
+
+    #If applicable, generate access data for VO user
+    generate_vo_data(account_id, @backbone_ids_index.keys) if !account_id.nil?
 
     return @filename
   end
@@ -122,10 +127,13 @@ class Extraction
     extract_flattened_data()
 
     #Step 5: Build table structure from backbone and flattened data
-    final_table = build_table(endpoint_hash)
+    final_table = build_table(endpoint_hash, !account_id.nil?)
 
-    #Step 6: Convert to CSV file
+    #Step 6: Convert to Extraction CSV file(s)
     create_csv(final_table)
+
+    #Step 7: If applicable, generate access data for VO user; otherwise set filename as first file in array
+    !account_id.nil? ? generate_vo_data(account_id, @backbone_ids_index.keys) : @filename = @filename[0]
 
     return @filename
   end
@@ -138,8 +146,9 @@ class Extraction
   #Builds the CSV table from the data populated in memory
   #Endpoint_hash contains a series of id, parent_id, and document_id fields, indicating a group, its parent, and its document.
   #Endpoint_hash SHOULD BE ORDERED BY DOCUMENT ID or memory-saving logic will hack the structure apart!
-  def build_table(endpoint_hash)
-    final_table = ExtractionTable.new()
+  #Track_ids determines whether IDs of annotations are tracked as well, to be passed back in a separate file
+  def build_table(endpoint_hash, track_ids)
+    final_table = ExtractionTable.new(track_ids)
     last_doc_id = nil
 
     endpoint_hash.each do |endpoint|
@@ -172,17 +181,31 @@ class Extraction
     return final_table
   end
 
+
   #Turn an extraction table into a CSV file
   def create_csv(table)
     time = Time.new()
-    @filename = "/extraction/csv/#{time.year}#{time.month}#{time.day}#{time.hour}#{time.min}#{time.sec}#{time.usec}.csv"
-    CSV.open("public#{@filename}", "w") do |csv|
+    file_start = "/extraction/csv/#{time.year}#{time.month}#{time.day}#{time.hour}#{time.min}#{time.sec}#{time.usec}"
+    CSV.open("public#{file_start}-data.csv", "w") do |csv|
       csv << table.column_data
       table.row_data.each do |row|
         csv << row
       end
     end
+    @filename << "#{file_start}-data.csv"
+
+    #If ID data was tracked, generate id CSV as well
+    if table.id_data.length > 0
+      CSV.open("public#{file_start}-ids.csv", "w") do |csv|
+        csv << table.column_data
+        table.id_data.each do |row|
+          csv << row
+        end
+      end
+      @filename << "#{file_start}-ids.csv"
+    end
   end
+
 
   #Populates backbone ID tracking objects @backbone_ids_index and @backbone_ids_string with unique group IDs that form the backbones of a group hash
   #Endpoint_hash contains a series of id, parent_id, and document_id fields, indicating a group, its parent, and its document.
@@ -193,7 +216,7 @@ class Extraction
 
     while !group_hash.nil?
       group_hash.each do |group|
-        @backbone_ids_index[group['document_id']] = Set.new() if @backbone_ids_index[group['document_id']].nil?
+        @backbone_ids_index[group['document_id']] = Set.new()
         if !@backbone_ids_index[group['document_id']].include?(group['id'])
           @backbone_ids_index[group['document_id']].add(group['id'])
           all_ids << group['id']
@@ -212,13 +235,14 @@ class Extraction
     @backbone_id_string = all_ids.join(',')
   end
 
+
   # Populates @flattened_data with all non-backbone data.  Result will be a hash with a document ID key pointing to a hash where multiple keys
   # (one for each group ID composing the result) will point to a single array containing all groups/points in the tree.
   def extract_flattened_data
     ancestry_names = {}
 
     flattened_sql = <<-EOS
-      SELECT g.id AS group_id, g.parent_id, g.document_id, g.name, a.title, a.content
+      SELECT g.id AS group_id, g.parent_id, g.document_id, g.name, a.title, a.content, a.id as anno_id
       FROM (SELECT g1.id, g1.parent_id, g1.document_id, g1.name
         FROM groups g1 WHERE g1.parent_id IN (#{@backbone_id_string}) AND g1.id NOT IN (#{@backbone_id_string})) g
       LEFT JOIN annotation_groups ag on g.id=ag.group_id AND ag.qa_approved_by IS NOT NULL
@@ -262,12 +286,12 @@ class Extraction
         end
 
         group_array = @flattened_data[point['document_id']][point['group_id']]
-        group_array[group_array.length - 1][:annos] << {title: point['title'], content: point['content']} if !point['title'].nil?
+        group_array[group_array.length - 1][:annos] << {id: point['anno_id'], title: point['title'], content: point['content']} if !point['title'].nil?
       end
 
       if group_id_array.length > 0
         flattened_sql = <<-EOS
-          SELECT g.id AS group_id, g.parent_id, g.document_id, g.name, a.title, a.content
+          SELECT g.id AS group_id, g.parent_id, g.document_id, g.name, a.title, a.content, a.id as anno_id
           FROM (SELECT g1.id, g1.parent_id, g1.document_id, g1.name
             FROM groups g1 WHERE g1.parent_id IN (#{group_id_array.join(',')})) g
           LEFT JOIN annotation_groups ag on g.id=ag.group_id AND ag.qa_approved_by IS NOT NULL
@@ -290,11 +314,12 @@ class Extraction
     end
   end
 
+
   #Turns populated @backbone_ids_set into two-direction navigable data tree
   #bb_data_hash is group data and anno data in row form
   def generate_backbone_structure()
     backbone_points_sql = <<-EOS
-      SELECT g.id AS group_id, g.parent_id, g.document_id, g.name, a.title, a.content
+      SELECT g.id AS group_id, g.parent_id, g.document_id, g.name, a.title, a.content, a.id as anno_id
       FROM (SELECT g1.id, g1.parent_id, g1.document_id, g1.name
         FROM groups g1 WHERE g1.id IN (#{@backbone_id_string})) g
       LEFT JOIN annotation_groups ag on g.id=ag.group_id AND ag.qa_approved_by IS NOT NULL
@@ -315,7 +340,7 @@ class Extraction
         grp[:name] = anno['name']
       end
 
-      grp[:annos] << { title: anno['title'], content: anno['content'] } if !anno['title'].nil?
+      grp[:annos] << { id: anno['anno_id'], title: anno['title'], content: anno['content'] } if !anno['title'].nil?
       par[:children].add(anno['group_id'])
     end
   end
@@ -342,6 +367,21 @@ class Extraction
 
     return sql_string
   end
+
+
+  #Assign a VO user access to documents from the extraction
+  def generate_vo_data(account_id, doc_ids)
+    ActiveRecord::Base.transaction do
+      doc_ids.each do |doc_id|
+        review_sql = <<-EOS
+          INSERT INTO view_only_accesses (account_id, document_id, created_at, updated_at)
+          VALUES (#{account_id}, #{doc_id}, current_date, current_date)
+        EOS
+        ActiveRecord::Base.connection.execute(review_sql)
+      end
+    end
+  end
+
 
   #Get hash of endpoint groups from search parameters
   def get_endpoint_hash(endpoints, filters)
@@ -423,18 +463,24 @@ end
 class ExtractionTable
   attr_reader :row_data     #Array of arrays of data values
   attr_reader :column_data  #Single array of column headers
+  attr_reader :id_data      #Complementary array of arrays of ids of points in table
 
   @groups_contained #Maps group name to an array of hashes containing its first and last index
   @current_row      #Index of current row
   @endpoint         #Endpoint column name
   @group_cache      #Cache group data by group ID, hash mapping group ID to starting row index and array of data
+  @id_cache         #Cache anno ids for group cache points by group ID, hash mapping group ID to starting row index and array of data
+  @store_ids        #Whether or not to store anno IDs in separate reference table
 
-  def initialize()
+  def initialize(store_ids)
+    @store_ids = store_ids
     @groups_contained = {}
     @group_cache = {}
+    @id_cache = {}
     @current_row = -1
     @row_data = []
     @column_data = []
+    @id_data = []
   end
 
 
@@ -447,6 +493,7 @@ class ExtractionTable
       if cached_grp[:data].length > 0
         last = cached_grp[:start] + (cached_grp[:data].length - 1)
         @row_data[@current_row][cached_grp[:start]..last] = cached_grp[:data]
+        @id_data[@current_row][cached_grp[:start]..last] = @id_cache[grp_id][:data] if @store_ids
       end
     else
       #Otherwise, generate the data
@@ -467,6 +514,7 @@ class ExtractionTable
     end
     @current_row += 1
     @row_data << Array.new(@column_data.length)
+    @id_data << Array.new(@column_data.length) if @store_ids
   end
 
 
@@ -495,12 +543,17 @@ class ExtractionTable
         end
       end
       curr_row[rel_col_index + indices[:first]] = point[:content]
+      @id_data[@current_row][rel_col_index + indices[:first]] = point[:id] if @store_ids
     end
 
     @group_cache[grp_id] = {
       :start  => indices[:first],
       :data   => indices[:last].nil? ? [] : Array.wrap(curr_row[indices[:first]..indices[:last]])
     }
+    @id_cache[grp_id] = {
+      :start  => indices[:first],
+      :data   => indices[:last].nil? ? [] : Array.wrap(@id_data[@current_row][indices[:first]..indices[:last]])
+    } if @store_ids
   end
 
 
@@ -518,8 +571,14 @@ class ExtractionTable
     to_front ? @column_data.insert(indices[:first], col_name) : @column_data.insert(indices[:last], col_name)
 
     #Update existing rows
-    @row_data.each do |row|
-      to_front ? row.insert(indices[:first], nil) : row.insert(indices[:last], nil)
+    @row_data.each_index do |row_index|
+      if to_front
+        @row_data[row_index].insert(indices[:first], nil)
+        @id_data[row_index].insert(indices[:first], nil) if @store_ids
+      else
+        @row_data[row_index].insert(indices[:last], nil)
+        @id_data[row_index].insert(indices[:last], nil) if @store_ids
+      end
     end
 
     #Update index refs/data for cached groups
@@ -527,6 +586,7 @@ class ExtractionTable
       grp[:start] += 1 if grp[:start] > indices[:first]
       if grp[:start] <= indices[:first] && grp[:start] + (grp[:data].length - 1) >= indices[:last]
         grp[:data].insert(indices[:first] - grp[:start], nil)
+        @id_cache[grp_index][:data].insert(indices[:first] - grp[:start], nil) if @store_ids
       end
     end
 
@@ -563,12 +623,14 @@ class ExtractionTable
             end
           end
           curr_row[rel_col_index + indices[:first]] = point[:content]
+          @id_data[@current_row][rel_col_index + indices[:first]] = point[:id] if @store_ids
         end
 
         #Update backbone group's cached data
         inside_bb_first = indices[:first] - bb_indices[:first]
         inside_bb_last = indices[:last] - bb_indices[:first]
         @group_cache[grp_id][:data][inside_bb_first..inside_bb_last] = curr_row[indices[:first]..indices[:last]]
+        @id_cache[grp_id][:data][inside_bb_first..inside_bb_last] = @id_data[@current_row][indices[:first]..indices[:last]] if @store_ids
       end
     end
   end

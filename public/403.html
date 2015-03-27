@@ -4,7 +4,7 @@
 <head>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="chrome=1">
-  <title>Forbidden - DocumentCloud</title>
+  <title>Forbidden - DACTYL</title>
   
   <link href="/stylesheets/common/reset.css" media="all" rel="stylesheet" type="text/css" />
   <link href="/stylesheets/ui/ui.css" media="all" rel="stylesheet" type="text/css" />
@@ -15,7 +15,7 @@
   <div id="container">
     <div id="topbar" class="header gradient_mid">
       <div id="cloud_edge"></div>
-      <div id="wordmark" class="logo_words"><a href="/">DocumentCloud</a></div>
+      <div id="wordmark" class="logo_words"><a href="/">DACTYL</a></div>
       <h1 id="title" class="logo_words">403 Forbidden</h1>
     </div>
 
@@ -40,17 +40,3 @@
 
 </body>
 </html>
-
-SELECT COUNT(DISTINCT "documents"."id")
-FROM "documents" LEFT OUTER JOIN "accounts" ON "accounts"."id" = "documents"."account_id"
-LEFT OUTER JOIN "organizations" ON "organizations"."id" = "documents"."organization_id"
-WHERE (documents.access in (1,2) OR
-        (documents.access=3 AND
-            (
-                (documents.de_one_id=4 AND documents.de_one_complete=0
-                ) OR
-                (documents.de_two_id=4 AND documents.de_two_complete=0
-                )
-            )
-        )
-      )

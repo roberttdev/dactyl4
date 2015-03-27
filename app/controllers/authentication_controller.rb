@@ -38,11 +38,11 @@ class AuthenticationController < ApplicationController
   end
 
   def view_only_login
-    account = Account.hashed_login(params[:id], params[:p])
+    account = Account.hashed_login(params[:id], params[:p], session, cookies)
     if account && account.active?
-      return redirect_to("/documents/view_point/#{params[:aid]}")
+      return redirect_to("/documents/view_point")
     else
-      return forbidden
+      return redirect_to("/login_403.html")
     end
   end
 

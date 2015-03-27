@@ -1082,6 +1082,38 @@ ALTER SEQUENCE template_fields_id_seq OWNED BY template_fields.id;
 
 
 --
+-- Name: view_only_accesses; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE view_only_accesses (
+    id integer NOT NULL,
+    document_id integer,
+    account_id integer,
+    created_at timestamp without time zone,
+    updated_at timestamp without time zone
+);
+
+
+--
+-- Name: view_only_accesses_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE view_only_accesses_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: view_only_accesses_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE view_only_accesses_id_seq OWNED BY view_only_accesses.id;
+
+
+--
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1282,6 +1314,13 @@ ALTER TABLE ONLY subtemplates ALTER COLUMN id SET DEFAULT nextval('subtemplates_
 --
 
 ALTER TABLE ONLY template_fields ALTER COLUMN id SET DEFAULT nextval('template_fields_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY view_only_accesses ALTER COLUMN id SET DEFAULT nextval('view_only_accesses_id_seq'::regclass);
 
 
 --
@@ -1514,6 +1553,14 @@ ALTER TABLE ONLY subtemplates
 
 ALTER TABLE ONLY template_fields
     ADD CONSTRAINT template_fields_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: view_only_accesses_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY view_only_accesses
+    ADD CONSTRAINT view_only_accesses_pkey PRIMARY KEY (id);
 
 
 --
@@ -1922,4 +1969,6 @@ INSERT INTO schema_migrations (version) VALUES ('20141010180742');
 INSERT INTO schema_migrations (version) VALUES ('20141014200020');
 
 INSERT INTO schema_migrations (version) VALUES ('20150107191612');
+
+INSERT INTO schema_migrations (version) VALUES ('20150325205011');
 
