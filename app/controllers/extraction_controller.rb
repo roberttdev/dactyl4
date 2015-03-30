@@ -79,6 +79,7 @@ class ExtractionController < ApplicationController
 
         zipfile.add("README", "public#{config_file}")
       end
+      File.chmod(0644, "public#{zip_file}")
 
       resultFile = zip_file
     end

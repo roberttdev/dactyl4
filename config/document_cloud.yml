@@ -7,7 +7,7 @@ defaults: &defaults
 
 development:
   <<: *defaults
-  ssl_on: false
+  ssl_on:             false
 
 staging:
   <<: *defaults
