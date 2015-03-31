@@ -126,9 +126,12 @@ class Document < ActiveRecord::Base
       access << qcFmt
       access << qaFmt
     end
+    if account.view_only?
+      access << "(documents.id IN (SELECT document_id FROM view_only_accesses WHERE account_id=#{account.id}))"
+    end
 
     access << "(documents.status in (#{EXTRACT_ACCESS.join(",")}))" if account.data_extraction?
-    access << "1=0" if account.file_uploading? || account.view_only? #No docs shown to file uploaders or view only
+    access << "1=0" if account.file_uploading? #No docs shown to file uploaders
     query = where( access.join(' or ') )
     query.readonly(false)
   }
