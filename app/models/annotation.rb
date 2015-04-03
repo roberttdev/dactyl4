@@ -48,7 +48,7 @@ class Annotation < ActiveRecord::Base
 
   #Gets annos flattened with anno-group and/or note info, flattened to a particular group
   scope :flattened_by_group, ->(group_id) {
-    includes(:annotation_groups => :annotation_note).where({
+    includes(:document, :annotation_groups => :annotation_note).where({
         'annotation_groups.group_id' => group_id
     })
   }

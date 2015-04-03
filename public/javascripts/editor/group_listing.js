@@ -4,7 +4,8 @@ dc.ui.GroupListing = Backbone.View.extend({
   showEdit: true,
   showDelete: true,
   showClone: true,
-  showApprove: false,
+  showApproval: false,
+  showApprovalStatus: false,
   showReject: false,
   showNote: false,
   complete: false,
@@ -30,6 +31,7 @@ dc.ui.GroupListing = Backbone.View.extend({
     this.showDelete = options['showDelete'] != null ? options['showDelete'] : true;
     this.showClone = options['showClone'] != null ? options['showClone'] : true;
     this.showApproval = options['showApproval'] != null ? options['showApproval'] : false;
+    this.showApprovalStatus = options['showApprovalStatus'] != null ? options['showApprovalStatus'] : false;
     this.showNote = options['showNote'] != null ? options['showNote'] : false;
 
     this._mainJST = JST['group_listing'];
@@ -48,8 +50,8 @@ dc.ui.GroupListing = Backbone.View.extend({
     if( !this.showDelete ){ this.$('.delete_item').hide(); }
     if( !this.showClone ){ this.$('.clone_item').hide(); }
     if( !this.showNote ){ this.$('.point_note').hide(); }
+    if( !this.showApprovalStatus ){ this.$('.row_status').hide(); }
     if( !this.showApproval ){
-      this.$('.row_status').hide();
       this.$('.approve_item').hide();
       this.$('.reject_item').hide();
     }
@@ -62,7 +64,7 @@ dc.ui.GroupListing = Backbone.View.extend({
         this.$('.subitem_status').addClass('incomplete');
     }
 
-    if( this.showApproval && this.model.get('qa_approved_by') ){
+    if( (this.showApproval || this.showApprovalStatus) && this.model.get('qa_approved_by') ){
       this.model.get('qa_reject_note') ? this.setReject() : this.setApprove();
     }
 
@@ -122,7 +124,7 @@ dc.ui.GroupListing = Backbone.View.extend({
     this.$('.row_status').removeClass('incomplete');
     this.$('.row_status').removeClass('rejected');
     this.$('.row_status').addClass('complete');
-    this.$('.reject_item').show().css('display', 'inline-block');
+    if( this.showApproval ){ this.$('.reject_item').show().css('display', 'inline-block'); }
   },
 
 
@@ -132,8 +134,8 @@ dc.ui.GroupListing = Backbone.View.extend({
     this.$('.row_status').removeClass('complete');
     this.$('.row_status').removeClass('incomplete');
     this.$('.row_status').addClass('rejected');
-    this.$('.approve_item').show().css('display', 'inline-block');
-    this.$('.point_note').show().css('display', 'inline-block');
+    if( this.showApproval ){ this.$('.approve_item').show().css('display', 'inline-block'); }
+    if( this.showApproval ){ this.$('.point_note').show().css('display', 'inline-block'); }
   }
 
 });

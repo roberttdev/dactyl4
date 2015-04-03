@@ -1,7 +1,7 @@
 class FileNotesController < ApplicationController
 
   def index
-    json AnnotationNote.where({document_id: params[:document_id]})
+    json AnnotationNote.includes(:annotation_group).where({document_id: params[:document_id]})
   end
 
   def update

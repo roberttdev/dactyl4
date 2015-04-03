@@ -18,11 +18,17 @@ class GroupsController < ApplicationController
   def show
     #Pull base-level groups/annotations and create group-like JSON
     doc = Document.find(params[:document_id])
-    responseJSON = Group.includes(:children, :group_template).find(params[:id]).as_json({
+    ret_grp = Group.includes(:children, :group_template).find(params[:id])
+    responseJSON = ret_grp.as_json({
                       include: [:children, :group_template],
                       ancestry: true
                   })
     responseJSON[:annotations] = Annotation.flattened_by_group(params[:id]).as_json()
+
+    if (doc.in_de? || doc.in_supp_de?) && ret_grp.template_id
+      responseJSON[:template_fields] = TemplateField.where({template_id: ret_grp.template_id}).pluck(:field_name)
+    end
+
     json responseJSON
   end
 

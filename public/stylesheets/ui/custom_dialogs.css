@@ -91,6 +91,7 @@
 #file_note_dialog .note_text {
     display: inline-block;
     margin-right: 10px;
+    cursor: pointer;
 }
 
 #file_note_dialog .file_note_actions,

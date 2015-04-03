@@ -6,6 +6,8 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
   showReject:       false,
   showNote:         false,
 
+  className: 'anno_listing_wrapper',
+
   events : {
       'click .annotation_listing'   : 'prepareForAnnotation',
       'click .clone_item'           : 'prepareForClone',

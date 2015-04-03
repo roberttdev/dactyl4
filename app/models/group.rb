@@ -32,14 +32,16 @@ class Group < ActiveRecord::Base
   }
 
   def attributes
-    if document.in_qa?
-      super.merge({
+    merge_hash = {}
+    if document.in_qa? || document.in_supp_de?
+      merge_hash = {
         'approved' => nil,
         'qa_reject_note' => nil
-      })
+      }
     end
 
-    super.merge('unapproved_count' => nil)
+    merge_hash[:unapproved_count] = nil
+    super.merge(merge_hash)
   end
 
 

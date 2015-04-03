@@ -22,10 +22,15 @@ dc.ui.ViewerSuppDEControlPanel = dc.ui.ViewerDEControlPanel.extend({
 
     //Group Listings
     this.model.children.each(function(model, index){
-        _deView.addGroup({
-            model: model,
-            showStatus: false
-        });
+      can_edit = dc.account == dc.model.Account.ADMINISTRATOR || model.get('qa_reject_note') || !model.get('approved')
+      _grp = _deView.addGroup({
+        model: model,
+        showClone: true,
+        showEdit: can_edit ? true : false,
+        showDelete: can_edit ? true :false,
+        showApproval: false,
+        showApprovalStatus: true
+      });
     });
     $('#group_section').html(_.pluck(this.groupViewList, 'el'));
 
@@ -120,12 +125,20 @@ dc.ui.ViewerSuppDEControlPanel = dc.ui.ViewerDEControlPanel.extend({
 
     //handleFileNote: blank placeholder to be overridden if class wishes to handle file notes
     handleFileNote: function() {
-        if( !this.fileNoteDialog ){ this.fileNoteDialog = new dc.ui.FileNoteDialog(this.docModel, this.noteList, this.releaseFileNote); }
+        if( !this.fileNoteDialog ){
+          this.fileNoteDialog = new dc.ui.FileNoteDialog(this.docModel, this.noteList, this.releaseFileNote);
+          this.listenTo(this.fileNoteDialog, 'requestPointReload', this.handleReloadRequest);
+        }
     },
 
     //Function to trigger that file note dialog is gone
     releaseFileNote: function() {
         this.fileNoteDialog = null;
+    },
+
+
+    handleReloadRequest: function(annoGroupInfo) {
+      this.reloadPoints(annoGroupInfo.group_id, annoGroupInfo.annotation_id);
     }
 
 });

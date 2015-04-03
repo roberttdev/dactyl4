@@ -10,7 +10,7 @@ module DC
       def self.save_page_images(asset_store, document, page_number, filename, access)
         asset_store.save_page_images(document, page_number,
           {'normal'     => "images/700x/#{filename}",
-           'large'      => "images/1000x/#{filename}",
+           'large'      => "images/1400x/#{filename}",
            'small'      => "images/180x/#{filename}",
            'thumbnail'  => "images/60x75!/#{filename}"},
           access

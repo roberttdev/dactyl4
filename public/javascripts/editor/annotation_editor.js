@@ -303,6 +303,11 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
     currentDocument.api.markApproval(anno_id, group_id, approved);
   },
 
+  //Populate DV's autocomplete recommendations
+  setRecommendations: function(recArray) {
+    currentDocument.api.setRecommendations(recArray);
+  },
+
   // Lazily create the page-specific div for persistent elements.
   _specificPage : function() {
     // if a div for redaction already exists, return it.

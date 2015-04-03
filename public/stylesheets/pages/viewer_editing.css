@@ -221,6 +221,7 @@
         display: inline-block;
         width: 200px;
         cursor: pointer;
+        vertical-align: middle;
     }
 
     .edit_group {
@@ -264,6 +265,7 @@
         display: inline-block;
         width: 16px;
         height: 16px;
+        vertical-align: middle;
     }
 
     .highlighting {
@@ -294,6 +296,10 @@
         background: url(/images/embed/icons/dark_check.png) no-repeat center center;
     }
 
+    .anno_listing_wrapper {
+        min-height: 21px;
+    }
+
     .annotation_listing {
         display: inline;
         margin-left: 5px;
@@ -301,13 +307,16 @@
     }
 
     .annotation_actions {
-        display: inline;
+        display: inline-block;
+        vertical-align: middle;
+
     }
 
     .annotation_name, .annotation_value {
         display: inline-block;
         width: 37%;
         word-wrap: break-word;
+        vertical-align: middle;
     }
 
     .annotation_separator {

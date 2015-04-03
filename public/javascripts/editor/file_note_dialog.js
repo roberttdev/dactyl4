@@ -53,6 +53,7 @@ dc.ui.FileNoteDialog = dc.ui.Dialog.extend({
         _view = new dc.ui.FileNoteListing({model: model});
         _thisView.noteViewList.push(_view);
         _view.render();
+        _thisView.listenTo(_view, 'requestPointReload', _thisView.requestPointReload);
     });
     $('#note_section table').html(_.pluck(this.noteViewList,'el'));
 
@@ -67,6 +68,11 @@ dc.ui.FileNoteDialog = dc.ui.Dialog.extend({
     this.document.save({},{success: function() {
         _thisView.close();
     }});
+  },
+
+
+  requestPointReload : function(payload){
+    this.trigger('requestPointReload', payload);
   }
 
 }, {

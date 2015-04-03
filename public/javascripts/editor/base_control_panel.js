@@ -116,7 +116,10 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
         this.model = new dc.model.Group({document_id: dc.app.editor.docId, id: groupId});
         this.model.fetch({
             data:    $.param(this.reloadParams),
-            success: function(){ _thisView.render(annotationId); }
+            success: function(){
+              dc.app.editor.annotationEditor.setRecommendations(_thisView.model.get('template_fields'));
+              _thisView.render(annotationId);
+            }
         });
     },
 

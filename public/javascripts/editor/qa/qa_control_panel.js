@@ -28,7 +28,8 @@ dc.ui.ViewerQAControlPanel = dc.ui.ViewerBaseControlPanel.extend({
             showEdit: false,
             showDelete: false,
             showSubitemStatus: true,
-            showApproval: true
+            showApproval: true,
+            showApprovalStatus: true
         });
     });
     this.$('#group_section').html(_.pluck(this.groupViewList, 'el'));

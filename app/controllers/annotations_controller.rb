@@ -18,7 +18,7 @@ class AnnotationsController < ApplicationController
       #For QC, this is used for DV -- return only DE anno-groups
       searchParams = {:document_id => params[:document_id], "annotation_groups.based_on" => nil}
     end
-    annotations = Annotation.includes(:annotation_groups).where(searchParams)
+    annotations = Annotation.includes(:annotation_groups, :document).where(searchParams)
     json annotations.map {|a| a.canonical }
   end
 

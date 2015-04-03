@@ -8,6 +8,7 @@ dc.ui.FileNoteListing = Backbone.View.extend({
   tagName:          'tr',
 
   events : {
+    'click .note_text'  : 'requestPointReload'
   },
 
   initialize : function(options) {
@@ -18,9 +19,10 @@ dc.ui.FileNoteListing = Backbone.View.extend({
 
 
   render : function() {
-    _thisView           = this;
+    _thisView = this;
+    var noteText = this.model.get('group_id') ? '[GROUP] ' : '[POINT] '
     $(this.el).html(this._mainJST({
-        title:          this.model.get('note')
+        title:          noteText + this.model.get('note')
     }));
 
     if(this.model.get('approved')){ this.showReject(); }else{ this.showApprove(); }
@@ -41,6 +43,16 @@ dc.ui.FileNoteListing = Backbone.View.extend({
       this.$('.row_status').removeClass('incomplete');
       this.$('.row_status').addClass('complete');
       this.$('.reject_item').show().css('display', 'inline-block');
+  },
+
+
+  //Send request to redirect to the AnnotationGroup this note refers to
+  requestPointReload : function() {
+    var payload = {
+      group_id: this.model.get('group_id') ? this.model.get('group_id') : this.model.get('annotation_group').group_id,
+      annotation_id: this.model.get('annotation_group') ? this.model.get('annotation_group').annotation_id : null
+    }
+    this.trigger('requestPointReload', payload);
   }
 
 });

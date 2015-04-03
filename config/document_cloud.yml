@@ -8,6 +8,7 @@ defaults: &defaults
 development:
   <<: *defaults
   ssl_on:             false
+  asset_root:         "//s3.amazonaws.com/dactyl-docs"
 
 staging:
   <<: *defaults
