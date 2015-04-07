@@ -69,13 +69,16 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
 
     //If there are non-blank annotations, attempt to sync them with DB.
     if( this.model.annotations.length > 0 ) {
-        this.model.annotations.pushAll({success: function(){
-            _deView.syncDV(success)
+      //Hide annotations/check for unfinished annotations in DV; if successful, save
+      dc.app.editor.annotationEditor.hideActiveAnnotations(function(){
+        _deView.model.annotations.pushAll({success: function(){
+          _deView.syncDV(success)
         }});
+      });
     }
     else {
-        //If not, just pass along to success function
-        success.call();
+        //If not, just double check for unfinished annotations in DV, then pass along to success function
+      dc.app.editor.annotationEditor.hideActiveAnnotations(function(){ success.call(); });
     }
   },
 

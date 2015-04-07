@@ -32,29 +32,32 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
     this._inserts.click(this.createPageNote);
   },
 
-  open : function(annotation, groupId, showEdit) {
-    //If annotation already has location, just show it
-    if( annotation.get('location') ){ return this.showAnnotation(annotation, showEdit); }
+  open : function(annotation, groupId, showEdit, success) {
+    //Request to hide existing annos; if succeeds, continue and call success function
+    var _me = this;
+    this.hideActiveAnnotations(function(){
+      //If annotation already has location, just show it
+      if( annotation.get('location') ){ return _me.showAnnotation(annotation, showEdit); }
 
-    if( annotation != null ){
+      if (annotation != null) {
         annotation.groups = [{group_id: groupId, approved_count: 0}];
-        this._active_annotation = annotation;
-    }
+        _me._active_annotation = annotation;
+      }
 
-    this.hideActiveAnnotations();
+      _me._open = true;
+      _me.redactions = [];
+      _me.page.css({cursor: 'crosshair'});
+      _me._inserts.filter('.visible').show().addClass('DV-public');
 
-    this._open = true;
-    this.redactions = [];
-    this.page.css({cursor: 'crosshair'});
-    this._inserts.filter('.visible').show().addClass('DV-public');
+      // Start drawing region when user mousedown
+      _me.page.bind('mousedown', _me.drawAnnotation);
+      $(document).bind('keydown', _me.close);
 
-    // Start drawing region when user mousesdown
-    this.page.bind('mousedown', this.drawAnnotation);
-    $(document).bind('keydown', this.close);
-
-    $(document.body).setMode('public', 'editing');
-    this._buttons['public'].addClass('open');
-    this._guide.fadeIn('fast');
+      $(document.body).setMode('public', 'editing');
+      _me._buttons['public'].addClass('open');
+      _me._guide.fadeIn('fast');
+      success.call();
+    });
   },
 
   close : function() {
@@ -271,8 +274,8 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
   },
 
   //Hide any existing active annotations
-  hideActiveAnnotations: function() {
-      currentDocument.api.cleanUp();
+  hideActiveAnnotations: function(success) {
+      currentDocument.api.cleanUp(success);
   },
 
   //Pass annotation data to DV so it can update any missing IDs

@@ -80,10 +80,11 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
 
   //prepareForAnnotation: signal DV to create annotation and wait for response
   prepareForAnnotation : function() {
-      this.openDocumentTab();
-      this.highlight();
-
-      dc.app.editor.annotationEditor.open(this.model, this.group_id, this.showEdit);
+    var _thisView = this;
+    dc.app.editor.annotationEditor.open(this.model, this.group_id, this.showEdit, function(){
+      _thisView.openDocumentTab();
+      _thisView.highlight();
+    });
   },
 
 
