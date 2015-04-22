@@ -60,19 +60,21 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
     });
   },
 
-  close : function() {
+  close : function(success) {
+    var _me = this;
     this._open = false;
     this._active_annotation = null;
-    this.page.css({cursor : ''});
-    this.page.unbind('mousedown', this.drawAnnotation);
-    $(document).unbind('keydown', this.close);
-    this.clearAnnotation();
-    this.clearRedactions();
-    this.hideActiveAnnotations();
-    this._inserts.hide().removeClass('DV-public DV-private');
-    $(document.body).setMode(null, 'editing');
-    this._buttons['public'].removeClass('open');
-    this._guide.hide();
+    this.hideActiveAnnotations(function(){
+      _me.page.css({cursor : ''});
+      _me.page.unbind('mousedown', _me.drawAnnotation);
+      $(document).unbind('keydown', _me.close);
+      _me.clearAnnotation();
+      _me._inserts.hide().removeClass('DV-public DV-private');
+      $(document.body).setMode(null, 'editing');
+      _me._buttons['public'].removeClass('open');
+      _me._guide.hide();
+      if(success){ success.call(); }
+    });
   },
 
   toggle : function(kind) {

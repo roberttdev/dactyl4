@@ -49,22 +49,28 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
 
   //Show popup confirming template delete
   confirmDelete: function(event) {
-      if( (!this.model.get('title') || this.model.get('templated')) && !this.model.get('content') ){ this.deletePoint(); }
-      else{ dc.ui.Dialog.confirm(_.t('confirm_point_delete'), this.deletePoint); }
+    var _thisView = this;
+    if( (!this.model.get('title') || this.model.get('templated')) && !this.model.get('content') ){ this.deletePoint(); }
+    else{ dc.ui.Dialog.confirm(_.t('confirm_point_delete'), function(){
+      _thisView.deletePoint();
+      return true;
+    }); }
   },
 
 
   deletePoint: function() {
-    dc.app.editor.annotationEditor.deleteAnnotation(this.model, this.group_id);
-    dc.app.editor.annotationEditor.close();
-    if( this.model.get('annotation_group_id') ) {
-      //If this has been saved before, initiate deletion from DB.  Must check ag_id first, as this is the relevant one (as opposed to 'id' that Backbone uses, which is anno id to sync w/ DV)
-      this.model.destroy({data: {group_id: this.group_id}, processData: true});
-    }
-    this.trigger('pointDeleted', this, this.model.id);
-    $(this.el).remove();
-    this.setWaitingForClone(false);
-    return true;
+    var _thisView = this;
+    dc.app.editor.annotationEditor.close(function() {
+      //If close succeeds, continue
+      dc.app.editor.annotationEditor.deleteAnnotation(_thisView.model, _thisView.group_id);
+      if( _thisView.model.get('annotation_group_id') ) {
+        //If this has been saved before, initiate deletion from DB.  Must check ag_id first, as this is the relevant one (as opposed to 'id' that Backbone uses, which is anno id to sync w/ DV)
+        _thisView.model.destroy({data: {group_id: _thisView.group_id}, processData: true});
+      }
+      _thisView.trigger('pointDeleted', _thisView, _thisView.model.id);
+      $(_thisView.el).remove();
+      _thisView.setWaitingForClone(false);
+    });
   },
 
 
