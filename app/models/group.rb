@@ -108,6 +108,14 @@ class Group < ActiveRecord::Base
   end
 
 
+  #Mark that the group was deleted in Supp DE.. can't fully delete it without removing ability to drop work
+  def mark_deleted_in_supp
+    self.update({:deleted_in_supp => true})
+    self.annotation_groups.each do |ag|
+      ag.mark_deleted_in_supp()
+    end
+  end
+
   #Clone override.. 'is_sub' determines if this is a sub-process of the original clone;
   # 'related' indicates whether to include related objects (children and annotations)
   # 'same_name' overrides the default behavior of adding '(copy)' to the name of the copy

@@ -171,6 +171,7 @@
   - contributor: Contributor
   - country: " Countries"
   - create_group: Edit Group
+  - create_in_rejected_group: You cannot create a new data point in a rejected group.
   - create_new_project: Create a New Project
   - data_entry: Data Entry
   - data_extraction: Data Extraction

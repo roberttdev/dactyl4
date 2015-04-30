@@ -60,7 +60,8 @@ class GroupsController < ApplicationController
           :account_id   => current_account.id,
           :document_id  => params[:document_id],
           :title        => field.field_name,
-          :templated    => true
+          :templated    => true,
+          :iteration    => doc.iteration
         })
 
         ag = AnnotationGroup.create({
@@ -78,7 +79,10 @@ class GroupsController < ApplicationController
 
   def destroy
     group = Group.find(params[:id])
-    group.destroy()
+    doc = Document.find(group.document_id)
+
+    doc.in_supp_de? ? group.mark_deleted_in_supp() : group.destroy()
+
     json({"success" => true})
   end
 

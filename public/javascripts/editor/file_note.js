@@ -8,7 +8,9 @@ dc.ui.FileNoteListing = Backbone.View.extend({
   tagName:          'tr',
 
   events : {
-    'click .note_text'  : 'requestPointReload'
+    'click .note_text'    : 'requestPointReload',
+    'click .approve_item' : 'approveNote',
+    'click .reject_item'  : 'disapproveNote'
   },
 
   initialize : function(options) {
@@ -53,6 +55,15 @@ dc.ui.FileNoteListing = Backbone.View.extend({
       annotation_id: this.model.get('annotation_group') ? this.model.get('annotation_group').annotation_id : null
     }
     this.trigger('requestPointReload', payload);
+  },
+
+
+  approveNote : function() {
+    this.model.address(true, this.showReject);
+  },
+
+  disapproveNote: function() {
+    this.model.address(false, this.showApprove);
   }
 
 });

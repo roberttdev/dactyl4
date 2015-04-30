@@ -132,19 +132,16 @@ class Annotation < ActiveRecord::Base
     data['image_url'] = document.page_image_url_template if opts[:include_image_url]
     data['published_url'] = document.published_url || document.document_viewer_url(:allow_ssl => true) if opts[:include_document_url]
     data['account_id'] = account_id
+    data['iteration'] = iteration
+
+    #If account ID passed in, determine whether it 'owns' this note currently (can edit, generally)
+    data['owns_note'] = opts[:account] && (opts[:account].id == account_id) && (iteration == document.iteration)
 
     #If requested, pass anno+group relationship info
     if !opts[:skip_groups]
       data['groups'] = annotation_groups.map {|ag| ag.approval_json(document.in_qa?)}
     end
 
-    if author
-      data.merge!({
-        'author'              => author[:full_name],
-        'owns_note'           => author[:owns_note],
-        'author_organization' => author[:organization_name]
-      })
-    end
     data
   end
 
@@ -162,13 +159,21 @@ class Annotation < ActiveRecord::Base
     canonical(opts).merge({
       'document_id'         => document_id,
       'account_id'          => account_id,
+      'ag_account_id'       => anno_group.created_by,
       'organization_id'     => organization_id,
+      'iteration'           => iteration,
+      'ag_iteration'        => anno_group.iteration,
       'annotation_group_id' => anno_group.id,
       'approved_count'      => anno_group.approved_count,
       'approved'            => anno_group.qa_approved_by ? true : false,
       'qa_reject_note'      => anno_group.association_cache.keys.include?(:annotation_note) ? anno_group.annotation_note.note : nil,
       'templated'           => templated
     })
+  end
+
+  #Instead of deleting in supp DE, mark
+  def mark_deleted_in_supp
+    self.update({:deleted_in_supp => true})
   end
 
 

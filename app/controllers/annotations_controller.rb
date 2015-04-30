@@ -107,6 +107,7 @@ class AnnotationsController < ApplicationController
       if doc.in_de? || doc.in_supp_de? || doc.in_extraction?
         if field[:id].nil?
           submitHash[:account_id] = current_account.id
+          submitHash[:iteration] = doc.iteration
           anno = Annotation.create(submitHash)
         else
           submitHash[:account_id] = current_account.id

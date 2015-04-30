@@ -306,6 +306,12 @@
         cursor: pointer;
     }
 
+    .annotation_listing.rejected .annotation_name,
+    .annotation_listing.rejected .annotation_value {
+        color: red;
+        text-decoration: line-through;
+    }
+
     .annotation_actions {
         display: inline-block;
         vertical-align: middle;

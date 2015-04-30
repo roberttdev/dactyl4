@@ -11,18 +11,15 @@ dc.model.FileNote = Backbone.Model.extend({
         Backbone.Model.apply(this, arguments);
     },
 
-    //Remove QC approval from point.  Requires 'group_id' passed as an option
-    address: function(options) {
+    //Mark note as addressed or not
+    address: function(addressed, options) {
         var _thisModel = this;
         $.ajax({
             url         : this.urlRoot + '/' + this.id,
             contentType : 'application/json; charset=utf-8',
             type        : 'put',
-            data        : JSON.stringify({'type': options['type']}),
-            success     : function(response){
-                            _thisModel.set({'addressed': response.addressed}, {silent: true});
-                            if(options['success']){ options['success'](response); }
-                          },
+            data        : JSON.stringify({'addressed': addressed}),
+            success     : options['success'],
             error       : options['error']
         })
     }

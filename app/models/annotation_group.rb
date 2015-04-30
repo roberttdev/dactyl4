@@ -62,4 +62,14 @@ class AnnotationGroup < ActiveRecord::Base
 
   end
 
+  #In Supp DE, mark as deleted instead of deleting
+  def mark_deleted_in_supp
+    self.update({:deleted_in_supp => true})
+
+    #Mark annotation as well if no other un-"deleted" groups link to it
+    if !AnnotationGroup.where("annotation_id=#{self.annotation_id} AND deleted_in_supp IS NOT TRUE").exists?
+      Annotation.find(self.annotation_id).mark_deleted_in_supp()
+    end
+  end
+
 end

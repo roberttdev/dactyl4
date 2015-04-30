@@ -222,6 +222,7 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
   showAnnotation: function(anno, showEdit) {
       currentDocument.api.selectAnnotation({
           id        : anno.id,
+          group_id  : anno.get('groups')[0].group_id,
           location  : anno.get('location')
       },
       showEdit);
@@ -240,9 +241,11 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
       content     : anno.text,
       title       : anno.title,
       access      : anno.access,
-      group_id    : anno.groupCount > 0 ? anno.groups[anno.groupIndex - 1].group_id : undefined,
+      groups    : anno.groupCount > 0 ? [anno.groups[anno.groupIndex - 1]] : undefined,
       location    : anno.location,
-      account_id  : anno.account_id
+      account_id  : anno.account_id,
+      iteration   : anno.iteration,
+      ag_iteration   : currentDocumentModel.iteration
     };
     return _.extend(params, extra || {});
   },

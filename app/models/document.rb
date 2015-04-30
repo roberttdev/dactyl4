@@ -1107,6 +1107,7 @@ class Document < ActiveRecord::Base
       :organization_id     => organization_id,
       :account_id          => account_id,
       :created_at          => created_at.to_date.strftime(DISPLAY_DATE_FORMAT),
+      :iteration           => iteration,
       :access              => access,
       :status              => status,
       :page_count          => page_count,
@@ -1186,6 +1187,7 @@ class Document < ActiveRecord::Base
     doc['source']             = source
     doc['created_at']         = created_at.to_formatted_s(:rfc822)
     doc['updated_at']         = updated_at.to_formatted_s(:rfc822)
+    doc['iteration']          = iteration
     doc['canonical_url']      = canonical_url(:html, options[:allow_ssl])
     doc['language']           = language
     doc['file_hash']          = file_hash
@@ -1224,7 +1226,7 @@ class Document < ActiveRecord::Base
       if options[:view_only_id]
         doc['annotations'] = self.annotations.where(:id => options[:view_only_id])
       else
-        doc['annotations'] = ordered_annotations(options[:account]).map {|a| a.canonical}
+        doc['annotations'] = ordered_annotations(options[:account]).map {|a| a.canonical({:account => options[:account]})}
       end
     end
     if self.mentions

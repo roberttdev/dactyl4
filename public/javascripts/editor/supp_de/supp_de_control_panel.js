@@ -139,6 +139,16 @@ dc.ui.ViewerSuppDEControlPanel = dc.ui.ViewerDEControlPanel.extend({
 
     handleReloadRequest: function(annoGroupInfo) {
       this.reloadPoints(annoGroupInfo.group_id, annoGroupInfo.annotation_id);
+    },
+
+
+    //Overload for create new point; don't allow in rejected group
+    createNewDataPoint: function() {
+      if( this.model.get('qa_reject_note') ){
+        dc.ui.Dialog.alert(_.t('create_in_rejected_group'));
+      }else {
+        dc.ui.ViewerDEControlPanel.prototype.createNewDataPoint.call(this);
+      }
     }
 
 });
