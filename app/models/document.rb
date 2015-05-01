@@ -731,6 +731,7 @@ class Document < ActiveRecord::Base
               'data' => {id: anno.id, group_id: anno.annotation_groups[0].group_id}
           }
         end
+
       #########QUALITY ASSURANCE#########
       when STATUS_IN_QA
         #Check that all annotation groups have been addressed
@@ -771,6 +772,17 @@ class Document < ActiveRecord::Base
               }
             end
           end
+        end
+
+      ###### SUPPLEMENTAL DATA ENTRY ######
+      when STATUS_IN_SUPP_DE
+        #Check that all QA notes have been addressed
+        notes = AnnotationNote.where({document_id: self.id, addressed: false}).take
+        if notes
+          return {
+            'errorText' => 'Completion failed because a File Note has not been addressed.  Please address all points.',
+            'data' => {id: notes.id}
+          }
         end
 
       ###### READY FOR EXTRACTION ######
@@ -829,6 +841,10 @@ class Document < ActiveRecord::Base
           #If no rejections, complete
           self.update({status: STATUS_READY_EXT})
         end
+
+      #######SUPPLEMENTAL DATA ENTRY#######
+      when STATUS_IN_SUPP_DE
+        self.update_attributes({:status => STATUS_READY_SUPP_QC})
     end
 
     #Add history event

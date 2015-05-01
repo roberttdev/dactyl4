@@ -217,6 +217,11 @@
         font-size: 14px;
     }
 
+    .group_listing.rejected .group_name a {
+        color: red;
+        text-decoration: line-through;
+    }
+
     .group_name {
         display: inline-block;
         width: 200px;

@@ -22,14 +22,15 @@ dc.ui.ViewerSuppDEControlPanel = dc.ui.ViewerDEControlPanel.extend({
 
     //Group Listings
     this.model.children.each(function(model, index){
-      can_edit = dc.account == dc.model.Account.ADMINISTRATOR || model.get('qa_reject_note') || !model.get('approved')
+      can_edit = model.get('iteration') == currentDocumentModel.iteration;
       _grp = _deView.addGroup({
         model: model,
         showClone: true,
-        showEdit: can_edit ? true : false,
-        showDelete: can_edit ? true :false,
+        showEdit: can_edit ,
+        showDelete: can_edit,
         showApproval: false,
-        showApprovalStatus: true
+        showApprovalStatus: true,
+        strikethrough: !(model.get('qa_reject_note') == null)
       });
     });
     $('#group_section').html(_.pluck(this.groupViewList, 'el'));

@@ -27,7 +27,7 @@ dc.ui.FileNoteListing = Backbone.View.extend({
         title:          noteText + this.model.get('note')
     }));
 
-    if(this.model.get('approved')){ this.showReject(); }else{ this.showApprove(); }
+    if(this.model.get('addressed')){ this.showReject(); }else{ this.showApprove(); }
     return this;
   },
 
@@ -59,11 +59,13 @@ dc.ui.FileNoteListing = Backbone.View.extend({
 
 
   approveNote : function() {
-    this.model.address(true, this.showReject);
+    this.showReject();
+    this.model.address(true);
   },
 
   disapproveNote: function() {
-    this.model.address(false, this.showApprove);
+    this.showApprove();
+    this.model.address(false);
   }
 
 });

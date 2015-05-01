@@ -5,6 +5,6 @@ class FileNotesController < ApplicationController
   end
 
   def update
-    AnnotationNote.update(params[:id], :addressed => params[:addressed])
+    json AnnotationNote.update(params[:id], :addressed => params[:addressed])
   end
 end

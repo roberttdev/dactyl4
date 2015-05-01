@@ -5,6 +5,8 @@ class AnnotationNote < ActiveRecord::Base
 
   def as_json(opts)
     json = {
+      :id               => id,
+      :document_id      => document_id,
       :group_id         => group_id,
       :note             => note,
       :addressed        => addressed

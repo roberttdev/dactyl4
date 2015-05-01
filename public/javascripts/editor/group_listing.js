@@ -9,6 +9,7 @@ dc.ui.GroupListing = Backbone.View.extend({
   showReject: false,
   showNote: false,
   complete: false,
+  strikethrough: false,
 
   events : {
     'click .edit_group'   : 'openEditGroupDialog',
@@ -33,6 +34,7 @@ dc.ui.GroupListing = Backbone.View.extend({
     this.showApproval = options['showApproval'] != null ? options['showApproval'] : false;
     this.showApprovalStatus = options['showApprovalStatus'] != null ? options['showApprovalStatus'] : false;
     this.showNote = options['showNote'] != null ? options['showNote'] : false;
+    this.strikethrough = options['strikethrough'] != null ? options['strikethrough'] : false;
 
     this._mainJST = JST['group_listing'];
   },
@@ -67,6 +69,8 @@ dc.ui.GroupListing = Backbone.View.extend({
     if( (this.showApproval || this.showApprovalStatus) && this.model.get('qa_approved_by') ){
       this.model.get('qa_reject_note') ? this.setReject() : this.setApprove();
     }
+
+    if( this.strikethrough ){ this.$('.group_listing').addClass('rejected'); }
 
     return this;
   },
