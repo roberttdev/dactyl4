@@ -124,13 +124,13 @@ dc.ui.ViewerSuppDEControlPanel = dc.ui.ViewerDEControlPanel.extend({
     },
 
 
-    //handleFileNote: blank placeholder to be overridden if class wishes to handle file notes
     handleFileNote: function() {
         if( !this.fileNoteDialog ){
           this.fileNoteDialog = new dc.ui.FileNoteDialog(this.docModel, this.noteList, this.releaseFileNote);
           this.listenTo(this.fileNoteDialog, 'requestPointReload', this.handleReloadRequest);
         }
     },
+
 
     //Function to trigger that file note dialog is gone
     releaseFileNote: function() {

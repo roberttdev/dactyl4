@@ -38,6 +38,8 @@ dc.ui.ViewerQcSubpanel = dc.ui.ViewerBaseControlPanel.extend({
     });
     this.$('#annotation_section').html(_.pluck(this.pointViewList,'el'));
 
+    this.$('.file_note').hide();
+
     return this.el;
   },
 

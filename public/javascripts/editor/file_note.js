@@ -20,11 +20,12 @@ dc.ui.FileNoteListing = Backbone.View.extend({
   },
 
 
-  render : function() {
+  render : function(showApproval) {
     _thisView = this;
     var noteText = this.model.get('group_id') ? '[GROUP] ' : '[POINT] '
     $(this.el).html(this._mainJST({
-        title:          noteText + this.model.get('note')
+      title:          noteText + this.model.get('note'),
+      show_approval:  showApproval
     }));
 
     if(this.model.get('addressed')){ this.showReject(); }else{ this.showApprove(); }

@@ -364,7 +364,7 @@ class DocumentsController < ApplicationController
   def populate_editor_data
     @edits_enabled = true
     @allowed_to_edit = current_document.status == STATUS_DE1 || current_document.status == STATUS_DE2
-    if current_document.status == STATUS_IN_QC
+    if current_document.status == STATUS_IN_QC || current_document.status == STATUS_IN_SUPP_QC
       @orientation = 'vertical'
     else
       @orientation = 'horizontal'

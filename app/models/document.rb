@@ -111,7 +111,7 @@ class Document < ActiveRecord::Base
     #Add logic for allowing access to DE2/Supp DE statuses if user is one of the DE users unless user has already completed DE work
     deFmt << " OR ((documents.status=#{STATUS_DE2} OR documents.status=#{STATUS_IN_SUPP_DE}) AND ((documents.de_one_id=#{account.id} AND documents.de_one_complete is not true) OR (documents.de_two_id=#{account.id} AND documents.de_two_complete is not true))))"
 
-    qcFmt = "(documents.qc_id=#{account.id} AND documents.status=#{STATUS_IN_QC})"
+    qcFmt = "(documents.qc_id=#{account.id} AND (documents.status=#{STATUS_IN_QC} OR documents.status=#{STATUS_IN_SUPP_QC}))"
     qaFmt = "(documents.qa_id=#{account.id} AND documents.status=#{STATUS_IN_QA})"
 
     if account.data_entry?
@@ -674,8 +674,14 @@ class Document < ActiveRecord::Base
     return false if self.status == STATUS_READY_EXT
 
     return true if (self.de_one_id == account.id && self.de_one_complete) || (self.de_two_id == account.id && self.de_two_complete)
-    return true if self.status > STATUS_IN_QC && self.qc_id == account.id
-    return true if self.status > STATUS_IN_QA && self.qa_id == account.id
+
+    if self.iteration == 1
+      return true if self.status > STATUS_IN_QC && self.qc_id == account.id
+      return true if self.status > STATUS_IN_QA && self.qa_id == account.id
+    else
+      return true if (self.status > STATUS_IN_SUPP_QC || self.status == STATUS_READY_EXT) && self.qc_id == account.id
+      return true if self.status == STATUS_READY_EXT && self.qa_id == account.id
+    end
 
     false
   end
@@ -913,6 +919,10 @@ class Document < ActiveRecord::Base
         self.update({status: STATUS_IN_QA, qa_id: account.id})
       when STATUS_READY_SUPP_DE
         self.update({status: STATUS_IN_SUPP_DE, de_one_id: account.id})
+      when STATUS_READY_SUPP_QC
+        self.update({status: STATUS_IN_SUPP_QC, qc_id: account.id})
+      when STATUS_READY_SUPP_QA
+        self.update({status: STATUS_IN_SUPP_QA, qa_id: account.id})
       when STATUS_READY_EXT
         #Do nothing -- grant access but place no claim on file
     end
