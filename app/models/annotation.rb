@@ -47,10 +47,12 @@ class Annotation < ActiveRecord::Base
   scope :unrestricted, lambda{ where( :access => PUBLIC_LEVELS ) }
 
   #Gets annos flattened with anno-group and/or note info, flattened to a particular group
-  scope :flattened_by_group, ->(group_id) {
-    includes(:document, :annotation_groups => :annotation_note).where({
-        'annotation_groups.group_id' => group_id
-    })
+  #Iteration: If supplied, limit annotations to passed iteration
+  scope :flattened_by_group, ->(group_id, iteration) {
+    whereClause = { 'annotation_groups.group_id' => group_id }
+    whereClause['annotation_groups.iteration'] = iteration     if iteration
+
+    includes(:document, :annotation_groups => :annotation_note).where(whereClause)
   }
 
   # Annotations are not indexed for the time being.

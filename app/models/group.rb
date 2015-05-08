@@ -1,6 +1,19 @@
 class Group < ActiveRecord::Base
   belongs_to :parent, :class_name => 'Group', :foreign_key => 'parent_id'
   has_many :children, -> { includes :annotation_note }, :class_name => 'Group', :foreign_key => 'parent_id', :dependent => :destroy
+
+  has_many :supp_qc_children, -> { where("id NOT IN (SELECT group_id FROM annotation_notes an WHERE an.document_id=groups.document_id AND group_id IS NOT NULL)
+            AND (groups.iteration <> (SELECT iteration FROM documents WHERE id=groups.document_id)
+              OR groups.account_id=(SELECT qc_id FROM documents WHERE id=groups.document_id))") },
+           :class_name => "Group", :foreign_key => 'parent_id'
+
+  has_many :supp_qc_de1_children, -> { where("(groups.iteration <> (SELECT iteration FROM documents WHERE id=groups.document_id))") },
+           :class_name => "Group", :foreign_key => 'parent_id'
+
+  has_many :supp_qc_de2_children, -> { where("(groups.iteration <> (SELECT iteration FROM documents WHERE id=groups.document_id)
+              OR groups.account_id <> (SELECT qc_id FROM documents WHERE id=groups.document_id))") },
+           :class_name => "Group", :foreign_key => 'parent_id'
+
   belongs_to :group_template, :foreign_key => 'template_id'
   belongs_to :document
 
@@ -30,6 +43,7 @@ class Group < ActiveRecord::Base
       :base => true
     }).first
   }
+
 
   def attributes
     merge_hash = {}
@@ -100,9 +114,19 @@ class Group < ActiveRecord::Base
   def as_json(options = {})
     json = super(options)
 
-    if(options[:ancestry])
+    if options[:ancestry]
       json[:ancestry] = get_ancestry
     end
+
+    #If special filtered children are requested, frame as children
+    if options[:include].include?(:supp_qc_children)
+      json[:children] = json['supp_qc_children']
+    elsif options[:include].include?(:supp_qc_de1_children)
+      json[:children] = json['supp_qc_de1_children']
+    elsif options[:include].include?(:supp_qc_de2_children)
+      json[:children] = json['supp_qc_de2_children']
+    end
+
 
     json
   end

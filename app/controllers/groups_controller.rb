@@ -3,14 +3,20 @@ class GroupsController < ApplicationController
   def index
     #Pull base-level groups/annotations and create group-like JSON
     doc = Document.find(params[:document_id])
-    group = Group.includes(:children, :group_template).base(doc, current_account.id, params[:de], params[:qc])
+
+    includes = self.determine_child_includes(doc.iteration, params)
+
+    group = Group.includes(includes).base(doc, current_account.id, params[:de], params[:qc])
 
     responseJSON = group.as_json({
-      include: [:children, :group_template],
+      include: includes,
       ancestry: true
     })
 
-    responseJSON[:annotations] = Annotation.flattened_by_group(group.id).as_json()
+    #For DE2 requests in supplemental workflows, only return iteration-specific annos
+    iteration = (params[:de] == '2' && doc.iteration > 1) ? doc.iteration : nil
+
+    responseJSON[:annotations] = Annotation.flattened_by_group(group.id, iteration).as_json()
 
     json responseJSON
   end
@@ -18,12 +24,19 @@ class GroupsController < ApplicationController
   def show
     #Pull base-level groups/annotations and create group-like JSON
     doc = Document.find(params[:document_id])
-    ret_grp = Group.includes(:children, :group_template).find(params[:id])
+
+    includes = self.determine_child_includes(doc.iteration, params)
+
+    ret_grp = Group.includes(includes).find(params[:id])
     responseJSON = ret_grp.as_json({
-                      include: [:children, :group_template],
+                      include: includes,
                       ancestry: true
                   })
-    responseJSON[:annotations] = Annotation.flattened_by_group(params[:id]).as_json()
+
+    #For DE2 requests in supplemental workflows, only return iteration-specific annos
+    iteration = (params[:de] == '2' && doc.iteration > 1) ? doc.iteration : nil
+
+    responseJSON[:annotations] = Annotation.flattened_by_group(params[:id], iteration).as_json()
 
     if (doc.in_de? || doc.in_supp_de?) && ret_grp.template_id
       responseJSON[:template_fields] = TemplateField.where({template_id: ret_grp.template_id}).pluck(:field_name)
@@ -116,5 +129,18 @@ class GroupsController < ApplicationController
     searchTerm = params[:term] + '%'
     json Group.uniq.where("qa_approved_by IS NOT NULL AND name ILIKE ?", searchTerm )
            .order(:name).limit(10).pluck(:name)
+  end
+
+  def determine_child_includes(iteration, params)
+    #Determine what filter (if any) for children to use
+    if params[:de] == '1' && iteration > 1
+      includes = [:supp_qc_de1_children, :group_template]
+    elsif params[:de] == '2' && iteration > 1
+      includes = [:supp_qc_de2_children, :group_template]
+    elsif params[:qc] && iteration > 1
+      includes = [:supp_qc_children, :group_template]
+    else
+      includes = [:children, :group_template]
+    end
   end
 end

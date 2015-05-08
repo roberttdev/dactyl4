@@ -23,11 +23,14 @@ dc.ui.ViewerQcSubpanel = dc.ui.ViewerBaseControlPanel.extend({
 
     //Group Listings
     this.model.children.each(function(model, index){
-        _deView.addGroup({
-            model: model,
-            showStatus: false,
-            showClone: false
-        });
+      var _canEdit = model.get('iteration') == currentDocumentModel.iteration;
+      _deView.addGroup({
+          model: model,
+          showStatus: false,
+          showClone: false,
+          showEdit: _canEdit,
+          showDelete: _canEdit
+      });
     });
     this.$('#group_section').html(_.pluck(this.groupViewList, 'el'));
 
@@ -58,7 +61,11 @@ dc.ui.ViewerQcSubpanel = dc.ui.ViewerBaseControlPanel.extend({
   approveDEPoint: function(anno, group_id){
     if( this.hasTitle(anno.get('title')) ){ return false; }
     else {
-        anno.set({based_on: anno.get('annotation_group_id'), based_on_group_id: group_id});
+        anno.set({
+          based_on: anno.get('annotation_group_id'),
+          based_on_group_id: group_id,
+          iteration: currentDocumentModel.iteration
+        });
         var _view = this.createDataPointCopy(anno.attributes);
         this.listenTo(_view, 'removeFromQC', this.passRemoveFromQC);
         return true;
