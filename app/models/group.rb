@@ -119,14 +119,15 @@ class Group < ActiveRecord::Base
     end
 
     #If special filtered children are requested, frame as children
-    if options[:include].include?(:supp_qc_children)
-      json[:children] = json['supp_qc_children']
-    elsif options[:include].include?(:supp_qc_de1_children)
-      json[:children] = json['supp_qc_de1_children']
-    elsif options[:include].include?(:supp_qc_de2_children)
-      json[:children] = json['supp_qc_de2_children']
+    if !options[:include].nil?
+      if options[:include].include?(:supp_qc_children)
+        json[:children] = json['supp_qc_children']
+      elsif options[:include].include?(:supp_qc_de1_children)
+        json[:children] = json['supp_qc_de1_children']
+      elsif options[:include].include?(:supp_qc_de2_children)
+        json[:children] = json['supp_qc_de2_children']
+      end
     end
-
 
     json
   end
