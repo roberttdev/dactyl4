@@ -3,82 +3,84 @@ dc.ui.ViewerSuppDEControlPanel = dc.ui.ViewerDEControlPanel.extend({
   AnnoClass: FuncUtils.stringToFunction("dc.ui.SuppDEAnnotationListing"),
 
     initialize: function(options) {
-        dc.ui.ViewerDEControlPanel.prototype.initialize.apply(this, arguments);
+      dc.ui.ViewerDEControlPanel.prototype.initialize.apply(this, arguments);
 
-        _.bindAll(this, 'releaseFileNote');
+      _.bindAll(this, 'releaseFileNote');
 
-        this.noteList = new dc.model.FileNotes({document_id: this.docModel.id});
-        this.noteList.fetch();
+      this.noteList = new dc.model.FileNotes({document_id: this.docModel.id});
+      this.noteList.fetch();
     },
 
     render : function(annoId) {
-    var _deView           = this;
-    var _mainJST = JST['supp_de_control_panel'];
-    var templateName    = this.model.get('group_template') == null ? null : this.model.get('group_template').name;
-    $(this.el).html(_mainJST({template_name: templateName ? templateName.substring(0,39) : null}));
+      var _deView           = this;
+      var _mainJST = JST['supp_de_control_panel'];
+      var templateName    = this.model.get('group_template') == null ? null : this.model.get('group_template').name;
+      $(this.el).html(_mainJST({template_name: templateName ? templateName.substring(0,39) : null}));
 
-    //Group Navigation
-    $('.group_navigation').html(this.generateGroupNav());
+      //Group Navigation
+      $('.group_navigation').html(this.generateGroupNav());
 
-    //Group Listings
-    this.model.children.each(function(model, index){
-      can_edit = model.get('iteration') == currentDocumentModel.iteration;
-      _grp = _deView.addGroup({
-        model: model,
-        showClone: true,
-        showEdit: can_edit ,
-        showDelete: can_edit,
-        showApproval: false,
-        showApprovalStatus: true,
-        strikethrough: !(model.get('qa_reject_note') == null)
+      //Group Listings
+      this.model.children.each(function(model, index){
+        can_edit = model.get('iteration') == currentDocumentModel.iteration;
+        _grp = _deView.addGroup({
+          model: model,
+          showClone: true,
+          showEdit: can_edit ,
+          showDelete: can_edit,
+          showApproval: false,
+          showApprovalStatus: true,
+          strikethrough: !(model.get('qa_reject_note') == null)
+        });
       });
-    });
-    $('#group_section').html(_.pluck(this.groupViewList, 'el'));
+      $('#group_section').html(_.pluck(this.groupViewList, 'el'));
 
-    //Annotations
-    this.model.annotations.each(function(model, index) {
-       _deView.addDataPoint(model, (model.id == annoId));
-    });
-    $('#annotation_section').html(_.pluck(this.pointViewList,'el'));
+      //Annotations
+      this.model.annotations.each(function(model, index) {
+         _deView.addDataPoint(model, (model.id == annoId));
+      });
+      $('#annotation_section').html(_.pluck(this.pointViewList,'el'));
 
-    return this;
+      return this;
     },
 
 
     //Save: save all valid data point changes if no errors
     save: function(success) {
-    var _deView = this;
+      var _deView = this;
 
-    //Clear error class from all inputs
-    $('input').removeClass('error');
-    var _hasErrors = false;
+      //Clear error class from all inputs
+      $('input').removeClass('error');
+      var _hasErrors = false;
 
-    //Check for duplicate annotation titles.  If found, throw error and exit
-    var titleList = [];
-    for(var i=0; i < this.pointViewList.length; i++){
-        if( $.inArray(this.pointViewList[i].model.get('title'), titleList) > 0 ){
-            dc.ui.Dialog.alert(_.t('duplicate_titles'));
+      //Check for duplicate annotation titles.  If found, throw error and exit
+      var titleList = [];
+      for(var i=0; i < this.pointViewList.length; i++){
+        if( this.pointViewList[i].model.get('qa_reject_note') == null ) {
+          if ($.inArray(this.pointViewList[i].model.get('title'), titleList) > 0) {
+            dc.ui.Dialog.alert(_.t('duplicate_titles', this.pointViewList[i].model.get('title')));
             return false;
-        }else{
+          } else {
             titleList.push(this.pointViewList[i].model.get('title'));
+          }
         }
-    }
+      }
 
-    //Remove any blank points
-    this.model.annotations.each(function(model, index) {
-        if(model.get('title') == null && model.get('content') == null){ _deView.model.annotations.remove(model); }
-    });
+      //Remove any blank points
+      this.model.annotations.each(function(model, index) {
+          if(model.get('title') == null && model.get('content') == null){ _deView.model.annotations.remove(model); }
+      });
 
-    //If there are non-blank annotations, attempt to sync them with DB.
-    if( this.model.annotations.length > 0 ) {
-        this.model.annotations.pushAll({success: function(){
-            _deView.syncDV(success)
-        }});
-    }
-    else {
-        //If not, just pass along to success function
-        success.call();
-    }
+      //If there are non-blank annotations, attempt to sync them with DB.
+      if( this.model.annotations.length > 0 ) {
+          this.model.annotations.pushAll({success: function(){
+              _deView.syncDV(success)
+          }});
+      }
+      else {
+          //If not, just pass along to success function
+          success.call();
+      }
     },
 
 
@@ -126,7 +128,7 @@ dc.ui.ViewerSuppDEControlPanel = dc.ui.ViewerDEControlPanel.extend({
 
     handleFileNote: function() {
         if( !this.fileNoteDialog ){
-          this.fileNoteDialog = new dc.ui.FileNoteDialog(this.docModel, this.noteList, this.releaseFileNote);
+          this.fileNoteDialog = new dc.ui.FileNoteDialog(this.docModel, this.noteList, this.releaseFileNote, true);
           this.listenTo(this.fileNoteDialog, 'requestPointReload', this.handleReloadRequest);
         }
     },
@@ -139,7 +141,10 @@ dc.ui.ViewerSuppDEControlPanel = dc.ui.ViewerDEControlPanel.extend({
 
 
     handleReloadRequest: function(annoGroupInfo) {
-      this.reloadPoints(annoGroupInfo.group_id, annoGroupInfo.annotation_id);
+      var _thisView = this;
+      this.save(function () {
+        _thisView.reloadPoints(annoGroupInfo.group_id, annoGroupInfo.id);
+      });
     },
 
 

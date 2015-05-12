@@ -698,10 +698,10 @@ class Document < ActiveRecord::Base
         else
           self.update({status: newStatus, de_two_id: nil})
         end
-      when STATUS_IN_QC
-        Group.destroy_all({document_id: self.id, account_id: account.id})
-        self.update({status: STATUS_READY_QC, qc_id: nil})
-        AnnotationGroup.joins(:group).where({"groups.document_id" => self.id}).update_all({approved_count: 0})
+      when STATUS_IN_QC, STATUS_IN_SUPP_QC
+        Group.destroy_all({document_id: self.id, account_id: account.id, iteration: self.iteration})
+        self.update({status: self.status - 1, qc_id: nil})
+        AnnotationGroup.joins(:group).where({"groups.document_id" => self.id, :iteration => self.iteration}).update_all({approved_count: 0})
       when STATUS_IN_QA
         annotation_notes.destroy_all
         AnnotationGroup.joins(:group).where({"groups.document_id" => self.id}).update_all({qa_approved_by: nil})
@@ -851,6 +851,10 @@ class Document < ActiveRecord::Base
       #######SUPPLEMENTAL DATA ENTRY#######
       when STATUS_IN_SUPP_DE
         self.update_attributes({:status => STATUS_READY_SUPP_QC})
+
+      #######SUPPLEMENTAL QUALITY CONTROL#######
+      when STATUS_IN_SUPP_QC
+        self.update_attributes({:status => STATUS_READY_SUPP_QA})  
     end
 
     #Add history event
@@ -867,13 +871,13 @@ class Document < ActiveRecord::Base
     #Check that user is QC or QA, and therefore has permission
     if( account_id == qc_id )
       #Generate values for actions (anno/group delete step, doc status update step)
-      delWhere = {document_id: id, account_id: [qc_id]}
+      delWhere = {document_id: id, account_id: [qc_id], iteration: self.iteration}
       upValues = {qc_id: nil, de_two_id: nil, de_two_complete: nil}
       case de_num
         when "1"
           delWhere[:account_id] << de_one_id
           upValues[:de_one_id] = de_two_id
-          upValues[:status] = STATUS_DE1
+          upValues[:status] = (self.status == STATUS_IN_SUPP_QC) ? STATUS_READY_SUPP_DE : STATUS_DE1
         when "2"
           delWhere[:account_id] << de_two_id
           upValues[:status] = STATUS_DE1
@@ -882,6 +886,11 @@ class Document < ActiveRecord::Base
           upValues[:de_one_id] = nil
           upValues[:status] = STATUS_NEW
           upValues[:de_one_complete] = nil
+      end
+
+      #If in Supp QC, reset all note statuses as well
+      if self.status == STATUS_IN_SUPP_QC
+        self.annotation_notes.update_all({addressed: false})
       end
 
       Annotation.destroy_all(delWhere)

@@ -17,7 +17,7 @@ dc.ui.FileNoteDialog = dc.ui.Dialog.extend({
     this.document           = document;
     this.noteList           = noteList;
     this.options.onClose    = onClose;
-    this.showApproval       = showApproval ? showApproval : true;
+    this.showApproval       = showApproval != null ? showApproval : true;
     this.events         = _.extend({}, this.events, this.dataEvents);
     this._mainJST = JST['file_note_dialog'];
     _.bindAll(this, 'render');
@@ -53,7 +53,7 @@ dc.ui.FileNoteDialog = dc.ui.Dialog.extend({
     this.noteList.each(function(model, index) {
         _view = new dc.ui.FileNoteListing({model: model});
         _thisView.noteViewList.push(_view);
-        _view.render(this.showApproval);
+        _view.render(_thisView.showApproval);
         _thisView.listenTo(_view, 'requestPointReload', _thisView.requestPointReload);
     });
     $('#note_section table').html(_.pluck(this.noteViewList,'el'));

@@ -3,7 +3,7 @@
       <%= _.t('review_de_instruct') %>
 </div>
 <div class="radio_row">
-    <%=_.t('de_left')%>
+    <%if( !is_supp ){%><%=_.t('de_left')%><%}%>
     <select id="de_one_review">
         <option value="1">Poor</option>
         <option value="2">OK</option>
@@ -12,6 +12,8 @@
         <option value="5">Fantastic</option>
     </select>
 </div>
+
+<%if( !is_supp ){%>
 <div class="radio_row">
     <%=_.t('de_right')%>
     <select id="de_two_review">
@@ -22,6 +24,8 @@
         <option value="5">Fantastic</option>
     </select>
 </div>
+<% } %>
+
 <div class="row tall">
     <%=_.t('file_note')%>:
     <textarea id="qc_file_note" class="text_area dark small content attribute"></textarea>

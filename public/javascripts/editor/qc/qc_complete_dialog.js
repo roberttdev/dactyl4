@@ -12,9 +12,10 @@ dc.ui.QCCompleteDialog = dc.ui.Dialog.extend({
   },
 
 
-  constructor : function(document) {
+  constructor : function(document, is_supp) {
     this.document    = document;
-    this.events         = _.extend({}, this.events, this.dataEvents);
+    this.events      = _.extend({}, this.events, this.dataEvents);
+    this.is_supp     = is_supp == null ? false : is_supp;
     this._mainJST = JST['qc_complete_dialog'];
     _.bindAll(this, 'render');
     dc.ui.Dialog.call(this, {mode : 'custom', title : _.t('complete_qc'), saveText : _.t('save') });
@@ -33,7 +34,7 @@ dc.ui.QCCompleteDialog = dc.ui.Dialog.extend({
     this._container = this.$('.custom');
 
     //Main template
-    this._container.html(this._mainJST({}));
+    this._container.html(this._mainJST({is_supp: this.is_supp}));
 
     return this;
   },
@@ -46,9 +47,14 @@ dc.ui.QCCompleteDialog = dc.ui.Dialog.extend({
     var rating_one = parseInt($("#de_one_review").val());
     var rating_two = parseInt($("#de_two_review").val());
     var file_note = $('#qc_file_note').val();
-    if( (rating_one < 3 || rating_two < 3) && file_note.length == 0 ){
+    if( rating_one < 3 && file_note.length == 0 ){
         this.error(_.t('explain_rating_error'));
         return false;
+    }
+
+    if( !this.is_supp && rating_two < 3 && file_note.length == 0 ){
+      this.error(_.t('explain_rating_error'));
+      return false;
     }
 
     //Trigger save
@@ -66,8 +72,8 @@ dc.ui.QCCompleteDialog = dc.ui.Dialog.extend({
 
   // This static method is used for conveniently opening the dialog for
   // any selected template.
-  open : function(document) {
-    new dc.ui.QCCompleteDialog(document);
+  open : function(document, is_supp) {
+    new dc.ui.QCCompleteDialog(document, is_supp);
   }
 
 });

@@ -540,6 +540,7 @@
   - reject_de_text: Please choose which data entry user's work you would like to reject. This user's work and all current QC work will be deleted.
   - reject_point: Reject Data Point
   - reject_point_explanation:  Please enter a rejection reason.
+  - reject_supp_de_text: Are you sure you want to reject?  This user's work and all current QC work will be deleted.
   - related_article_url: Source Reference
   - related_article_url_help: Providing the URL of the article that references this
       document will enable a "Related Article" link within the document viewer. Many
