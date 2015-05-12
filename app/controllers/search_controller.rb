@@ -1,8 +1,6 @@
 class SearchController < ApplicationController
   include DC::Search::Controller
 
-  before_action :bouncer if Rails.env.staging?
-
   FIELD_STRIP = /\S+:\s*/
 
   def documents

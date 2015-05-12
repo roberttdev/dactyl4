@@ -1,7 +1,5 @@
 class AuthenticationController < ApplicationController
 
-  before_action :bouncer, :except => [:callback] if Rails.env.staging?
-
   skip_before_action :verify_authenticity_token, :only => [:login]
   after_action :allow_iframe, only: [:iframe,:inner_iframe]
 

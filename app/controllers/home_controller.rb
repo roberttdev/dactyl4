@@ -6,7 +6,7 @@ class HomeController < ApplicationController
 
   before_action :prefer_secure
   before_action :current_account
-  
+
   def index
     @document = Rails.cache.fetch( "homepage/featured_document" ) do
       time = Rails.env.production? ? 2.weeks.ago : nil
