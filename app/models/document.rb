@@ -854,7 +854,7 @@ class Document < ActiveRecord::Base
 
       #######SUPPLEMENTAL QUALITY CONTROL#######
       when STATUS_IN_SUPP_QC
-        self.update_attributes({:status => STATUS_READY_SUPP_QA})  
+        self.update_attributes({:status => STATUS_READY_SUPP_QA})
     end
 
     #Add history event
