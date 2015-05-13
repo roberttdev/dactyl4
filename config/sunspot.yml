@@ -30,8 +30,12 @@ test:
 
 staging:
   solr:
-    hostname: ec2-50-16-197-147.compute-1.amazonaws.com
+    hostname: localhost
     port: 7377
     log_level: WARNING
     pid_dir: tmp/pids
     path: /solr/collection1
+    read_timeout: 5
+    open_timeout: 1.5
+    min_memory: 200M
+    max_memory: 3G
