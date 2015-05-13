@@ -426,7 +426,7 @@ module DC
         return unless needs_solr?
         return if @populated_projects
         account, organization  = @account, @organization
-        accessible_project_ids = has_projects? || has_project_ids? ? [] : (account && account.accessible_project_ids)
+        #accessible_project_ids = has_projects? || has_project_ids? ? [] : (account && account.accessible_project_ids)
         @solr.build do
           any_of do
             if account.data_entry?
