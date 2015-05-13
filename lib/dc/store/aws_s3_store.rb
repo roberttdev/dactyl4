@@ -4,7 +4,14 @@ module DC
     # An implementation of an AssetStore.
     module AwsS3Store
 
-      BUCKET_NAME     = 'dactyl-docs'
+      if Rails.env.production?
+        BUCKET_NAME     = 'dactyl-docs'
+      elsif Rails.env.staging?
+        BUCKET_NAME     = 'dactyl-docs-qa'
+      else
+        BUCKET_NAME     = 'dactyl-docs-dev'
+      end
+
 
       AUTH_PERIOD     = 5.minutes
 
