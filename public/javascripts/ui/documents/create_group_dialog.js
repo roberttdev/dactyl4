@@ -18,7 +18,7 @@ dc.ui.CreateGroupDialog = dc.ui.Dialog.extend({
     this.model      = group;
     this.events     = _.extend({}, this.events, this.dataEvents);
     this._mainJST   = JST['document/create_group_dialog'];
-    _.bindAll(this, 'render', 'saveAndClose', 'showErrors');
+    _.bindAll(this, 'render', 'saveAndClose', 'showErrors', 'updateGroupName');
     dc.ui.Dialog.call(this, {mode : 'custom', title : _.t('create_group'), saveText : _.t('save') });
 
     //Set mode (create or edit)
@@ -27,7 +27,6 @@ dc.ui.CreateGroupDialog = dc.ui.Dialog.extend({
     this.render();
 
     $(document.body).append(this.el);
-    this.$('#group_name').focus();
   },
 
 
@@ -52,7 +51,10 @@ dc.ui.CreateGroupDialog = dc.ui.Dialog.extend({
           name: 'templateArray',
           displayKey: 'value',
           source: FuncUtils.substringMatcher(dc.app.editor.templateArray)
-        });
+        }
+    );
+
+    $('.typeahead').bind('typeahead:selected', this.updateGroupName);
 
     return this;
   },
@@ -107,6 +109,14 @@ dc.ui.CreateGroupDialog = dc.ui.Dialog.extend({
     if(errors[0].class == 'name'){ this.$('#template_name').addClass('error'); }
 
     return this.error(errors[0].message);
+  },
+
+
+  //Update group name from template chosen
+  updateGroupName: function(){
+    var _template = this.$('#template_name').val();
+    if( _template.indexOf('::') > -1 ){ _template = _template.substr(0, _template.indexOf('::')); }
+    this.$('#group_name').val(_template);
   }
 
 }, {

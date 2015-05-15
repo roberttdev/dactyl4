@@ -1,13 +1,5 @@
 
 <table>
-  <tr>
-    <td><label><%- _.t('group_name') %>:</label></td>
-    <td><input name="group_name" id="group_name" size="40" type="text" value="<%=name%>"/></td>
-  </tr>
-  <tr>
-    <td><label><%- _.t('extension') %>:</label></td>
-    <td><input name="extension" id="extension" size="40" value="<%=extension%>" maxlength="10"/></td>
-  </tr>
 
 <%if( mode == 'create' ) {%>
   <tr>
@@ -16,6 +8,14 @@
   </tr>
 <%}%>
 
+  <tr>
+    <td><label><%- _.t('group_name') %>:</label></td>
+    <td><input name="group_name" id="group_name" size="40" type="text" value="<%=name%>"/></td>
+  </tr>
+  <tr>
+    <td><label><%- _.t('extension') %>:</label></td>
+    <td><input name="extension" id="extension" size="40" value="<%=extension%>" maxlength="10"/></td>
+  </tr>
 </table>
 
 
