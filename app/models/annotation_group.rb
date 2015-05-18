@@ -16,7 +16,7 @@ class AnnotationGroup < ActiveRecord::Base
   after_destroy {
     #Destroy annotation as well if no other groups link to it
     if !AnnotationGroup.exists?({annotation_id: self.annotation_id})
-      Annotation.find(self.annotation_id).destroy
+      Annotation.destroy_all({id: self.annotation_id})
     end
   }
 

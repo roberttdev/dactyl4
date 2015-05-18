@@ -14,6 +14,11 @@ class Group < ActiveRecord::Base
               OR groups.account_id <> (SELECT qc_id FROM documents WHERE id=groups.document_id))") },
            :class_name => "Group", :foreign_key => 'parent_id'
 
+  has_many :supp_qa_children, -> { where("((groups.iteration <> (SELECT iteration FROM documents WHERE id=groups.document_id)
+                AND groups.id NOT IN (SELECT group_id FROM annotation_notes WHERE document_id=groups.document_id))
+              OR groups.iteration = (SELECT iteration FROM documents WHERE id=groups.document_id))") },
+           :class_name => "Group", :foreign_key => 'parent_id'
+
   belongs_to :group_template, :foreign_key => 'template_id'
   belongs_to :document
 
@@ -47,7 +52,7 @@ class Group < ActiveRecord::Base
 
   def attributes
     merge_hash = {}
-    if document.in_qa? || document.in_supp_de?
+    if document.in_qa? || document.in_supp_qa? || document.in_supp_de?
       merge_hash = {
         'approved' => nil,
         'qa_reject_note' => nil
@@ -89,7 +94,7 @@ class Group < ActiveRecord::Base
 
   #Get count of unapproved points in this and child groups for this group's doc status
   def unapproved_count
-    if document.in_qc?
+    if document.in_qc? || document.in_supp_qc?
       sqlID = ActiveRecord::Base.connection.quote(id)
       sql = "SELECT ag.id
             FROM get_descendants(#{sqlID}) grps
@@ -97,7 +102,7 @@ class Group < ActiveRecord::Base
             WHERE ag.approved_count=0"
       annos = ActiveRecord::Base.connection.exec_query(sql)
       unapproved = annos.count
-    elsif document.in_qa?
+    elsif document.in_qa? || document.in_supp_qa?
       sqlID = ActiveRecord::Base.connection.quote(id)
       sql = "SELECT ag.id
             FROM get_descendants(#{sqlID}) grps

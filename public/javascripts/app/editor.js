@@ -58,6 +58,9 @@ _.extend(dc.app.editor, {
       case 12:
           this.controlPanel = new dc.ui.ViewerSuppQCControlPanel();
           break;
+      case 14:
+          this.controlPanel = new dc.ui.ViewerSuppQAControlPanel();
+          break;
       default:
           alert('System Error: Invalid document status for editing');
     }

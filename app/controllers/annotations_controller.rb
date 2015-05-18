@@ -134,7 +134,7 @@ class AnnotationsController < ApplicationController
         end
       else
         #Update with new data if in QA
-        if doc.in_qa?
+        if doc.in_qa? || doc.in_supp_qa?
           anno_group.update_qa_status(field[:approved], field[:qa_reject_note], current_account.id, doc.id)
         elsif doc.in_extraction?
           anno_group.update_attributes({:qa_approved_by => current_account.id})

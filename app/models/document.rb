@@ -112,7 +112,7 @@ class Document < ActiveRecord::Base
     deFmt << " OR ((documents.status=#{STATUS_DE2} OR documents.status=#{STATUS_IN_SUPP_DE}) AND ((documents.de_one_id=#{account.id} AND documents.de_one_complete is not true) OR (documents.de_two_id=#{account.id} AND documents.de_two_complete is not true))))"
 
     qcFmt = "(documents.qc_id=#{account.id} AND (documents.status=#{STATUS_IN_QC} OR documents.status=#{STATUS_IN_SUPP_QC}))"
-    qaFmt = "(documents.qa_id=#{account.id} AND documents.status=#{STATUS_IN_QA})"
+    qaFmt = "(documents.qa_id=#{account.id} AND documents.status=#{STATUS_IN_QA} OR documents.status=#{STATUS_IN_SUPP_QA})"
 
     if account.data_entry?
       access << deFmt % {statuses: DE_ACCESS.join(",")}
