@@ -55,7 +55,10 @@ dc.ui.QCRejectDialog = dc.ui.Dialog.extend({
         contentType : 'application/json; charset=utf-8',
         type        : 'put',
         data        : JSON.stringify({'de': selected}),
-        success     : function(response){ window.close(); }
+        success     : function(response){
+          if(window.opener){ window.opener.location.reload(); }
+          window.close();
+        }
     })
   }
 

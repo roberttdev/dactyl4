@@ -64,7 +64,10 @@ dc.ui.QCCompleteDialog = dc.ui.Dialog.extend({
             'de_two_rating': rating_two,
             'qc_note':       file_note
         },
-        success: window.close
+        success: function() {
+          if(window.opener){ window.opener.location.reload(); }
+          window.close();
+        }
       });
   }
 

@@ -55,7 +55,10 @@ dc.ui.QACompleteDialog = dc.ui.Dialog.extend({
             'qc_rating': qc_rating,
             'qa_note': qa_note
         },
-        success: window.close,
+        success: function() {
+          if(window.opener){ window.opener.location.reload(); }
+          window.close();
+        },
         error: this.handleMarkCompleteError
       });
   },

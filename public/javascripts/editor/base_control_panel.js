@@ -28,6 +28,9 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
         var docModel = this._getDocumentModel();
         this.viewer         = currentDocument;
 
+        //If standard opening process, refresh opener to update list
+        if(window.opener){ window.opener.location.reload(); }
+
         //Mark as changed when any update request is fired
         this.listenTo(dc.app.editor.annotationEditor, 'updateAnnotation', this.delegateUpdate);
 
@@ -212,7 +215,10 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
     dropClaim: function(success) {
         _thisView = this;
         dc.ui.Dialog.confirm(_.t('confirm_drop_claim'), function(){
-            _thisView.docModel.dropClaim({success: window.close});
+            _thisView.docModel.dropClaim({success: function(){
+              if(window.opener){ window.opener.location.reload(); }
+              window.close();
+            }});
         });
     },
 

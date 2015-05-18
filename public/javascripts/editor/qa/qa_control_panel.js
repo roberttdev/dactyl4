@@ -60,7 +60,10 @@ dc.ui.ViewerQAControlPanel = dc.ui.ViewerBaseControlPanel.extend({
       _thisView.docModel.markComplete({
         data: {},
         error: _thisView.handleMarkCompleteResponse,
-        success: window.close
+        success: function(){
+          if(window.opener){ window.opener.location.reload(); }
+          window.close();
+        }
       });
     });
   },

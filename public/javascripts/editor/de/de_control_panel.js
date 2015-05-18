@@ -173,7 +173,10 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
       dc.ui.Dialog.confirm(_.t('confirm_mark_complete'), function(){
           _thisView.save(function() {
               _thisView.docModel.markComplete({
-                  success: window.close,
+                  success: function() {
+                    if(window.opener){ window.opener.location.reload(); }
+                    window.close();
+                  },
                   error: _thisView.handleMarkCompleteError
               });
           });
