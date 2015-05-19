@@ -104,9 +104,15 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
               var _dupeView = _.find(this.pointViewList, function(view){ return (anno.title == view.model.get('title')) && !view.waitingForClone });
               if( _dupeView ){
                   dc.ui.Dialog.confirm(_.t('duplicate_point_error'), function(){
-                      _dupeView.deletePoint();
-                      _deView.replacePoint(anno, _view);
-                      dc.app.editor.annotationEditor.syncGroupAssociation(anno.id, _deView.model.id);
+                      if( _dupeView.model.id != anno.id ) {
+                        //If not replacing an anno with the exact same anno, delete old and replace with new
+                        _dupeView.deletePoint();
+                        _deView.replacePoint(anno, _view);
+                        dc.app.editor.annotationEditor.syncGroupAssociation(anno.id, _deView.model.id);
+                      }else{
+                        //If the copy request is just the same anno again, just delete the empty anno
+                        _view.deletePoint();
+                      }
                       return true;
                   },{
                       onCancel: function(){ dc.app.editor.annotationEditor.hideActiveAnnotations(); }

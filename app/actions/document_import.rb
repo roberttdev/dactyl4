@@ -75,7 +75,7 @@ class DocumentImport < DocumentAction
     if duplicate = document.duplicates.first
       asset_store.copy_images( duplicate, document, access )
     else
-      Docsplit.extract_images(@pdf, :format => :gif, :size => Page::IMAGE_SIZES.values, :rolling => true, :output => 'images')
+      Docsplit.extract_images(@pdf, :format => :gif, :density => '300', :size => Page::IMAGE_SIZES.values, :rolling => true, :output => 'images')
       Dir['images/700x/*.gif'].length.times do |i|
         number = i + 1
         image  = "#{document.slug}_#{number}.gif"
