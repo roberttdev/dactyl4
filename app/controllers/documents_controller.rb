@@ -278,7 +278,7 @@ class DocumentsController < ApplicationController
   #Drop the current user's claim to the document (if any)
   def drop_claim
     doc = current_document(true)
-    return forbidden if !doc.has_open_claim?(current_account)
+    return forbidden if !doc || !doc.has_open_claim?(current_account)
 
     doc.drop_claim(current_account)
 
