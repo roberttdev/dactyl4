@@ -4,6 +4,8 @@ class AnnotationGroup < ActiveRecord::Base
 
   has_many :approvals, :class_name => 'AnnotationGroup', :foreign_key => 'based_on'
   has_one :annotation_note, :foreign_key => 'annotation_group_id'
+  has_one :supp_de_note, -> { where("(annotation_notes.annotation_group_id IS NOT NULL)") },
+          :class_name => "AnnotationNote", :foreign_key => :de_ref
 
   before_destroy {
     #If based on something, decrement that relationship's annotation count
@@ -19,6 +21,13 @@ class AnnotationGroup < ActiveRecord::Base
       Annotation.destroy_all({id: self.annotation_id})
     end
   }
+
+
+  def qa_reject_note()
+    return annotation_note.note if !annotation_note.nil?
+    return supp_de_note.note if !supp_de_note.nil?
+  end
+
 
   #Return stripped-down json indicating group and approval count
   def approval_json(in_qa)
@@ -52,7 +61,8 @@ class AnnotationGroup < ActiveRecord::Base
             :document_id         => doc_id,
             :annotation_group_id => self.id,
             :note                => note,
-            :addressed           => false
+            :addressed           => false,
+            :iteration           => self.iteration
         })
       end
     else
@@ -60,16 +70,6 @@ class AnnotationGroup < ActiveRecord::Base
       annotation_note.destroy if !annotation_note.nil?
     end
 
-  end
-
-  #In Supp DE, mark as deleted instead of deleting
-  def mark_deleted_in_supp
-    self.update({:deleted_in_supp => true})
-
-    #Mark annotation as well if no other un-"deleted" groups link to it
-    if !AnnotationGroup.where("annotation_id=#{self.annotation_id} AND deleted_in_supp IS NOT TRUE").exists?
-      Annotation.find(self.annotation_id).mark_deleted_in_supp()
-    end
   end
 
 end

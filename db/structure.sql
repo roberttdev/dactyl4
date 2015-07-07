@@ -141,7 +141,9 @@ CREATE TABLE annotation_notes (
     addressed boolean,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
-    group_id integer
+    group_id integer,
+    iteration integer,
+    de_ref integer
 );
 
 
@@ -578,7 +580,8 @@ CREATE TABLE groups (
     account_id integer,
     base boolean DEFAULT false,
     iteration integer,
-    qa_approved_by integer
+    qa_approved_by integer,
+    canon boolean
 );
 
 
@@ -1974,4 +1977,8 @@ INSERT INTO schema_migrations (version) VALUES ('20150107191612');
 INSERT INTO schema_migrations (version) VALUES ('20150325205011');
 
 INSERT INTO schema_migrations (version) VALUES ('20150429175735');
+
+INSERT INTO schema_migrations (version) VALUES ('20150529205731');
+
+INSERT INTO schema_migrations (version) VALUES ('20150609172330');
 

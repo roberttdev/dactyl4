@@ -51,9 +51,10 @@ dc.ui.QACompleteDialog = dc.ui.Dialog.extend({
     //Trigger save
     this.document.markComplete({
         data: {
-            'self_assign': $("#self_assign").prop('checked'),
-            'qc_rating': qc_rating,
-            'qa_note': qa_note
+          'self_assign': $("#self_assign").prop('checked'),
+          'request_supp_work': $("#request_supp_work").prop('checked'),
+          'qc_rating': qc_rating,
+          'qa_note': qa_note
         },
         success: function() {
           if(window.opener){ window.opener.location.reload(); }
@@ -67,6 +68,12 @@ dc.ui.QACompleteDialog = dc.ui.Dialog.extend({
   handleMarkCompleteError: function(responseData){
     if( responseData.errorText == 'has_supp_de_claim' ){
         this.error(_.t('existing_supp_de_claim'));
+    }else if(responseData.errorText == 'no_supp_confirm') {
+      //If error is that the user has asked to bypass Supp DE, get confirmation
+      var qc_rating = parseInt($("#qc_rating").val());
+      var qa_note = $('#qa_note').val();
+      dc.ui.QANoSuppConfirmDialog.open(this.document, responseData.data.notes, qc_rating, qa_note);
+      this.close();
     }
   }
 

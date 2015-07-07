@@ -7,15 +7,14 @@ class Group < ActiveRecord::Base
               OR groups.account_id=(SELECT qc_id FROM documents WHERE id=groups.document_id))") },
            :class_name => "Group", :foreign_key => 'parent_id'
 
-  has_many :supp_qc_de1_children, -> { where("(groups.iteration <> (SELECT iteration FROM documents WHERE id=groups.document_id))") },
+  has_many :supp_qc_de1_children, -> { includes(:annotation_note).where("(groups.iteration <> (SELECT iteration FROM documents WHERE id=groups.document_id))") },
            :class_name => "Group", :foreign_key => 'parent_id'
 
-  has_many :supp_qc_de2_children, -> { where("(groups.iteration <> (SELECT iteration FROM documents WHERE id=groups.document_id)
-              OR groups.account_id <> (SELECT qc_id FROM documents WHERE id=groups.document_id))") },
+  has_many :supp_qc_de2_children, -> { where("id NOT IN (SELECT de_ref FROM annotation_notes an WHERE an.document_id=groups.document_id AND group_id IS NOT NULL)") },
            :class_name => "Group", :foreign_key => 'parent_id'
 
   has_many :supp_qa_children, -> { where("((groups.iteration <> (SELECT iteration FROM documents WHERE id=groups.document_id)
-                AND groups.id NOT IN (SELECT group_id FROM annotation_notes WHERE document_id=groups.document_id))
+              AND NOT EXISTS (SELECT * FROM annotation_notes WHERE document_id=groups.document_id AND groups.id=annotation_notes.group_id))
               OR groups.iteration = (SELECT iteration FROM documents WHERE id=groups.document_id))") },
            :class_name => "Group", :foreign_key => 'parent_id'
 
@@ -26,33 +25,42 @@ class Group < ActiveRecord::Base
   has_many :annotations, :through => :annotation_groups
 
   has_one :annotation_note
+  has_one :supp_de_note, -> { where("(annotation_notes.group_id IS NOT NULL)") },
+          :class_name => "AnnotationNote", :foreign_key => :de_ref
 
   #Base group for document/user
   scope :base, ->(doc, account_id=nil, de=nil, qc=nil) {
-    if doc.in_de?
+    whereClause = {
+      :document_id => doc.id,
+      :base => true
+    }
+
+    if doc.in_de? || doc.in_supp_de?
       accountId = account_id
     elsif doc.in_qc?
       accountId = doc.de_one_id if de == "1"
       accountId = doc.de_two_id if de == "2"
       accountId = doc.qc_id if qc == "true"
       accountId = account_id if accountId.nil?
-    elsif doc.in_qa? || doc.in_extraction?
+    elsif doc.in_qa? || doc.in_extraction? || doc.in_supp_qa?
       accountId = doc.qc_id
-    elsif doc.in_supp_de? || doc.in_supp_qc? || doc.in_supp_qa?
-      accountId = doc.reviews.where({iteration: 1}).first.qc_id
+    elsif doc.in_supp_qc?
+      if de == "2"
+        whereClause[:iteration] = doc.iteration
+      else
+        whereClause[:canon] = true
+      end
     end
 
-    where({
-      :document_id => doc.id,
-      :account_id => accountId,
-      :base => true
-    }).first
+    whereClause[:account_id] = accountId if !accountId.nil?
+
+    where(whereClause).order(created_at: :desc).first
   }
 
 
   def attributes
     merge_hash = {}
-    if document.in_qa? || document.in_supp_qa? || document.in_supp_de?
+    if document.in_qa? || document.in_supp_qa? || document.in_supp_de? || document.in_supp_qc?
       merge_hash = {
         'approved' => nil,
         'qa_reject_note' => nil
@@ -89,7 +97,8 @@ class Group < ActiveRecord::Base
   end
 
   def qa_reject_note
-    !annotation_note.nil? ? annotation_note.note : nil
+    return annotation_note.note if !annotation_note.nil?
+    return supp_de_note.note if !supp_de_note.nil?
   end
 
   #Get count of unapproved points in this and child groups for this group's doc status
@@ -99,7 +108,7 @@ class Group < ActiveRecord::Base
       sql = "SELECT ag.id
             FROM get_descendants(#{sqlID}) grps
             INNER JOIN annotation_groups ag ON grps.group_id=ag.group_id
-            WHERE ag.approved_count=0"
+            WHERE ag.approved_count=0 AND ag.qa_approved_by IS NULL"
       annos = ActiveRecord::Base.connection.exec_query(sql)
       unapproved = annos.count
     elsif document.in_qa? || document.in_supp_qa?
@@ -123,14 +132,20 @@ class Group < ActiveRecord::Base
       json[:ancestry] = get_ancestry
     end
 
-    #If special filtered children are requested, frame as children
+    #If special filtered children are requested, reframe as children
     if !options[:include].nil?
       if options[:include].include?(:supp_qc_children)
         json[:children] = json['supp_qc_children']
+        json.delete(:supp_qc_children)
       elsif options[:include].include?(:supp_qc_de1_children)
         json[:children] = json['supp_qc_de1_children']
+        json.delete(:supp_qc_de1_children)
       elsif options[:include].include?(:supp_qc_de2_children)
         json[:children] = json['supp_qc_de2_children']
+        json.delete(:supp_qc_de2_children)
+      elsif options[:include].include?(:supp_qa_children)
+        json[:children] = json['supp_qa_children']
+        json.delete(:supp_qa_children)
       end
     end
 
@@ -149,7 +164,8 @@ class Group < ActiveRecord::Base
   #Clone override.. 'is_sub' determines if this is a sub-process of the original clone;
   # 'related' indicates whether to include related objects (children and annotations)
   # 'same_name' overrides the default behavior of adding '(copy)' to the name of the copy
-  def clone(parent_id, account_id, is_sub, related, iteration, same_name)
+  # 'keep_values' keep anno-group values, notes and approval status if true; null if not
+  def clone(parent_id, account_id, is_sub, related, iteration, same_name, keep_values)
     cloned = Group.create({
         :document_id => document_id,
         :parent_id => parent_id,
@@ -157,29 +173,53 @@ class Group < ActiveRecord::Base
         :account_id => account_id,
         :name => name,
         :extension => is_sub || same_name ? extension : 'COPY',
-        :iteration => iteration
+        :iteration => iteration,
+        :qa_approved_by => keep_values ? qa_approved_by : nil,
+        :base => base,
+        :canon => false
     })
 
-    if related
-      annotations.each do |anno|
-        newAnno = Annotation.create({
-          :account_id => anno.account_id,
-          :document_id => anno.document_id,
-          :title => anno.title,
-          :templated => anno.templated
-        })
+    if keep_values && annotation_note
+      annotation_note.update({ :de_ref => cloned.id })
+    end
 
-        AnnotationGroup.create({
-           :annotation_id => newAnno.id,
-           :group_id => cloned.id,
-           :iteration => iteration,
-           :created_by => account_id,
-           :approved_count => 0
-        })
+    if related
+      if keep_values
+        annotation_groups.each do |ag|
+          cloned_ag = AnnotationGroup.create({
+             :annotation_id => ag.annotation_id,
+             :group_id => cloned.id,
+             :iteration => ag.iteration,
+             :created_by => ag.created_by,
+             :qa_approved_by => ag.qa_approved_by,
+             :approved_count => keep_values ? ag.approved_count : 0
+           })
+
+          if ag.annotation_note
+            ag.annotation_note.update({ :de_ref => cloned_ag.id })
+          end
+        end
+      else
+        annotations.each do |anno|
+          newAnno = Annotation.create({
+            :account_id => anno.account_id,
+            :document_id => anno.document_id,
+            :title => anno.title,
+            :templated => anno.templated
+          })
+
+          AnnotationGroup.create({
+             :annotation_id => newAnno.id,
+             :group_id => cloned.id,
+             :iteration => iteration,
+             :created_by => account_id,
+             :approved_count => 0
+          })
+        end
       end
 
       children.each do |child|
-        child.clone(cloned.id, account_id, true, related, iteration, same_name)
+        child.clone(cloned.id, account_id, true, related, iteration, same_name, keep_values)
       end
     end
 
@@ -211,7 +251,8 @@ class Group < ActiveRecord::Base
             :document_id         => self.document_id,
             :group_id            => self.id,
             :note                => note,
-            :addressed           => false
+            :addressed           => false,
+            :iteration           => self.iteration
         })
       end
     else

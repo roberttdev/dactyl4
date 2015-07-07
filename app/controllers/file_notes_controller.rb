@@ -1,7 +1,10 @@
 class FileNotesController < ApplicationController
 
   def index
-    json AnnotationNote.includes(:annotation_group).where({document_id: params[:document_id]})
+    doc = Document.find(params[:document_id])
+    includes = doc.in_supp_de? ? [:supp_de_ag] : [:annotation_group]
+
+    json AnnotationNote.eager_load(includes).for_doc(doc).as_json({use_de_ref: doc.in_supp_de?})
   end
 
   def update

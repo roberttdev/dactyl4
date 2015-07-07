@@ -108,6 +108,7 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
 
     //reloadPoints: fetch data again and re-render. Expects group ID (null is no group)
     //annotationId is optional; will highlight that if exists
+    //based_on: If true, get the group/anno based on the passed values instead
     reloadPoints: function(groupId, annotationId) {
         var _thisView = this;
 
@@ -116,10 +117,12 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
         this.pointViewList = [];
         this.stopListening(undefined, 'requestAnnotationClear');
 
+        var requestParams = this.reloadParams;
+
         if( groupId == 0 ){ groupId = null; }
         this.model = new dc.model.Group({document_id: dc.app.editor.docId, id: groupId});
         this.model.fetch({
-            data:    $.param(this.reloadParams),
+            data:    $.param(requestParams),
             success: function(){
               dc.app.editor.annotationEditor.setRecommendations(_thisView.model.get('template_fields'));
               _thisView.render(annotationId);

@@ -515,7 +515,9 @@
   - published_documents: Published Documents
   - published_url: Published URL
   - publishing_embedding: Publishing & Embedding
-  - qa_complete_instruct: Since there are rejection notes attached to this document, it will be returned for supplemental data entry.  Do you want to assign it to yourself?
+  - qa_complete_instruct: Since there are rejection notes attached to this document, it will be returned for supplemental data entry.  Please uncheck the box to cancel this process.
+  - qa_no_supp_instruct: Below are the notes that will not be addressed if you skip Supplemental Data Entry.  Click OK to continue, or Close to cancel.
+  - qa_confirm_supp_opt_out: Supplemental Data Entry Opt-Out Confirm
   - qa_reject_notes: Rejection Notes
   - quality_assurance: Quality Assurance
   - quality_control: Quality Control

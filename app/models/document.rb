@@ -282,10 +282,6 @@ class Document < ActiveRecord::Base
 
   # Update a document, with S3 permission fixing, cache expiry, and access control.
   def secure_update(attrs, account)
-    if !account.allowed_to_edit?(self)
-      self.errors.add(:base, "You don't have permission to update the document." )
-      return false
-    end
     access = attrs.delete :access
     access &&= access.to_i
     published_url = attrs.delete :published_url
@@ -321,7 +317,7 @@ class Document < ActiveRecord::Base
     whereClause = {"annotation_groups.created_by" => account.id} if in_de?
     whereClause = {"annotation_groups.created_by" => [de_one_id, de_two_id]} if in_qc?
     whereClause = {"annotation_groups.created_by" => qc_id} if in_qa?
-    whereClause = "(annotation_groups.created_by=#{account.id} AND annotation_groups.iteration=#{self.iteration}) OR annotation_groups.qa_approved_by IS NOT NULL" if in_supp_de?
+    whereClause = "(annotation_groups.group_id IN (SELECT id FROM groups WHERE document_id=#{self.id} AND iteration=#{self.iteration}))" if in_supp_de?
     whereClause = "(annotation_groups.qa_approved_by IS NOT NULL)" if in_extraction?
 
     self.annotations.joins(:annotation_groups).includes(:annotation_groups).where(whereClause).order('page_number asc, location asc nulls first')
@@ -702,14 +698,15 @@ class Document < ActiveRecord::Base
         Group.destroy_all({document_id: self.id, account_id: account.id, iteration: self.iteration})
         self.update({status: self.status - 1, qc_id: nil})
         AnnotationGroup.joins(:group).where({"groups.document_id" => self.id, :iteration => self.iteration}).update_all({approved_count: 0})
-      when STATUS_IN_QA
-        annotation_notes.destroy_all
-        AnnotationGroup.joins(:group).where({"groups.document_id" => self.id}).update_all({qa_approved_by: nil})
-        self.update({status: STATUS_READY_QA, qa_id: nil, qa_note: nil})
+      when STATUS_IN_QA, STATUS_IN_SUPP_QA
+        annotation_notes.where({:document_id => self.id}).destroy_all
+        AnnotationGroup.joins(:group).where({"groups.document_id" => self.id, :iteration => self.iteration}).update_all({qa_approved_by: nil})
+        Group.where({"groups.document_id" => self.id, :iteration => self.iteration}).update_all({qa_approved_by: nil})
+        self.update({status: self.status - 1, qa_id: nil, qa_note: nil})
       when STATUS_IN_SUPP_DE
-        Group.destroy_all({document_id: self.id, account_id: account.id, iteration: self.iteration})
+        Group.destroy_all({document_id: self.id, iteration: self.iteration})
         AnnotationGroup.joins(:annotation).destroy_all({"annotations.document_id" => self.id, :iteration => self.iteration, :created_by => account.id})
-        self.annotation_notes.where({:document_id => self.id}).update_all({:addressed => false})
+        self.annotation_notes.where(:iteration => self.iteration - 1).update_all({:de_ref => nil})
         self.update({status: STATUS_READY_SUPP_DE, de_one_id: nil})
     end
   end
@@ -739,9 +736,15 @@ class Document < ActiveRecord::Base
         end
 
       #########QUALITY ASSURANCE#########
-      when STATUS_IN_QA
+      when STATUS_IN_QA, STATUS_IN_SUPP_QA
         #Check that all annotation groups have been addressed
-        ag = AnnotationGroup.joins(:group).where({"groups.document_id" => self.id, :created_by => self.qc_id, "qa_approved_by" => nil}).take
+        ag = AnnotationGroup.joins(:group).where({
+           "groups.document_id" => self.id,
+           :created_by => self.qc_id,
+           "qa_approved_by" => nil,
+           :iteration => self.iteration
+        }).take
+
         if ag
           return {
               'errorText' => 'Completion failed because a data point has not been addressed.  Please address all points.',
@@ -750,7 +753,14 @@ class Document < ActiveRecord::Base
         end
 
         #Check that all groups have been addressed
-        grp = Group.where({:document_id => self.id, :account_id => self.qc_id, :qa_approved_by => nil, :base => false}).take
+        grp = Group.where({
+          :document_id => self.id,
+          :account_id => self.qc_id,
+          :qa_approved_by => nil,
+          :base => false,
+          :iteration => self.iteration
+        }).take
+
         if grp
           return {
               'errorText' => 'Completion failed because a group has not been addressed.  Please address all points.',
@@ -782,8 +792,17 @@ class Document < ActiveRecord::Base
 
       ###### SUPPLEMENTAL DATA ENTRY ######
       when STATUS_IN_SUPP_DE
+        #Check that all points are completed
+        anno = Annotation.where("document_id=#{self.id} AND account_id=#{account.id} AND (title IS NULL OR title='' OR content IS NULL OR content='')").take
+        if anno
+          return {
+            'errorText' => 'Completion failed because a data point is incomplete.  Please populate or delete the incomplete point.',
+            'data' => {id: anno.id, group_id: anno.annotation_groups[0].group_id}
+          }
+        end
+
         #Check that all QA notes have been addressed
-        notes = AnnotationNote.where({document_id: self.id, addressed: false}).take
+        notes = AnnotationNote.where("document_id=#{self.id} AND addressed=false").take
         if notes
           return {
             'errorText' => 'Completion failed because a File Note has not been addressed.  Please address all points.',
@@ -807,7 +826,8 @@ class Document < ActiveRecord::Base
 
 
   #Mark a certain status's work as complete for a user
-  def mark_complete(account)
+  #to_extraction: If true, send straight to extraction (QA only, currently)
+  def mark_complete(account, to_extraction)
     history_status = 0
 
     case self.status
@@ -830,11 +850,11 @@ class Document < ActiveRecord::Base
         self.update_attributes({:status => STATUS_READY_QA})
 
       #######QUALITY ASSURANCE / READY FOR EXTRACTION######
-      when STATUS_IN_QA, STATUS_READY_EXT
+      when STATUS_IN_QA, STATUS_IN_SUPP_QA, STATUS_READY_EXT
         if self.has_rejections?
             #If rejection notes, send to Supp DE
             self.update({
-                status: STATUS_READY_SUPP_DE,
+                status: to_extraction ? STATUS_READY_EXT : STATUS_READY_SUPP_DE,
                 de_one_id: nil,
                 de_two_id: nil,
                 qc_id: nil,
@@ -854,7 +874,11 @@ class Document < ActiveRecord::Base
 
       #######SUPPLEMENTAL QUALITY CONTROL#######
       when STATUS_IN_SUPP_QC
-        self.update_attributes({:status => STATUS_READY_SUPP_QA})
+        #No need for previously rejected groups/annotations anymore -- delete
+        self.groups.where("EXISTS (SELECT * FROM annotation_notes an WHERE an.group_id=groups.id)").destroy_all
+        self.annotation_groups.where("EXISTS (SELECT * FROM annotation_notes an WHERE an.annotation_group_id=annotation_groups.id)").destroy_all
+
+        self.update_attributes({:status => STATUS_READY_SUPP_QA, :qa_note => nil})
     end
 
     #Add history event
@@ -888,8 +912,9 @@ class Document < ActiveRecord::Base
           upValues[:de_one_complete] = nil
       end
 
-      #If in Supp QC, reset all note statuses as well
+      #If in Supp QC, delete all groups/annos from this iteration, and reset all note statuses as well
       if self.status == STATUS_IN_SUPP_QC
+        delWhere = {document_id: id, iteration: self.iteration}
         self.annotation_notes.update_all({addressed: false})
       end
 
@@ -936,7 +961,7 @@ class Document < ActiveRecord::Base
         #Do nothing -- grant access but place no claim on file
     end
 
-    #Create a base group for the user in group-creating statuses
+    #DE & QC: Create a base group for the user in group-creating statuses
     if( self.status <= STATUS_IN_QC )
       Group.create({
           :name => 'Home',
@@ -944,9 +969,17 @@ class Document < ActiveRecord::Base
           :document_id => self.id,
           :account_id => account.id,
           :base => true,
-          :iteration => self.iteration
+          :iteration => self.iteration,
+          :canon => self.status == STATUS_IN_QC
       })
     end
+
+    #Supp DE: Clone the canon group for supp DE work
+    if( self.status == STATUS_IN_SUPP_DE )
+      to_clone = Group.where({document_id: self.id, base:true, canon: true}).take
+      to_clone.clone(nil, account.id, false, true, self.iteration, true, true)
+    end
+
   end
 
   def asset_store

@@ -17,8 +17,12 @@
 <div class="row med">
       <%= _.t('qa_complete_instruct') %>
 </div>
-<div class="row">
-    <%=_.t('assign_to_self')%>
+<div class="two_column_split" >
+    <%=_.t('request_supp_work')%>
+    <input type="checkbox" id="request_supp_work" checked>
+</div>
+<div class="two_column_split" >
+    &nbsp;<%=_.t('assign_to_self')%>
     <input type="checkbox" id="self_assign">
 </div>
 <%}%>

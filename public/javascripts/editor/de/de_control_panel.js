@@ -123,12 +123,12 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
               }
           }else{
               //If the group selected is this group, find and highlight point; otherwise save and reload proper group
-              if( anno.group_id == _deView.model.id ) {
+              if( anno.groups[0].group_id == _deView.model.id ) {
                   _view = _.find(this.pointViewList, function(view){ return view.model.id == anno.id; });
                   if( _view ){ _view.highlight(); }
               }else {
                   this.save(function () {
-                      _deView.reloadPoints(anno.group_id, anno.id);
+                      _deView.reloadPoints(anno.groups[0].group_id, anno.id);
                   });
               }
           }

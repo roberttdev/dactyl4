@@ -43,7 +43,7 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
 
 
   //Hear clone request from DE panel; create anno in QC panel
-  passAnnoCloneRequest: function(annos, group_id, backup){
+  passAnnoCloneRequest: function(annos, group_id, backup, de_requester){
     var thisView = this;
     var failedTitleString = "";
     for(var i=0; i < annos.length; i++) {
@@ -57,8 +57,8 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
 
     var handleSuccess = function(){
       if(backup) {
-        if (annos[0].get('account_id') == window.currentDocumentModel.de_one_id) { thisView.deOneSubpanel.handleApprovalSuccess(); }
-        if (annos[0].get('account_id') == window.currentDocumentModel.de_two_id) { thisView.deTwoSubpanel.handleApprovalSuccess(); }
+        if (de_requester == 1) { thisView.deOneSubpanel.handleApprovalSuccess(); }
+        if (de_requester == 2) { thisView.deTwoSubpanel.handleApprovalSuccess(); }
         thisView.qcSubpanel.handleApprovalSuccess();
       }
     };

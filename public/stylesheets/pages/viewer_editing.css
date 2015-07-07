@@ -298,7 +298,7 @@
     }
 
     .subitem_status.complete {
-        background: url(/images/embed/icons/dark_check.png) no-repeat center center;
+        background: url(/images/embed/icons/green_check.png) no-repeat center center;
     }
 
     .anno_listing_wrapper {

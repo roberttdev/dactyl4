@@ -1,49 +1,39 @@
 class GroupsController < ApplicationController
 
   def index
-    #Pull base-level groups/annotations and create group-like JSON
-    doc = Document.find(params[:document_id])
-
-    includes = self.determine_child_includes(doc.iteration, params)
-
-    group = Group.includes(includes).base(doc, current_account.id, params[:de], params[:qc])
-
-    responseJSON = group.as_json({
-      include: includes,
-      ancestry: true
-    })
-
-    #For DE2 requests in supplemental workflows, only return iteration-specific annos
-    iteration = (params[:de] == '2' && doc.iteration > 1) ? doc.iteration : nil
-
-    responseJSON[:annotations] = Annotation.flattened_by_group(group.id, iteration).as_json()
-
-    json responseJSON
+    json get_group_json(params, true)
   end
+
 
   def show
-    #Pull base-level groups/annotations and create group-like JSON
+    json get_group_json(params, false)
+  end
+
+
+  #Fetch group JSON based on parameters.  BASE determines whether to pull base group, or use group ID from parameters
+  def get_group_json( params, base )
     doc = Document.find(params[:document_id])
+    includes = self.determine_child_includes(doc, params)
 
-    includes = self.determine_child_includes(doc.iteration, params)
-
-    ret_grp = Group.includes(includes).find(params[:id])
-    responseJSON = ret_grp.as_json({
-                      include: includes,
-                      ancestry: true
-                  })
-
-    #For DE2 requests in supplemental workflows, only return iteration-specific annos
-    iteration = (params[:de] == '2' && doc.iteration > 1) ? doc.iteration : nil
-
-    responseJSON[:annotations] = Annotation.flattened_by_group(params[:id], iteration).as_json()
-
-    if (doc.in_de? || doc.in_supp_de?) && ret_grp.template_id
-      responseJSON[:template_fields] = TemplateField.where({template_id: ret_grp.template_id}).pluck(:field_name)
+    if base
+      grp = Group.includes(includes).base(doc, current_account.id, params[:de], params[:qc])
+    else
+      grp = Group.includes(includes).find(params[:id])
     end
 
-    json responseJSON
+    responseJSON = grp.as_json({
+                     include: includes,
+                     ancestry: true
+                   })
+
+    if (doc.in_de? || doc.in_supp_de?) && grp.template_id
+      responseJSON[:template_fields] = TemplateField.where({template_id: grp.template_id}).pluck(:field_name)
+    end
+
+    responseJSON[:annotations] = Annotation.by_doc_status(doc, params[:de]).flattened_by_group(grp.id, doc.in_supp_de?).as_json()
+    responseJSON
   end
+
 
   def create
     doc = Document.find(params[:document_id])
@@ -116,7 +106,7 @@ class GroupsController < ApplicationController
     to_clone = Group.find(params[:group_id])
     doc = Document.find(to_clone.document_id)
     in_qc = doc.in_qc? || doc.in_supp_qc?
-    json to_clone.clone(params[:parent_id], current_account.id, false, !in_qc, doc.iteration, in_qc)
+    json to_clone.clone(params[:parent_id], current_account.id, false, !in_qc, doc.iteration, in_qc, false)
   end
 
   def update_approval
@@ -132,14 +122,16 @@ class GroupsController < ApplicationController
            .order(:name).limit(10).pluck(:name)
   end
 
-  def determine_child_includes(iteration, params)
+  def determine_child_includes(doc, params)
     #Determine what filter (if any) for children to use
-    if params[:de] == '1' && iteration > 1
+    if params[:de] == '1' && doc.iteration > 1
       includes = [:supp_qc_de1_children, :group_template]
-    elsif params[:de] == '2' && iteration > 1
+    elsif params[:de] == '2' && doc.iteration > 1
       includes = [:supp_qc_de2_children, :group_template]
-    elsif params[:qc] && iteration > 1
+    elsif params[:qc] && doc.iteration > 1
       includes = [:supp_qc_children, :group_template]
+    elsif doc.in_supp_qa?
+      includes = [:supp_qa_children]
     else
       includes = [:children, :group_template]
     end

@@ -22,7 +22,7 @@ dc.ui.ViewerSuppDEControlPanel = dc.ui.ViewerDEControlPanel.extend({
 
       //Group Listings
       this.model.children.each(function(model, index){
-        can_edit = model.get('iteration') == currentDocumentModel.iteration;
+        can_edit = !model.get('approved');
         _grp = _deView.addGroup({
           model: model,
           showClone: true,
@@ -110,12 +110,12 @@ dc.ui.ViewerSuppDEControlPanel = dc.ui.ViewerDEControlPanel.extend({
               }
           }else{
               //If the group selected is this group, find and highlight point; otherwise save and reload proper group
-              if( anno.group_id == _deView.model.id ) {
+              if( anno.groups[0].group_id == _deView.model.id ) {
                   _view = _.find(this.pointViewList, function(view){ return view.model.id == anno.id; });
                   if( _view ){ _view.highlight(); }
               }else {
                   this.save(function () {
-                      _deView.reloadPoints(anno.group_id, anno.id);
+                      _deView.reloadPoints(anno.groups[0].group_id, anno.id);
                   });
               }
           }
@@ -143,7 +143,7 @@ dc.ui.ViewerSuppDEControlPanel = dc.ui.ViewerDEControlPanel.extend({
     handleReloadRequest: function(annoGroupInfo) {
       var _thisView = this;
       this.save(function () {
-        _thisView.reloadPoints(annoGroupInfo.group_id, annoGroupInfo.id);
+        _thisView.reloadPoints(annoGroupInfo.group_id, annoGroupInfo.id, true);
       });
     },
 

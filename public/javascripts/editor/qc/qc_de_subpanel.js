@@ -28,7 +28,8 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
           model: model,
           showEdit: false,
           showDelete: false,
-          showSubitemStatus: true
+          showSubitemStatus: true,
+          strikethrough: !(model.get('qa_reject_note') == null)
         });
       });
       this.$('#group_section').html(_.pluck(this.groupViewList, 'el'));
@@ -67,7 +68,7 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
   //listening to events from this control panel
   //Takes in an array of annotations, and whether to indicate you want to back up a level if approval succeeds
   passAnnoCloneRequest: function(annos, backup){
-    this.trigger('requestAnnotationClone', annos, this.model.id, backup);
+    this.trigger('requestAnnotationClone', annos, this.model.id, backup, this.reloadParams.de);
   },
 
 

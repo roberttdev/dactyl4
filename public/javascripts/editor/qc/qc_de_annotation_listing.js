@@ -14,11 +14,12 @@ dc.ui.QCDEAnnotationListing = dc.ui.BaseAnnotationListing.extend({
 
     //Show rejection if previously rejected
     if( this.model.get('qa_reject_note') != null ){
+      this.$('.row_status').removeClass('incomplete');
       this.$('.row_status').addClass('rejected');
       this.$('.annotation_listing').addClass('rejected');
     }else {
       //Otherwise base view on approval count
-      if(this.model.get('approved_count') > 0) {
+      if(this.model.get('approved_count') > 0 || this.model.get('approved')) {
         this.$('.row_status').removeClass('incomplete');
         this.$('.row_status').addClass('complete');
       }

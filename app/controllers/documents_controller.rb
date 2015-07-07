@@ -88,7 +88,7 @@ class DocumentsController < ApplicationController
     if params[:id].nil?
       return render :file => "documents/view_point_select.html.erb"
     end
-
+ww
     @current_anno_id = params[:id]
     anno = Annotation.find_by_id(@current_anno_id)
     allowed = ViewOnlyAccess.where({document_id: anno.document_id, account_id: current_account.id}) if anno
@@ -312,7 +312,7 @@ class DocumentsController < ApplicationController
     end
 
     #If in QA, and review provided, update review.  Otherwise, return and ask for review
-    if doc.in_qa?
+    if doc.in_qa? || doc.in_supp_qa?
       if params[:qc_rating].nil?
         errorResp = {
             'errorText' => 'no_qc_rating',
@@ -320,6 +320,15 @@ class DocumentsController < ApplicationController
         }
         return json errorResp, 500
       else
+        #If Supp DE is opted out of, prompt a confirmation screen
+        if !params[:request_supp_work] && !params[:skip_de]
+          errorResp = {
+            'errorText' => 'no_supp_confirm',
+            'data' => {'notes' => AnnotationNote.eager_load(:annotation_group).for_doc(doc).as_json({use_de_ref: false})}
+          }
+          return json errorResp, 500
+        end
+
         #If self-assign requested, but user already has claimed a Supp DE file, error
         if params[:self_assign] && current_account.has_claims?(STATUS_IN_SUPP_DE)
           errorResp = {
@@ -338,7 +347,7 @@ class DocumentsController < ApplicationController
     end
 
     #The actual marking complete
-    doc.mark_complete(current_account)
+    doc.mark_complete(current_account, params[:skip_de])
 
     #If self-assign requested, do so
     doc.claim(current_account) if params[:self_assign]

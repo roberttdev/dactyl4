@@ -40,6 +40,18 @@ class Annotation < ActiveRecord::Base
     where( "(#{access.join(' or ')})" ).readonly(false) if access.size > 0
   }
 
+  #Gets annotations based on doc status rules.  De_num refers to which DE window in QC/Supp QC (1, nil, 2)
+  scope :by_doc_status, -> (doc, de_num) {
+    if doc.in_supp_qc?
+      #The three Supp QC options
+      if de_num == "1"
+        return joins(:annotation_groups).where("annotation_groups.iteration <> #{doc.iteration}")
+      elsif de_num == "2"
+        return joins(:annotation_groups).where("annotation_groups.iteration = #{doc.iteration}")
+      end
+    end
+  }
+
   scope :owned_by, lambda { |account|
     where( :account_id => account.id )
   }
@@ -47,12 +59,11 @@ class Annotation < ActiveRecord::Base
   scope :unrestricted, lambda{ where( :access => PUBLIC_LEVELS ) }
 
   #Gets annos flattened with anno-group and/or note info, flattened to a particular group
-  #Iteration: If supplied, limit annotations to passed iteration
-  scope :flattened_by_group, ->(group_id, iteration) {
-    whereClause = { 'annotation_groups.group_id' => group_id }
-    whereClause['annotation_groups.iteration'] = iteration     if iteration
-
-    includes(:document, :annotation_groups => :annotation_note).where(whereClause)
+  #De_ref: Whether to join on de_ref or standard annotation_group_id
+  scope :flattened_by_group, ->(group_id, de_ref) {
+    includes = [:document]
+    includes << (de_ref ? { :annotation_groups => :supp_de_note } : { :annotation_groups => :annotation_note })
+    eager_load(includes).where(["annotation_groups.group_id=?", group_id])
   }
 
   # Annotations are not indexed for the time being.
@@ -168,7 +179,7 @@ class Annotation < ActiveRecord::Base
       'annotation_group_id' => anno_group.id,
       'approved_count'      => anno_group.approved_count,
       'approved'            => anno_group.qa_approved_by ? true : false,
-      'qa_reject_note'      => anno_group.association_cache.keys.include?(:annotation_note) ? anno_group.annotation_note.note : nil,
+      'qa_reject_note'      => (anno_group.association_cache.keys.include?(:annotation_note) || anno_group.association_cache.keys.include?(:supp_de_note)) ? anno_group.qa_reject_note : nil,
       'templated'           => templated
     })
   end
