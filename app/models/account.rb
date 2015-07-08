@@ -42,7 +42,7 @@ class Account < ActiveRecord::Base
   # Scopes
   scope :with_memberships, -> { references(:memberships).includes(:memberships) }
   scope :admin,   -> { with_memberships.where( ["memberships.role = ?",  ADMINISTRATOR] )  }
-  scope :active,  -> { with_memberships.where( ["memberships.role is NULL or memberships.role != ?", DISABLED] ) }
+  scope :active,  -> { with_memberships.where( ["accounts.disabled IS NULL OR accounts.disabled<>TRUE"] ) }
   scope :real,    -> { with_memberships.where( ["memberships.role in (?)", REAL_ROLES] ) }
   scope :with_identity, lambda { | provider, id |
      where("identities @> hstore(:provider, :id)", :provider=>provider.to_s,:id=>id.to_s )
@@ -181,12 +181,12 @@ class Account < ActiveRecord::Base
   end
 
   def disabled?(org=self.organization)
-    self.memberships.exists?({ :role=>DISABLED, :organization_id => org })
+    self.disabled
   end
 
   def active?(org=self.organization)
     membership = self.memberships.where({:organization_id => org}).first
-    membership && membership.role != DISABLED
+    membership && !self.disabled
   end
 
   #Checks whether user has claims for docs in the status being requested.  Optional, exclude a doc ID
@@ -313,7 +313,8 @@ class Account < ActiveRecord::Base
       'last_name'         => last_name,
       'language'          => language,
       'document_language' => document_language,
-      'pending'           => pending?
+      'pending'           => pending?,
+      'disabled'          => disabled
     }
 
     if options[:include_memberships]

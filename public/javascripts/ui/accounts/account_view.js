@@ -185,7 +185,7 @@ dc.ui.AccountView = Backbone.View.extend({
     var dialog = dc.ui.Dialog.confirm(null, _.bind(function() {
       this.setMode('display', 'view_mode');
       this.$el.next('tr.editing').remove();
-      this.model.save({'role': this.model.DISABLED});
+      this.model.save({'disabled': true});
       dc.ui.notifier.show({
         text      : _.t('account_is_disabled',this.model.fullName() ),
         duration  : 5000,
@@ -207,7 +207,7 @@ dc.ui.AccountView = Backbone.View.extend({
   _enableAccount : function() {
     this.setMode('display', 'view_mode');
     this.$el.next('tr.editing').remove();
-    this.model.save({'role': this.model.CONTRIBUTOR});
+    this.model.save({'disabled': false});
   },
 
   _loginAsAccount : function() {

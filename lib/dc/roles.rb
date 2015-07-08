@@ -1,7 +1,7 @@
 module DC
   module Roles
 
-    DISABLED          = 0
+    DISABLED          = 0 # DC LEGACY - Unused
     ADMINISTRATOR     = 1
     CONTRIBUTOR       = 2 # DC LEGACY - Unused
     REVIEWER          = 3 # DC LEGACY - Unused

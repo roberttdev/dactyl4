@@ -71,7 +71,8 @@ CREATE TABLE accounts (
     updated_at timestamp without time zone,
     identities hstore,
     language character varying(3),
-    document_language character varying(3)
+    document_language character varying(3),
+    disabled boolean
 );
 
 
@@ -1981,4 +1982,6 @@ INSERT INTO schema_migrations (version) VALUES ('20150429175735');
 INSERT INTO schema_migrations (version) VALUES ('20150529205731');
 
 INSERT INTO schema_migrations (version) VALUES ('20150609172330');
+
+INSERT INTO schema_migrations (version) VALUES ('20150708200432');
 

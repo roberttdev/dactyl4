@@ -27,14 +27,14 @@
 </td>
 <td class="role">
   <span class="display">
-    <% if (account.ROLE_NAMES[account.get('role')] == 'disabled') { %>
+    <% if (account.get('disabled')) { %>
     <span class="disabled">(<%= _.t('disabled') %>)</span>
     <% } else { %>
     <%= _.t( account.ROLE_NAMES[account.get('role')] ) %>
     <% } %>
   </span>
   <span class="edit">
-    <% if (account.ROLE_NAMES[account.get('role')] == 'disabled') { %>
+    <% if (account.get('disabled')) { %>
     <span class="disabled">(<%= _.t('disabled') %>)</span>
     <% } else { %>
     <select name="role" class="account_role" <%= current && current.isAdmin() && account.id != current.id ? '' : 'disabled="disabled"' %>>
@@ -60,7 +60,7 @@
   <div class="edit controls_wrapper">
     <div class="minibutton default save_changes"><%= _.t('ok') %></div>
     <% if (account.id && account.id > 0 && account.id != dc.account.get('id')) { %>
-    <% if (account.ROLE_NAMES[account.get('role')] == 'disabled') { %>
+    <% if (account.get('disabled')) { %>
     <div class="minibutton warn enable_account"><%= _.t('reenable') %></div>
     <% } else { %>
     <div class="minibutton warn disable_account"><%= _.t('disable') %></div>

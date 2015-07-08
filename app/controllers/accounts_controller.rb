@@ -104,7 +104,7 @@ class AccountsController < ApplicationController
   def update
     account = current_organization.accounts.find(params[:id])
     return json(nil, 403) unless account && current_account.allowed_to_edit_account?(account, current_organization)
-    unless account.update_attributes pick(params, :first_name, :last_name, :email,:language, :document_language)
+    unless account.update_attributes pick(params, :first_name, :last_name, :email,:language, :document_language, :disabled)
       return json({ "errors" => account.errors.to_a.map{ |field, error| "#{field} #{error}" } }, 409)
     end
     role = pick(params, :role)
@@ -131,7 +131,7 @@ class AccountsController < ApplicationController
   # login. Ther documents, projects, and name remain.
   def destroy
     return forbidden unless current_account.admin?
-    current_organization.memberships.where( account_id: params[:id] ).update_all( role: Account::DISABLED )
+    current_organization.memberships.where( account_id: params[:id] ).update_all( disabled: true )
     json nil
   end
 

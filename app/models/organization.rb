@@ -64,7 +64,7 @@ class Organization < ActiveRecord::Base
       accounts.id,                 accounts.email,
       accounts.first_name,         accounts.last_name,
       accounts.hashed_password,    accounts.identities,
-      accounts.language
+      accounts.language,           accounts.disabled
     from memberships
       inner join accounts on accounts.id = memberships.account_id
     where
@@ -86,6 +86,7 @@ class Organization < ActiveRecord::Base
                                Membership::REVIEWER != account['role'].to_i &&
                                DC::Hstore.from_sql( account['identities'] ).empty?
           account['hashed_email']=Digest::MD5.hexdigest( account['email'].downcase.gsub(/\s/, '') ) if account['email']
+          account['disabled'] = account['disabled'] == 't' ? true : false
 
           account.delete_if{|field,value| hidden_fields.include?(field) }
           account
