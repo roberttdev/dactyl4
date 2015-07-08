@@ -46,7 +46,9 @@ class Extraction
         FROM documents d1 #{sql_filters}
         WHERE status=8) d
       INNER JOIN groups g on d.id=g.document_id AND g.qa_approved_by IS NOT NULL AND UPPER(g.name) IN (#{sql_endpoint})
+      LEFT JOIN annotation_notes an on g.id=an.group_id
       INNER JOIN groups bg on d.id=bg.document_id AND bg.base=TRUE
+      WHERE an.id IS NULL
     EOS
     init_hash = ActiveRecord::Base.connection.exec_query(init_sql)
     init_hash.each do |doc_and_base|
@@ -65,8 +67,11 @@ class Extraction
         SELECT g.id AS group_id, g.name, a.title, a.content, a.id as anno_id
         FROM (SELECT g1.id, g1.name
         FROM groups g1 WHERE g1.id IN (#{grp_ids})) g
-        LEFT JOIN annotation_groups ag on g.id=ag.group_id AND ag.qa_approved_by IS NOT NULL
-        LEFT JOIN annotations a ON ag.annotation_id=a.id
+        LEFT JOIN (SELECT ag.*
+          FROM annotation_groups ag
+          LEFT JOIN annotation_notes an on ag.id=an.annotation_group_id AND ag.qa_approved_by IS NOT NULL AND an.id IS NULL) ang ON g.id=ang.group_id
+        LEFT JOIN annotations a ON ang.annotation_id=a.id
+        WHERE an.id IS NULL
       EOS
       slice_hash = ActiveRecord::Base.connection.exec_query(slice_sql)
 
@@ -245,8 +250,10 @@ class Extraction
       SELECT g.id AS group_id, g.parent_id, g.document_id, g.name, a.title, a.content, a.id as anno_id
       FROM (SELECT g1.id, g1.parent_id, g1.document_id, g1.name
         FROM groups g1 WHERE g1.parent_id IN (#{@backbone_id_string}) AND g1.id NOT IN (#{@backbone_id_string})) g
-      LEFT JOIN annotation_groups ag on g.id=ag.group_id AND ag.qa_approved_by IS NOT NULL
-      LEFT JOIN annotations a ON ag.annotation_id=a.id
+      LEFT JOIN (SELECT ag.*
+        FROM annotation_groups ag
+        LEFT JOIN annotation_notes an on ag.id=an.annotation_group_id AND ag.qa_approved_by IS NOT NULL AND an.id IS NULL) ang ON g.id=ang.group_id
+      LEFT JOIN annotations a ON ang.annotation_id=a.id
       ORDER BY g.document_id, g.id
     EOS
     flat_point_hash = ActiveRecord::Base.connection.exec_query(flattened_sql)
@@ -294,8 +301,10 @@ class Extraction
           SELECT g.id AS group_id, g.parent_id, g.document_id, g.name, a.title, a.content, a.id as anno_id
           FROM (SELECT g1.id, g1.parent_id, g1.document_id, g1.name
             FROM groups g1 WHERE g1.parent_id IN (#{group_id_array.join(',')})) g
-          LEFT JOIN annotation_groups ag on g.id=ag.group_id AND ag.qa_approved_by IS NOT NULL
-          LEFT JOIN annotations a ON ag.annotation_id=a.id
+          LEFT JOIN (SELECT ag.*
+            FROM annotation_groups ag
+            LEFT JOIN annotation_notes an on ag.id=an.annotation_group_id AND ag.qa_approved_by IS NOT NULL AND an.id IS NULL) ang ON g.id=ang.group_id
+          LEFT JOIN annotations a ON ang.annotation_id=a.id
           ORDER BY g.document_id, g.id
         EOS
         flat_point_hash = ActiveRecord::Base.connection.exec_query(flattened_sql)
@@ -322,8 +331,10 @@ class Extraction
       SELECT g.id AS group_id, g.parent_id, g.document_id, g.name, a.title, a.content, a.id as anno_id
       FROM (SELECT g1.id, g1.parent_id, g1.document_id, g1.name
         FROM groups g1 WHERE g1.id IN (#{@backbone_id_string})) g
-      LEFT JOIN annotation_groups ag on g.id=ag.group_id AND ag.qa_approved_by IS NOT NULL
-      LEFT JOIN annotations a ON ag.annotation_id=a.id
+      LEFT JOIN (SELECT ag.*
+        FROM annotation_groups ag
+        LEFT JOIN annotation_notes an on ag.id=an.annotation_group_id AND ag.qa_approved_by IS NOT NULL AND an.id IS NULL) ang ON g.id=ang.group_id
+      LEFT JOIN annotations a ON ang.annotation_id=a.id
       ORDER BY g.document_id, g.id
     EOS
     bb_data_hash = ActiveRecord::Base.connection.exec_query(backbone_points_sql)
@@ -399,7 +410,9 @@ class Extraction
           FROM documents
           WHERE status=8) d1 #{sql_filters}) d
       INNER JOIN groups g on d.id=g.document_id AND g.qa_approved_by IS NOT NULL AND UPPER(g.name) IN (#{sql_endpoint})
-      WHERE EXISTS (SELECT id FROM annotation_groups where group_id=g.id AND qa_approved_by IS NOT NULL)
+      WHERE EXISTS (SELECT ag.id FROM annotation_groups ag
+        LEFT JOIN annotation_notes an on ag.id=an.annotation_group_id
+        WHERE ag.group_id=g.id AND qa_approved_by IS NOT NULL AND an.id IS NULL)
       ORDER BY g.document_id
     EOS
     endpoint_hashes = ActiveRecord::Base.connection.exec_query(first_run_sql).to_hash
