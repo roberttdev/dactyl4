@@ -103,6 +103,52 @@ div.three_column_split {
 
 
 /*
+ * CENTERED LIST
+ */
+.centered_list {
+    max-width: 600px;
+    margin: auto;
+}
+
+.list_toolbar {
+    height: 26px;
+    margin-bottom: 20px;
+}
+
+.list_row {
+    padding: 8px;
+    width: 600px;
+    margin-top: 10px;
+    background-color: lightgray;
+    border-style: solid;
+    border-width: 1px;
+    border-color: gray;
+    border-radius: 5px;
+}
+
+.list_row.sub {
+    margin-top: 0px;
+    background-color: white;
+    border-width: 0px;
+}
+
+.list_row .title {
+    color: #000;
+    font: bold 16px/20px Helvetica, Arial;
+    padding-left: 32px;
+    display: inline-block;
+    width: 250px;
+}
+
+.list_row .title.sub {
+    padding-left: 96px;
+}
+
+.list_row .minibutton {
+    margin-left: 8px;
+}
+
+/*
  * ICONS
  */
 div.help_url_icon {

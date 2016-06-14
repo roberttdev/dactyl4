@@ -1,5 +1,5 @@
-# The TemplatesController is responsible for managing templates and their fields.
-class TemplatesController < ApplicationController
+# The RepositoriesController is responsible for managing repositories
+class RepositoriesController < ApplicationController
   layout 'workspace'
 
   before_filter :secure_only, :only => [:enable, :reset]
@@ -17,12 +17,7 @@ class TemplatesController < ApplicationController
         end
 
         format.json do
-          if params[:subtemplates] == 'true'
-            #Include subtemplates
-            json GroupTemplate.includes(:subtemplates).all().to_json(:include => :subtemplates)
-          else
-            json GroupTemplate.all()
-          end
+            json Repository.all()
         end
       end
     else
@@ -41,22 +36,21 @@ class TemplatesController < ApplicationController
 
   # Pull a specific template
   def show
-    json GroupTemplate.find(params[:id])
+    json Repository.find(params[:id])
   end
 
 
   # Create new template
   def create
-    template_attributes = pick(params, :name, :parent_id, :help_url)
-    json GroupTemplate.create(template_attributes)
+    json Repository.create(pick(params, :repo_name))
   end
 
 
   # Update template
   def update
-    template = GroupTemplate.find(params[:id])
-    unless template.update_attributes pick(params, :name, :help_url)
-      return json({ "errors" => template.errors.to_a.map{ |field, error| "#{field} #{error}" } }, 409)
+    repo = Repository.find(params[:id])
+    unless repo.update_attributes pick(params, :repo_name)
+      return json({ "errors" => repo.errors.to_a.map{ |field, error| "#{field} #{error}" } }, 409)
     end
 
     json({"success" => true})
@@ -65,16 +59,10 @@ class TemplatesController < ApplicationController
 
   # Delete template
   def destroy
-    template = GroupTemplate.find(params[:id])
-    template.destroy()
+    repo = Repository.find(params[:id])
+    repo.destroy()
     json({"success" => true})
   end
 
-
-  #Return top 10 unique template names that match search term
-  def search
-    searchTerm = params[:term] + '%'
-    json GroupTemplate.matching_name(searchTerm)
-  end
 
 end

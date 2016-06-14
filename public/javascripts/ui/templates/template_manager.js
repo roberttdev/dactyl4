@@ -21,7 +21,7 @@ dc.ui.TemplateManager = Backbone.View.extend({
     this.$('#new_template').on('click', {}, this.openCreateWindow);
 
     //Listing rows
-    this.$('.template_list').append(_.map(this.templateList, function(view, cid){
+    this.$('.centered_list').append(_.map(this.templateList, function(view, cid){
         view.render();
         return view.$el;
     }, this));

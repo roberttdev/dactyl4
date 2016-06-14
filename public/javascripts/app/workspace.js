@@ -2,11 +2,10 @@
 dc.controllers.Workspace = Backbone.Router.extend({
 
   routes : {
-    'help/:page': 'help',
-    'help':       'help',
-    'accounts':   'accounts',
-    'templates':  'templates',
-    'extraction': 'extraction'
+    'accounts'      : 'accounts',
+    'repositories'  : 'repositories',
+    'templates'     : 'templates',
+    'extraction'    : 'extraction'
   },
 
   // Initializes the workspace, binding it to <body>.
@@ -27,12 +26,12 @@ dc.controllers.Workspace = Backbone.Router.extend({
     dc.app.templates.open();
   },
 
-  extraction: function() {
-    dc.app.extraction.open();
+  repositories: function() {
+    dc.app.repositories.open();
   },
 
-  help : function(page) {
-    this.help.openPage(page || '');
+  extraction: function() {
+    dc.app.extraction.open();
   },
 
   // Create all of the requisite subviews.
@@ -41,6 +40,7 @@ dc.controllers.Workspace = Backbone.Router.extend({
     dc.app.navigation     = new dc.ui.Navigation();
     dc.app.toolbar        = new dc.ui.Toolbar();
     dc.app.organizer      = new dc.ui.Organizer();
+    dc.app.repositories   = new dc.ui.RepoManager();
     dc.app.templates      = new dc.ui.TemplateManager();
     dc.app.extraction     = new dc.ui.ExtractionManager();
     dc.ui.notifier        = new dc.ui.Notifier();

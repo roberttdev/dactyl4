@@ -180,6 +180,10 @@ DC::Application.routes.draw do
     resources :subtemplates
   end
 
+  #Repos
+  get '/repositories/index.json' => 'repositories#index'
+  resources :repositories
+
   #Subtemplate fields
   resources :subtemplate_fields, path: '/subtemplates/:subtemplate_id/subtemplate_fields'
 

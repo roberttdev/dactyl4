@@ -12,6 +12,13 @@
   </div>
   <%} %>
   <% if (dc.account && dc.account.isAdmin()) { %>
+  <div id="repositories_tab" data-tab="repo" class="tab trailing">
+    <%= _.t('repos') %>
+    <div class="tab_corner left"></div>
+    <div class="tab_corner right"></div>
+  </div>
+  <% } %>
+  <% if (dc.account && dc.account.isAdmin()) { %>
   <div id="templates_tab" data-tab="template" class="tab trailing">
       <%= _.t('templates') %>
       <div class="tab_corner left"></div>
@@ -24,12 +31,7 @@
         <div class="tab_corner left"></div>
         <div class="tab_corner right"></div>
       </div>
-    <% } %>
-  <div id="help_tab" data-tab="help" class="tab trailing">
-    <%= _.t('help') %>
-    <div class="tab_corner left"></div>
-    <div class="tab_corner right"></div>
-  </div>
+  <% } %>
 </div>
 
 <div class="panel_content">
@@ -47,20 +49,13 @@
   <div id="accounts_manager_container" class="accounts_tab_content">
   </div>
 
+  <div id="repo_manager_container" class="repositories_tab_content">
+  </div>
+
   <div id="template_manager_container" class="templates_tab_content">
   </div>
 
   <div id="extraction_manager_container" class="extraction_tab_content">
   </div>
 
-  <div id="help" class="help_tab_content">
-
-    <div id="help_toolbar">
-      <div class="minibutton uservoice"><%= _.t('uservoice_discuss') %></div>
-      <div class="minibutton contact_us"><%= _.t('contact_documentcloud') %></div>
-    </div>
-
-    <div id="help_content"></div>
-
-  </div>
 </div>

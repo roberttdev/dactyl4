@@ -325,7 +325,7 @@ div.full_page_background {
 .accounts_tab_content,
 .templates_tab_content,
 .extraction_tab_content,
-.help_tab_content {
+.repositories_tab_content {
   display: none;
 }
   body.search_panel_tab .search_tab_content,
@@ -333,7 +333,7 @@ div.full_page_background {
   body.accounts_panel_tab .accounts_tab_content,
   body.templates_panel_tab .templates_tab_content,
   body.extraction_panel_tab .extraction_tab_content,
-  body.help_panel_tab .help_tab_content {
+  body.repositories_panel_tab .repositories_tab_content {
     display: block;
   }
 

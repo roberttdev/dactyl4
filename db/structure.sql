@@ -876,6 +876,36 @@ ALTER SEQUENCE remote_urls_id_seq OWNED BY remote_urls.id;
 
 
 --
+-- Name: repositories; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE repositories (
+    id integer NOT NULL,
+    repo_name character varying(255),
+    disabled boolean
+);
+
+
+--
+-- Name: repositories_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE repositories_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: repositories_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE repositories_id_seq OWNED BY repositories.id;
+
+
+--
 -- Name: reviews; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -1283,6 +1313,13 @@ ALTER TABLE ONLY remote_urls ALTER COLUMN id SET DEFAULT nextval('remote_urls_id
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
+ALTER TABLE ONLY repositories ALTER COLUMN id SET DEFAULT nextval('repositories_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
 ALTER TABLE ONLY reviews ALTER COLUMN id SET DEFAULT nextval('reviews_id_seq'::regclass);
 
 
@@ -1518,6 +1555,14 @@ ALTER TABLE ONLY reviews
 
 ALTER TABLE ONLY remote_urls
     ADD CONSTRAINT remote_urls_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: repositories_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY repositories
+    ADD CONSTRAINT repositories_pkey PRIMARY KEY (id);
 
 
 --
@@ -1984,4 +2029,6 @@ INSERT INTO schema_migrations (version) VALUES ('20150529205731');
 INSERT INTO schema_migrations (version) VALUES ('20150609172330');
 
 INSERT INTO schema_migrations (version) VALUES ('20150708200432');
+
+INSERT INTO schema_migrations (version) VALUES ('20150716201936');
 
