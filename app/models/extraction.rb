@@ -117,9 +117,10 @@ class Extraction
   #Endpoint: String representing annotation title
   #Filters: Hash consisting of annotation title(s) and value(s)
   #Account_id: account to provide access to the resulting annotations to
-  def assemble_csv_from_query( endpoints, filters, account_id )
+  #Repository_id: repository to limit results to
+  def assemble_csv_from_query( endpoints, filters, account_id, repository_id )
     #Step 1: Collect all IDs of endpoint groups and backbone groups
-    endpoint_hash = get_endpoint_hash(endpoints, filters)
+    endpoint_hash = get_endpoint_hash(endpoints, filters, repository_id)
     extract_backbone_ids(endpoint_hash)
 
     #Step 2: Extract full group/data point info for all data in backbone groups
@@ -395,12 +396,14 @@ class Extraction
 
 
   #Get hash of endpoint groups from search parameters
-  def get_endpoint_hash(endpoints, filters)
+  def get_endpoint_hash(endpoints, filters, repository_id)
     endpoints.each_with_index do |endpoint, index|
       endpoints[index] = ActiveRecord::Base.connection.quote(endpoint)
     end
     sql_endpoint = "UPPER(#{endpoints.join('), UPPER(')})"
     sql_filters = generate_filter_string(filters)
+
+    repo_clause = repository_id.nil? ? " IS NULL" : "=#{repository_id}"
 
     first_run_sql = <<-EOS
       SELECT g.id, g.parent_id, g.document_id
@@ -408,7 +411,7 @@ class Extraction
         FROM (
           SELECT id
           FROM documents
-          WHERE status=8) d1 #{sql_filters}) d
+          WHERE status=8 AND repository_id#{repo_clause}) d1 #{sql_filters}) d
       INNER JOIN groups g on d.id=g.document_id AND g.qa_approved_by IS NOT NULL AND UPPER(g.name) IN (#{sql_endpoint})
       WHERE EXISTS (SELECT ag.id FROM annotation_groups ag
         LEFT JOIN annotation_notes an on ag.id=an.annotation_group_id

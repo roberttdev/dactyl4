@@ -59,6 +59,8 @@ class RepositoriesController < ApplicationController
 
   # Delete template
   def destroy
+    Document.where(repository_id: params[:id]).update_all(repository_id: nil)
+
     repo = Repository.find(params[:id])
     repo.destroy()
     json({"success" => true})

@@ -371,7 +371,8 @@ CREATE TABLE documents (
     de_one_complete boolean,
     de_two_complete boolean,
     qa_note text,
-    iteration integer
+    iteration integer,
+    repository_id integer
 );
 
 
@@ -2031,4 +2032,6 @@ INSERT INTO schema_migrations (version) VALUES ('20150609172330');
 INSERT INTO schema_migrations (version) VALUES ('20150708200432');
 
 INSERT INTO schema_migrations (version) VALUES ('20150716201936');
+
+INSERT INTO schema_migrations (version) VALUES ('20160615194758');
 

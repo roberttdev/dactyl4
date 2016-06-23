@@ -35,6 +35,7 @@ class Document < ActiveRecord::Base
   belongs_to :organization
 
   has_one :document_status
+  has_one :repository
   has_one  :docdata,              :dependent   => :destroy, :inverse_of=>:document
   has_many :pages,                :dependent   => :destroy, :inverse_of=>:document
   has_many :entities,             :dependent   => :destroy, :inverse_of=>:document
@@ -1210,6 +1211,7 @@ class Document < ActiveRecord::Base
       :file_hash           => file_hash,
       :original_file_path  => original_url,
       :qa_note             => qa_note,
+      :repository_id       => repository_id,
       :claimed_by          => self.claimant_names
     }
     if self.status == STATUS_IN_QC
@@ -1281,6 +1283,7 @@ class Document < ActiveRecord::Base
     res['related_article']    = related_article if related_article
     res['annotations_url']    = annotations_url
     res['qa_note']            = qa_note
+    res['repository_id']      = repository_id
     res['claimed_by']         = self.claimant_names
     if options[:allow_detected]
       res['published_url']    = published_url if published_url

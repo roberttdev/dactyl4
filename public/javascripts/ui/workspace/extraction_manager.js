@@ -1,6 +1,7 @@
 dc.ui.ExtractionManager = Backbone.View.extend({
   id          : 'extraction_manager_container',
   className   : 'extraction_tab_content',
+  repoCollection : null,
 
   events: {
     'click #add_filter_point'     : 'addFilterPoint',
@@ -16,6 +17,9 @@ dc.ui.ExtractionManager = Backbone.View.extend({
     this._mainJST = JST['workspace/extraction_main'];
     _.bindAll(this, 'open', 'render', 'addFilterPoint', 'removeFilterPoint');
     dc.app.navigation.bind('tab:extraction', this.open);
+
+    this.repoCollection = new dc.model.Repositories();
+    this.repoCollection.fetch({data:{}, success: this.render, error: this.error});
   },
 
 
@@ -23,6 +27,13 @@ dc.ui.ExtractionManager = Backbone.View.extend({
     this.$el = $('#' + this.id);
     //Main
     this.$el.html(this._mainJST(this.options));
+
+    //Repo dropdown
+    $.each(this.repoCollection.models, function(key, value) {
+      $('#repository_id')
+          .append($('<option>', { value : value.attributes.id })
+              .text(value.attributes.repo_name));
+    });
 
     $('#endpoint_lookup').autocomplete({source: '/groups/search'});
     $('#filter_lookup').autocomplete({source: '/annotations/search'});
@@ -38,6 +49,7 @@ dc.ui.ExtractionManager = Backbone.View.extend({
     var endpoints = $('#selected_endpoints option').map(function(){ return this.value; }).get();
     var account_name = $('#account_name').val();
     var file_format = $('input[name="file_format"]:checked').val();
+    var repository_id = $('#repository_id option:selected').val() == 'Public' ? null : $('#repository_id option:selected').val();
     var filters = [];
     $('#selected_filters option').each(function(iter, opt){ filters.push($(opt).val()); });
 
@@ -57,7 +69,8 @@ dc.ui.ExtractionManager = Backbone.View.extend({
       endpoints: endpoints,
       filters: this.filters,
       account_name: account_name,
-      file_format: file_format
+      file_format: file_format,
+      repository_id: repository_id
     };
 
     var _workingDialog = dc.ui.Dialog.progress('Extracting..');

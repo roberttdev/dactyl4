@@ -2,10 +2,11 @@
 // documents at once, sending a `Backbone.Model#save` per-document.
 dc.ui.DocumentDialog = dc.ui.Dialog.extend({
 
-  ATTRIBUTES : ['title', 'source', 'description', 'related_article', 'study', 'access', 'language'],
+  ATTRIBUTES : ['title', 'source', 'description', 'related_article', 'study', 'access', 'language', 'repository_id'],
 
   id        : 'edit_document_dialog',
   className : 'dialog docalog',
+  repoCollection : null,
 
   events : {
     'click .cancel'     : 'close',
@@ -21,11 +22,16 @@ dc.ui.DocumentDialog = dc.ui.Dialog.extend({
   // Takes multiple documents as a collection, since any changes are applied to
   // all documents.
   constructor : function(docs) {
+    _.bindAll(this, 'render');
     this.docs = docs;
     this.multiple = docs.length > 1;
     var title = _.t('edit_x', this._title() );
     dc.ui.Dialog.call(this, {mode : 'custom', title : title, editor : true});
-    this.render();
+
+    //Populate repos
+    this.repoCollection = new dc.model.Repositories();
+    this.repoCollection.fetch({data:{}, success: this.render, error: this.error});
+
     $(document.body).append(this.el);
   },
 
@@ -37,6 +43,15 @@ dc.ui.DocumentDialog = dc.ui.Dialog.extend({
       docs     : this.docs, 
       multiple : this.multiple
     }));
+
+    //Repo dropdown
+    $('select[name=repo]').append($('<option>', { value : null }).text('Public'));
+    $.each(this.repoCollection.models, function(key, value) {
+      $('select[name=repo]')
+          .append($('<option>', { value : value.attributes.id })
+              .text(value.attributes.repo_name));
+    });
+
     $('select[name=language]').val( this.docs[0].get('language') );
     var attrs = this._sharedAttributes();
     attrs['access'] = attrs['access'] || dc.access.PRIVATE;

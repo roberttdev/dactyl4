@@ -54,9 +54,9 @@ class ExtractionController < ApplicationController
     vo_id = vo_acct ? vo_acct.id : nil
 
     if params[:file_format] == 'csv'
-      resultFile = Extraction.new.assemble_csv_from_query(params[:endpoints], params[:filters], vo_id )
+      resultFile = Extraction.new.assemble_csv_from_query(params[:endpoints], params[:filters], vo_id, params[:repository_id] )
     else
-      resultFile = Extraction.new.assemble_json_from_query(params[:endpoints], params[:filters], vo_id )
+      resultFile = Extraction.new.assemble_json_from_query(params[:endpoints], params[:filters], vo_id, params[:repository_id] )
     end
 
     #If VO account passed, generate config file and ZIP contents

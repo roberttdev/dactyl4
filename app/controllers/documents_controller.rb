@@ -58,8 +58,9 @@ class DocumentsController < ApplicationController
 
   def update
     return not_found unless doc = current_document(true)
-    attrs = pick(params, :access, :title, :description, :source,
+    attrs = pick(params, :access, :title, :description, :source, :repository_id,
                          :related_article, :study, :publish_at, :data, :language, :qa_note)
+    attrs[:repository_id] = nil if attrs[:repository_id] == 'Public'
     success = doc.secure_update attrs, current_account
     return json(doc, 403) unless success
     if doc.cacheable?

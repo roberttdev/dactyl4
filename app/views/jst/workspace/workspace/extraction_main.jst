@@ -1,12 +1,18 @@
 <h1><%= _.t('extraction') %></h1>
 
 <div class="centered_tab_content">
-    <div class="two_column_split">
+    <div class="three_column_split">
       <h2>View Only Account</h2>
       <input type="text" class="lookup_box" id="account_name">
       <p class="field_instructions">Last Name, First Name</p>
     </div>
-    <div class="two_column_split">
+    <div class="three_column_split">
+      <h2>Repository</h2>
+      <select class="lookup_box" name="repository_id" id="repository_id">
+        <option>Public</option>
+      </select>
+    </div>
+    <div class="three_column_split">
       <h2>File Format</h2>
       <input type="radio" id="file_format" name="file_format" value="csv" checked><label for="file_format">CSV</label>
       <input type="radio" id="file_format" name="file_format" value="json"><label for="file_format">JSON</label>
