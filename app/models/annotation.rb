@@ -146,6 +146,7 @@ class Annotation < ActiveRecord::Base
     data['published_url'] = document.published_url || document.document_viewer_url(:allow_ssl => true) if opts[:include_document_url]
     data['account_id'] = account_id
     data['iteration'] = iteration
+    data['match_id'] = match_id
 
     #If account ID passed in, determine whether it 'owns' this note currently (can edit, generally)
     data['owns_note'] = opts[:account] && (opts[:account].id == account_id) && (iteration == document.iteration)
@@ -180,7 +181,9 @@ class Annotation < ActiveRecord::Base
       'approved_count'      => anno_group.approved_count,
       'approved'            => anno_group.qa_approved_by ? true : false,
       'qa_reject_note'      => (anno_group.association_cache.keys.include?(:annotation_note) || anno_group.association_cache.keys.include?(:supp_de_note)) ? anno_group.qa_reject_note : nil,
-      'templated'           => templated
+      'templated'           => templated,
+      'match_id'            => match_id,
+      'match_strength'      => match_strength
     })
   end
 

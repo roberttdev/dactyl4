@@ -185,7 +185,9 @@ CREATE TABLE annotations (
     updated_at timestamp without time zone,
     moderation_approval boolean,
     templated boolean DEFAULT false,
-    iteration integer
+    iteration integer,
+    match_id integer,
+    match_strength integer
 );
 
 
@@ -2034,4 +2036,6 @@ INSERT INTO schema_migrations (version) VALUES ('20150708200432');
 INSERT INTO schema_migrations (version) VALUES ('20150716201936');
 
 INSERT INTO schema_migrations (version) VALUES ('20160615194758');
+
+INSERT INTO schema_migrations (version) VALUES ('20160624200630');
 

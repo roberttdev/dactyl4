@@ -843,7 +843,10 @@ class Document < ActiveRecord::Base
           updateFields[:de_two_complete] = true
           history_status = STATUS_DE2
         end
-        updateFields[:status] = STATUS_READY_QC if (self.de_one_id==account.id && self.de_two_complete) || (self.de_two_id==account.id && self.de_one_complete)
+        if (self.de_one_id==account.id && self.de_two_complete) || (self.de_two_id==account.id && self.de_one_complete)
+          self.prepareForQC
+          updateFields[:status] = STATUS_READY_QC
+        end
         self.update updateFields
 
       ########QUALITY CONTROL#######
@@ -926,6 +929,53 @@ class Document < ActiveRecord::Base
     else
       return false
     end
+  end
+
+
+  #Finds and marks matches between DE submissions when sending to QC
+  def prepareForQC
+    value_sorted_annos = {}
+    matches = {}
+
+    #Transform DE1 annos into matchable structure
+    de_one_annos = self.annotations.where(account_id: self.de_one_id, iteration: self.iteration)
+    de_one_annos.each do |anno|
+      anno.content = anno.content.downcase
+      value_sorted_annos[anno.content] = [] if value_sorted_annos[anno.content].nil?
+      value_sorted_annos[anno.content] << {
+        id:       anno.id,
+        title:    anno.title.downcase,
+        location: anno.location.split(',') #y1, x2, y2, x1
+      }
+    end
+    de_one_annos = nil
+
+    #Cycle through DE annos and store matches
+    de_two_annos = self.annotations.where(account_id: self.de_two_id, iteration: self.iteration)
+    de_two_annos.each do |anno|
+      anno.content = anno.content.downcase
+      anno.title = anno.title.downcase
+      if !value_sorted_annos[anno.content].nil?
+        anno.location = anno.location.split(',') #y1, x2, y2, x1
+        value_sorted_annos[anno.content].each do |potential_match|
+          if( potential_match[:location][3] < anno.location[1] && potential_match[:location][1] >  anno.location[3] &&
+              potential_match[:location][0] < anno.location[2] && potential_match[:location][2] > anno.location[0] )
+            if anno.title == potential_match[:title]
+              matches[anno.id] = {match_id: potential_match[:id], match_strength: 2}
+              matches[potential_match[:id]] = {match_id: anno.id, match_strength: 2}
+              break
+            else
+              if matches[anno.id].nil?
+                matches[anno.id] = {match_id: potential_match[:id], match_strength: 1}
+                matches[potential_match[:id]] = {match_id: anno.id, match_strength: 1}
+              end
+            end
+          end
+        end
+      end
+    end
+
+    Annotation.update(matches.keys, matches.values)
   end
 
 

@@ -12,8 +12,10 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
 
     this.listenTo(this.deOneSubpanel, 'requestAnnotationClone', this.passAnnoCloneRequest);
     this.listenTo(this.deOneSubpanel, 'requestGroupClone', this.handleGroupCloneRequest);
+    this.listenTo(this.deOneSubpanel, 'requestAnnotationMatch', this.handleAnnotationMatchRequest);
     this.listenTo(this.deTwoSubpanel, 'requestAnnotationClone', this.passAnnoCloneRequest);
     this.listenTo(this.deTwoSubpanel, 'requestGroupClone', this.handleGroupCloneRequest);
+    this.listenTo(this.deTwoSubpanel, 'requestAnnotationMatch', this.handleAnnotationMatchRequest);
     this.listenTo(this.qcSubpanel, 'removeFromQC', this.handleRemoveFromQC);
     this.listenTo(this.qcSubpanel, 'groupDeleted', this.refreshDE);
 
@@ -39,6 +41,13 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
     this.deTwoSubpanel.clearAnnotations();
     if( anno.account_id == window.currentDocumentModel.de_one_id ){ this.deOneSubpanel.handleAnnotationSelect(anno); }
     if( anno.account_id == window.currentDocumentModel.de_two_id ){ this.deTwoSubpanel.handleAnnotationSelect(anno); }
+  },
+
+
+  //When one panel requests an annotation's match be displayed, update other panel
+  handleAnnotationMatchRequest: function(anno, de_requester) {
+    if( de_requester == 1 ){ this.deTwoSubpanel.handleMatchRequest(anno); }
+    if( de_requester == 2 ){ this.deOneSubpanel.handleMatchRequest(anno); }
   },
 
 

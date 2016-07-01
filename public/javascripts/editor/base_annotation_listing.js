@@ -5,6 +5,7 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
   showApprove:      false,
   showReject:       false,
   showNote:         false,
+  showMatch:        false,
 
   className: 'anno_listing_wrapper',
 
@@ -42,6 +43,7 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
     if( !this.showApprove ){ this.$('.approve_item').hide(); }
     if( !this.showReject ){ this.$('.reject_item').hide(); }
     if( !this.showNote ){ this.$('.point_note').hide(); }
+    if( !this.showMatch ){ this.$('.row_match').hide(); }
 
     return this;
   },

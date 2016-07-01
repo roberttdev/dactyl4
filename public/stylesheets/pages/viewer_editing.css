@@ -266,11 +266,20 @@
     }
 
     .row_status,
-    .subitem_status {
+    .subitem_status,
+    .row_match {
         display: inline-block;
         width: 16px;
         height: 16px;
         vertical-align: middle;
+    }
+
+    .row_match.full {
+        background: url(/images/embed/icons/dupe-1.png) no-repeat center center;
+    }
+
+    .row_match.partial {
+        background: url(/images/embed/icons/dupe-2.png) no-repeat center center;
     }
 
     .highlighting {

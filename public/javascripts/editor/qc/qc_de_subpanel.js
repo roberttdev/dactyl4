@@ -54,14 +54,28 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
   handleAnnotationSelect: function(anno){
     var _deView = this;
 
+    //If the anno has a match, trigger match logic
+    if( anno.match_id != null ){ this.trigger('requestAnnotationMatch', anno, this.reloadParams.de); }
+
     //If the group selected is this group, find and highlight point; otherwise save and reload proper group
-    if( anno.group_id == _deView.model.id ) {
+    if( _.where(anno.groups, {group_id: _deView.model.id}).length > 0 ) {
       _view = _.find(this.pointViewList, function(view){ return view.model.id == anno.id; });
       if( _view ){ _view.highlight(); }
     }else {
-      _deView.reloadPoints(anno.group_id, anno.id);
+      _deView.reloadPoints(anno.groups[0].group_id, anno.id);
     }
-},
+  },
+
+
+  //Reload to group containing an annotation's match when it's selected in the other window.
+  handleMatchRequest: function(anno){
+    var _thisView = this;
+    match = new dc.model.Annotation({document_id: this.docModel.id, id: anno.match_id});
+    match.fetch({success: function(anno){
+      _thisView.reloadPoints(anno.get('groups')[0].group_id);
+    }});
+
+  },
 
 
   //Listens for an annotation to request to be cloned and passes it to anything

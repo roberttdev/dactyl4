@@ -245,7 +245,8 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
       location    : anno.location,
       account_id  : anno.account_id,
       iteration   : anno.iteration,
-      ag_iteration   : currentDocumentModel.iteration
+      ag_iteration   : currentDocumentModel.iteration,
+      match_id: anno.match_id
     };
     return _.extend(params, extra || {});
   },

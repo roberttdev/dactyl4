@@ -1,5 +1,7 @@
 dc.ui.QCDEAnnotationListing = dc.ui.BaseAnnotationListing.extend({
 
+  showMatch: true,
+
   initialize: function() {
       this.listenTo(this.model, 'change', this.render);
 
@@ -11,6 +13,10 @@ dc.ui.QCDEAnnotationListing = dc.ui.BaseAnnotationListing.extend({
     dc.ui.BaseAnnotationListing.prototype.render.apply(this, arguments);
 
     this.$('.delete_item').hide();
+
+    //Match status
+    if( this.model.get('match_strength') == 2 ) { this.$('.row_match').addClass('full'); }
+    if( this.model.get('match_strength') == 1 ) { this.$('.row_match').addClass('partial'); }
 
     //Show rejection if previously rejected
     if( this.model.get('qa_reject_note') != null ){

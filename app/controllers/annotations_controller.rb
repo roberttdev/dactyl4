@@ -31,6 +31,10 @@ class AnnotationsController < ApplicationController
         cache_page js if current_annotation.cacheable? && PUBLIC_LEVELS.include?(current_document.access)
         render :js => js
       end
+      format.json do
+        @response = current_annotation.canonical
+        json_response
+      end
     end
   end
 
