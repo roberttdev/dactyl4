@@ -585,7 +585,10 @@ CREATE TABLE groups (
     base boolean DEFAULT false,
     iteration integer,
     qa_approved_by integer,
-    canon boolean
+    canon boolean,
+    graph_json character varying(255),
+    location character varying(255),
+    image_link character varying(255)
 );
 
 
@@ -2038,4 +2041,6 @@ INSERT INTO schema_migrations (version) VALUES ('20150716201936');
 INSERT INTO schema_migrations (version) VALUES ('20160615194758');
 
 INSERT INTO schema_migrations (version) VALUES ('20160624200630');
+
+INSERT INTO schema_migrations (version) VALUES ('20160816190855');
 

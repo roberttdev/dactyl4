@@ -115,3 +115,7 @@
     max-height: 250px;
     overflow-y: auto;
 }
+
+#webplotdigitizer_dialog {
+    max-width: none;
+}

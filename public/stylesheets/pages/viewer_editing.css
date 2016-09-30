@@ -546,6 +546,12 @@ body.redact_editing .DV-annotationRegion {
     position: relative;
   }
 
+  .annotation_notice {
+    background: yellow;
+    text-align: center;
+    display: none;
+  }
+
 /*------------------------- Document Page Tiles ------------------------------*/
 .document_page_tile {
   float: left;

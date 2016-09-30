@@ -187,6 +187,9 @@ DC::Application.routes.draw do
   #Subtemplate fields
   resources :subtemplate_fields, path: '/subtemplates/:subtemplate_id/subtemplate_fields'
 
+  #Image cropping
+  post '/imagecrop' => 'imagecrop#create'
+
   # Home pages.
   get '/contributors' => 'home#contributors', :as => :contributors
   get '/faq' => 'home#faq'

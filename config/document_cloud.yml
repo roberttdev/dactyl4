@@ -1,5 +1,6 @@
 defaults: &defaults 
   cloud_crowd_server:	http://localhost:8080
+  wpd_server:           http://localhost:1235
   server_root:          localhost:1234
   aws_zone:             us-east-1c
   preconfigured_ami_id: ami-11a4b57801aae468

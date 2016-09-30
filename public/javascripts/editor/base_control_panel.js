@@ -14,6 +14,7 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
         'click .new_group':         'openCreateGroupDialog',
         'click .new_data':          'createNewDataPoint',
         'click .save_exit':         'saveAndExit',
+        'click .new_graph':         'createGraph',
         'click .drop_claim':        'dropClaim',
         'click .mark_complete':     'markComplete',
         'click .group_title':       'handleGroupClick',
@@ -148,6 +149,8 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
 
     //Clear mid-annotation state for all annotations
     clearAnnotations: function(){
+        this.stopListening(dc.app.editor.annotationEditor, 'updateAnnotation', this.openGraphDialog);
+
         $.each(this.pointViewList, function(index, view) {
             view.clearAnnotation();
         });
@@ -184,6 +187,22 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
         var _view = this.addDataPoint(_point);
         this.$('#annotation_section').append(_view.$el);
         return _view;
+    },
+
+
+    createGraph: function() {
+      var _thisView = this;
+
+      _thisView.clearAnnotations();
+
+      //Trigger annotation for graph
+      dc.app.editor.annotationEditor.open(
+          this.model,
+          this.group_id,
+          false,
+          function() {},
+          'graph'
+      );
     },
 
 

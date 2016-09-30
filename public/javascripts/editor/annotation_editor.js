@@ -10,6 +10,8 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
     this._kind = 'public';
     // track open/close state
     this._open    = false;
+    // track state of what is being highlighted
+    this._highlight_type = null;
     // cache of button DOM elements
     this._buttons = {};
     // Annotation endpoint.
@@ -32,7 +34,7 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
     this._inserts.click(this.createPageNote);
   },
 
-  open : function(annotation, groupId, showEdit, success) {
+  open : function(annotation, groupId, showEdit, success, highlight_type) {
     //Request to hide existing annos; if succeeds, continue and call success function
     var _me = this;
     this.hideActiveAnnotations(function(){
@@ -46,12 +48,18 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
 
       _me._open = true;
       _me.redactions = [];
+      _me._highlight_type = highlight_type == 'graph' ? 'graph' : 'annotation';
       _me.page.css({cursor: 'crosshair'});
       _me._inserts.filter('.visible').show().addClass('DV-public');
 
       // Start drawing region when user mousedown
+      _me.page.unbind('mousedown', _me.drawAnnotation);
       _me.page.bind('mousedown', _me.drawAnnotation);
+      $(document).unbind('keydown', _me.close);
       $(document).bind('keydown', _me.close);
+
+      //Show notification that annotation mode is on
+      $('.annotation_notice').show();
 
       $(document.body).setMode('public', 'editing');
       _me._buttons['public'].addClass('open');
@@ -64,7 +72,9 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
     var _me = this;
     this._open = false;
     this._active_annotation = null;
+    this._highlight_type = null;
     this.hideActiveAnnotations(function(){
+      $('.annotation_notice').hide();
       _me.page.css({cursor : ''});
       _me.page.unbind('mousedown', _me.drawAnnotation);
       $(document).unbind('keydown', _me.close);
@@ -194,27 +204,41 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
       } else {
         // Instruct the viewer to create a note, if the region is large enough.
         if (loc.width > 5 && loc.height > 5) {
+          var highlight_type = this._highlight_type;
+
           // Close the editor
           this.close();
 
-          currentDocument.api.addAnnotation({
-            id              : _annotation.id,
-            title           : _annotation.get('title'),
-            content         : _annotation.get('content'),
-            document_id     : _annotation.get('document_id'),
-            groups          : _annotation.groups,
-            location        : {image : image},
-            page            : this._activePageNumber,
-            unsaved         : true,
-            access          : 'public',
-            owns_note       : true
-          });
-        }else{
+          if( highlight_type == 'graph' ) {
+            currentDocument.api.addAnnotation({
+              anno_type       : 'graph',
+              location        : {image : image},
+              page            : this._activePageNumber,
+              unsaved         : true,
+              access          : 'public',
+              owns_note       : true
+            });
+          }
+          else {
+            currentDocument.api.addAnnotation({
+              id              : _annotation.id,
+              title           : _annotation.get('title'),
+              content         : _annotation.get('content'),
+              document_id     : _annotation.get('document_id'),
+              groups          : _annotation.groups,
+              location        : {image : image},
+              page            : this._activePageNumber,
+              unsaved         : true,
+              access          : 'public',
+              owns_note       : true
+            });
+          }
           this.clearAnnotation();
         }
       }
       return false;
     }, this);
+
     this.pages.bind('mouseup', dragEnd);
   },
 
@@ -229,7 +253,11 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
   },
 
   saveAnnotation : function(anno) {
-    this[anno.unsaved ? 'createAnnotation' : 'updateAnnotation'](anno);
+    if(anno.anno_type == 'graph'){
+      this.selectGraph(anno);
+    }else {
+      this[anno.unsaved ? 'createAnnotation' : 'updateAnnotation'](anno);
+    }
   },
 
   // Convert an annotation object into serializable params understood by us.
@@ -249,6 +277,11 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
       match_id: anno.match_id
     };
     return _.extend(params, extra || {});
+  },
+
+  selectGraph: function(anno) {
+    var params = this.annotationToParams(anno);
+    this.trigger('selectGraph', params)
   },
 
   createAnnotation : function(anno) {

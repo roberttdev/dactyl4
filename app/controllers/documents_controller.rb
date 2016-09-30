@@ -372,14 +372,18 @@ ww
 
   def populate_editor_data
     @edits_enabled = true
+
     @allowed_to_edit = current_document.status == STATUS_DE1 || current_document.status == STATUS_DE2
     if current_document.status == STATUS_IN_QC || current_document.status == STATUS_IN_SUPP_QC
       @orientation = 'vertical'
     else
       @orientation = 'horizontal'
     end
+
     @template_list =  GroupTemplate.includes(:subtemplates).order(:name).all()
     @template_list = @template_list.to_json(:include => :subtemplates)
+
+    @wpd_server = DC::CONFIG['wpd_server']
   end
 
   def date_requested?
