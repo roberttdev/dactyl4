@@ -187,7 +187,8 @@ CREATE TABLE annotations (
     templated boolean DEFAULT false,
     iteration integer,
     match_id integer,
-    match_strength integer
+    match_strength integer,
+    is_graph_data boolean
 );
 
 
@@ -537,6 +538,66 @@ ALTER SEQUENCE file_status_histories_id_seq OWNED BY file_status_histories.id;
 
 
 --
+-- Name: graph_groups; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE graph_groups (
+    id integer NOT NULL,
+    graph_id integer,
+    group_id integer,
+    graph_json text
+);
+
+
+--
+-- Name: graph_groups_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE graph_groups_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: graph_groups_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE graph_groups_id_seq OWNED BY graph_groups.id;
+
+
+--
+-- Name: graphs; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE graphs (
+    id integer NOT NULL,
+    location text
+);
+
+
+--
+-- Name: graphs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE graphs_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: graphs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE graphs_id_seq OWNED BY graphs.id;
+
+
+--
 -- Name: group_templates; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -586,9 +647,7 @@ CREATE TABLE groups (
     iteration integer,
     qa_approved_by integer,
     canon boolean,
-    graph_json character varying(255),
-    location character varying(255),
-    image_link character varying(255)
+    is_graph_data boolean
 );
 
 
@@ -1249,6 +1308,20 @@ ALTER TABLE ONLY file_status_histories ALTER COLUMN id SET DEFAULT nextval('file
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
+ALTER TABLE ONLY graph_groups ALTER COLUMN id SET DEFAULT nextval('graph_groups_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY graphs ALTER COLUMN id SET DEFAULT nextval('graphs_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
 ALTER TABLE ONLY group_templates ALTER COLUMN id SET DEFAULT nextval('group_templates_id_seq'::regclass);
 
 
@@ -1473,6 +1546,22 @@ ALTER TABLE ONLY featured_reports
 
 ALTER TABLE ONLY file_status_histories
     ADD CONSTRAINT file_status_histories_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: graph_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY graph_groups
+    ADD CONSTRAINT graph_groups_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: graphs_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY graphs
+    ADD CONSTRAINT graphs_pkey PRIMARY KEY (id);
 
 
 --
@@ -2042,5 +2131,5 @@ INSERT INTO schema_migrations (version) VALUES ('20160615194758');
 
 INSERT INTO schema_migrations (version) VALUES ('20160624200630');
 
-INSERT INTO schema_migrations (version) VALUES ('20160816190855');
+INSERT INTO schema_migrations (version) VALUES ('20161013165748');
 

@@ -109,6 +109,13 @@ class GroupsController < ApplicationController
     json to_clone.clone(params[:parent_id], current_account.id, false, !in_qc, doc.iteration, in_qc, false)
   end
 
+  def create_graph_data
+    parent_id = params[:group_id]
+    graph_data = params[:graph_data]
+
+    json({'temp' => true})
+  end
+
   def update_approval
     group = Group.find(params[:id])
     group.update_qa_status(params[:approved], params[:qa_reject_note], current_account.id, params[:subitems_too])

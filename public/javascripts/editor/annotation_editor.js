@@ -253,10 +253,12 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
   },
 
   saveAnnotation : function(anno) {
+    var params = this.annotationToParams(anno);
+
     if(anno.anno_type == 'graph'){
-      this.selectGraph(anno);
-    }else {
-      this[anno.unsaved ? 'createAnnotation' : 'updateAnnotation'](anno);
+      this.saveGraph(params);
+    }else {d
+      this[anno.unsaved ? 'createAnnotation' : 'updateAnnotation'](params);
     }
   },
 
@@ -274,20 +276,20 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
       account_id  : anno.account_id,
       iteration   : anno.iteration,
       ag_iteration   : currentDocumentModel.iteration,
-      match_id: anno.match_id
+      match_id: anno.match_id,
+      graph_json: anno.graph_json
     };
     return _.extend(params, extra || {});
   },
 
-  selectGraph: function(anno) {
-    var params = this.annotationToParams(anno);
-    this.trigger('selectGraph', params)
+  selectGraph: function(params) {
+    this.trigger('saveGraph', params);
   },
 
-  createAnnotation : function(anno) {
-    var params = this.annotationToParams(anno);
+  createAnnotation : function(params) {
+
     $.ajax({url : this._baseURL, type : 'POST', data : params, dataType : 'json', success : _.bind(function(resp) {
-      anno.server_id = resp.id;
+      params.server_id = resp.id;
       this._adjustNoteCount(1, this._kind == 'public' ? 1 : 0);
     }, this)});
   },

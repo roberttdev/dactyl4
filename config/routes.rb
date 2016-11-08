@@ -49,6 +49,8 @@ DC::Application.routes.draw do
       match 'projects/:id.:format',                 allowed_methods: [:get, :put, :delete]
       match 'projects.:format',                     allowed_methods: [:get, :post]
       match 'search.:format',                       allowed_methods: [:get]
+      match '/measurement_fields',                  allowed_methods: [:get]
+      match '/imagecrop',                           allowed_methods: [:post]
     end
 
     put 'documents/:id.:format',                action: 'update'
@@ -62,6 +64,8 @@ DC::Application.routes.draw do
     post 'projects.:format',                    action: 'create_project'
     put 'projects/:id.:format',                 action: 'update_project'
     delete 'projects/:id.:format',              action: 'destroy_project'
+    get '/measurement_fields',                  action: 'measurement_fields'
+    post '/imagecrop',                          action: 'crop_image'
   end
 
   resources :featured do
@@ -77,6 +81,9 @@ DC::Application.routes.draw do
   #Bulk Annotation Submit
   put '/documents/:document_id/annotations' => 'annotations#bulk_update'
   put '/documents/:document_id/groups/:group_id/annotations' => 'annotations#bulk_update'
+
+  #Graph Data Submit
+  put '/documents/:document_id/groups/:group_id/graph_data' => 'groups#create_graph_data'
 
   #Un-QC
   put '/groups/:group_id/annotations/:id/unapprove' => 'annotations#unapprove'
@@ -186,9 +193,6 @@ DC::Application.routes.draw do
 
   #Subtemplate fields
   resources :subtemplate_fields, path: '/subtemplates/:subtemplate_id/subtemplate_fields'
-
-  #Image cropping
-  post '/imagecrop' => 'imagecrop#create'
 
   # Home pages.
   get '/contributors' => 'home#contributors', :as => :contributors

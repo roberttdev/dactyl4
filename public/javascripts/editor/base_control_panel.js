@@ -35,6 +35,9 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
         //Mark as changed when any update request is fired
         this.listenTo(dc.app.editor.annotationEditor, 'updateAnnotation', this.delegateUpdate);
 
+        //Listen for graph updates
+        this.listenTo(dc.app.editor.annotationEditor, 'saveGraph', this.saveGraph);
+
         this.reloadPoints(null);
     },
 
@@ -149,8 +152,6 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
 
     //Clear mid-annotation state for all annotations
     clearAnnotations: function(){
-        this.stopListening(dc.app.editor.annotationEditor, 'updateAnnotation', this.openGraphDialog);
-
         $.each(this.pointViewList, function(index, view) {
             view.clearAnnotation();
         });
@@ -190,6 +191,7 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
     },
 
 
+    //Trigger graph drawing to start graph creation
     createGraph: function() {
       var _thisView = this;
 
@@ -205,6 +207,11 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
       );
     },
 
+
+    //Save graph data
+    saveGraph: function(anno_data) {
+      this.model.save_graph(anno_data.graph_json);
+    },
 
     //Clone 'anno', replacing AnnotationView 'replace'
     replacePoint: function(anno, replace) {
