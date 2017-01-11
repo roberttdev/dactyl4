@@ -5,7 +5,7 @@ class RegenerateThumbnails < ActiveRecord::Migration
     # wait for a second for CloudCrowd to come online.
     sleep 2
     ids = Document.all.pluck('id')
-    RestClient.post(DC_CONFIG['cloud_crowd_server'] + '/jobs', {:job => {
+    RestClient.post(DC::CONFIG['cloud_crowd_server'] + '/jobs', {:job => {
       'action'  => 'regenerate_thumbnails',
       'inputs'  => ids
     }.to_json})
