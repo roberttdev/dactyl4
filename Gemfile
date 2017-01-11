@@ -8,6 +8,7 @@ gem 'bcrypt',                 '~> 3.1.1', :require => 'bcrypt'
 gem 'rubyzip',                '~> 1.1.0' #0.9.9'
 gem 'aws-sdk',                '~> 1.30', :require => 'aws' #11.1'
 gem 'pg',                     '~> 0.17'
+gem 'unicorn'
 
 gem 'closure-compiler'
 gem 'docsplit',               '>= 0.6.4'

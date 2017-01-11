@@ -3,7 +3,7 @@ class SwitchOverToSolrAltogether < ActiveRecord::Migration
 
   def self.up
     # Index with Solr.
-    Page.find_in_batches(:conditions => ['true']) do |pages|
+    Page.find_in_batches() do |pages|
       Sunspot.index(pages)
     end
 

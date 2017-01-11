@@ -1,7 +1,5 @@
 class RemoveRoleAndOrganizationFromAccounts < ActiveRecord::Migration
   def self.up
-    remove_index :accounts, 'organization_id'
-    
     remove_column :accounts, 'role'
     remove_column :accounts, 'organization_id'
   end
