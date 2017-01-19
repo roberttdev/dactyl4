@@ -1,7 +1,7 @@
-defaults: &defaults 
+defaults: &defaults
   cloud_crowd_server:	http://localhost:8080
   wpd_server:           http://localhost:1235
-  server_root:          local.documentcloud.org
+  server_root:          local.documentcloud.org:3000
   aws_zone:             us-east-1c
   preconfigured_ami_id: ami-11a4b57801aae468
   ssl_on:               true

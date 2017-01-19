@@ -38,7 +38,6 @@ sudo sh -c 'echo deb https://oss-binaries.phusionpassenger.com/apt/passenger tru
 sudo apt-get update
 sudo apt-get install -y nginx-extras passenger
 sudo cp /srv/www/documentcloud/config/server/files/nginx/nginx.conf /etc/nginx
-sudo cp /srv/www/documentcloud/config/server/files/nginx/$1.conf /etc/nginx/sites-enabled/dactyl.conf
 sudo service nginx restart
 
 #Set proper permissions for Nginx
@@ -73,8 +72,12 @@ rake rails:update:bin
 #Create default DACTYL group/admin
 bin/rails runner -e $1 config/server/scripts/fresh_user_setup.rb
 
-#Minify code (if production)
+#Production Only..
 if [[ "$1" == "production" ]]; then
+    #Have Nginx be web server (instead of using Rails debug server)
+    sudo cp /srv/www/documentcloud/config/server/files/nginx/$1.conf /etc/nginx/sites-enabled/dactyl.conf
+
+    #Minify JS
     bundle exec rake production app:jammit
 fi
 
