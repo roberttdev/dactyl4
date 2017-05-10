@@ -59,14 +59,13 @@ dc.model.Group = Backbone.Model.extend({
 
 
     //Save Graph:  Add/update graph data below this group
-    save_graph: function(graph_json, success){
+    save_graph: function(params, success){
       $.ajax({
-        url         : this.urlRoot + '/' + this.id + '/create_graph',
+        url         : this.urlRoot + '/' + this.id + '/graph_data',
         contentType : 'application/json; charset=utf-8',
         type        : 'post',
-        data        : {'graph_json': graph_json},
-        success     : success,
-        error       : error
+        data        : JSON.stringify(params),
+        success     : success
       })
     }
 });

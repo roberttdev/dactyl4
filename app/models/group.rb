@@ -21,6 +21,8 @@ class Group < ActiveRecord::Base
   belongs_to :group_template, :foreign_key => 'template_id'
   belongs_to :document
 
+  has_many :graph_groups, :dependent => :destroy
+  has_many :graphs, :through => :graph_groups
   has_many :annotation_groups, :dependent => :destroy
   has_many :annotations, :through => :annotation_groups
 
@@ -59,7 +61,9 @@ class Group < ActiveRecord::Base
 
 
   def attributes
-    merge_hash = {}
+    merge_hash = {
+        'is_graph_group' => nil
+    }
     if document.in_qa? || document.in_supp_qa? || document.in_supp_de? || document.in_supp_qc?
       merge_hash = {
         'approved' => nil,
@@ -90,6 +94,10 @@ class Group < ActiveRecord::Base
       anc_hash = split[1]
     end
     ordered
+  end
+
+  def is_graph_group
+    return !self.graph_groups.nil?
   end
 
   def approved

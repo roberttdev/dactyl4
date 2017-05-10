@@ -1,5 +1,6 @@
 dc.ui.BaseAnnotationListing = Backbone.View.extend({
 
+  showDelete:       true,
   waitingForClone:  false,
   showEdit:         false,
   showApprove:      false,
@@ -19,6 +20,12 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
     _.bindAll(this, 'render', 'confirmDelete', 'deletePoint');
 
     this.group_id = options.group_id;
+
+    //Hide all if graph data
+    if( this.model.get('is_graph_data') ){
+        this.showGraphData = true;
+        this.showDelete = false;
+    }
 
     this._mainJST = JST['annotation_listing'];
   },
@@ -40,6 +47,8 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
         content:        _content
     }));
 
+    if( !this.showGraphData ){ this.$('.graph_data').hide(); }
+    if( !this.showDelete ){ this.$('.delete_item').hide(); }
     if( !this.showApprove ){ this.$('.approve_item').hide(); }
     if( !this.showReject ){ this.$('.reject_item').hide(); }
     if( !this.showNote ){ this.$('.point_note').hide(); }

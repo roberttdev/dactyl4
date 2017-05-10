@@ -1,6 +1,7 @@
 dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
 
   AnnoClass: FuncUtils.stringToFunction("dc.ui.DEAnnotationListing"),
+  GroupClass: FuncUtils.stringToFunction("dc.ui.DEGroupListing"),
 
 
   initialize: function(options) {

@@ -12,11 +12,11 @@ _.extend(dc.app.editor, {
     this.options = options;
     _.bindAll(this, 'closeAllEditors', 'confirmStateChange');
     this.templateList = options.templateList;
-    this.wpd_server = options.wpd_server;
     this.flattenTemplateList(options.templateList);
     dc.app.hotkeys.initialize();
     this.createSubViews();
     this.renderSubViews();
+    currentDocument.api.setWPDLink(options.wpd_server);
     currentDocument.api.onChangeState(this.closeAllEditors);
   },
 

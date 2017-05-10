@@ -130,6 +130,7 @@
   - at: at
   - back: Back
   - bad_data_key: "%s cannot be used as a key"
+  - base_graph_error: You cannot add a graph to the base group.  Please select a group to add the graph to.
   - before_continue: Before continuing, you can take a moment to %s
   - black: black
   - blank_field_error: A field is blank.  Please enter a value or delete it.

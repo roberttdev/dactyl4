@@ -42,6 +42,7 @@ class Document < ActiveRecord::Base
   has_many :entity_dates,         :dependent   => :destroy
   has_many :sections,             :dependent   => :destroy
   has_many :groups,               :dependent   => :destroy
+  has_many :graphs,               :dependent   => :destroy
   has_many :annotations,          :dependent   => :destroy
   has_many :remote_urls,          :dependent   => :destroy
   has_many :project_memberships,  :dependent   => :destroy
@@ -50,6 +51,7 @@ class Document < ActiveRecord::Base
   has_many :reviews,              :dependent   => :destroy
 
   has_many :annotation_groups,    through: :annotations
+  has_many :graph_groups,         through: :graphs
 
   has_many :reviewer_projects,     -> { where( :hidden => true) },
                                      :through     => :project_memberships,
@@ -1349,6 +1351,9 @@ class Document < ActiveRecord::Base
       else
         doc['annotations'] = ordered_annotations(options[:account]).map {|a| a.canonical({:account => options[:account]})}
       end
+
+      #Render graphs like annotations
+      doc['annotations'] = doc['annotations'].concat( self.graphs.map {|g| g.anno_view_json() } )
     end
     if self.mentions
       doc['mentions']         = self.mentions

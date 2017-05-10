@@ -83,7 +83,7 @@ DC::Application.routes.draw do
   put '/documents/:document_id/groups/:group_id/annotations' => 'annotations#bulk_update'
 
   #Graph Data Submit
-  put '/documents/:document_id/groups/:group_id/graph_data' => 'groups#create_graph_data'
+  post '/documents/:document_id/groups/:group_id/graph_data' => 'groups#import_graph_data'
 
   #Un-QC
   put '/groups/:group_id/annotations/:id/unapprove' => 'annotations#unapprove'

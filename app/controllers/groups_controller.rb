@@ -109,9 +109,65 @@ class GroupsController < ApplicationController
     json to_clone.clone(params[:parent_id], current_account.id, false, !in_qc, doc.iteration, in_qc, false)
   end
 
-  def create_graph_data
-    parent_id = params[:group_id]
-    graph_data = params[:graph_data]
+  def import_graph_data
+    doc = Document.find(params[:document_id])
+    parent_group = Group.find(params[:group_id])
+
+    graph = Graph.create({
+        :page_number => params[:page_number],
+        :location => params[:location][:image],
+        :iteration => doc.iteration,
+        :graph_json => params[:graph_json],
+        :account_id => current_account.id,
+        :document_id => doc.id
+    })
+
+    GraphGroup.create({
+        :graph_id => graph.id,
+        :group_id => parent_group.id,
+        :iteration => doc.iteration,
+        :created_by => current_account.id
+    })
+
+    graph_data = JSON.parse(params[:graph_json])
+    variableIds = graph_data['wpd']['dataSeries'][0]['variableIds']
+    graphPoints = graph_data['wpd']['dataSeries'][0]['data']
+    variableNames = []
+
+    for i in 0..(variableIds.length-1)
+      variableNames[i] = TemplateField.find(variableIds[i]).field_name
+    end
+
+    graphPoints.each do |point|
+       group = Group.create({
+          :template_id => 1,
+          :parent_id => parent_group.id,
+          :document_id => doc.id,
+          :account_id => current_account.id,
+          :iteration => doc.iteration,
+          :is_graph_data => true,
+          :name => 'Measurement'
+       })
+
+       for i in 0..(point['value'].length-1)
+         anno = Annotation.create({
+            :iteration => doc.iteration,
+            :account_id => current_account.id,
+            :document_id => doc.id,
+            :templated => true,
+            :is_graph_data => true,
+            :title => variableNames[i],
+            :content => point['value'][i]
+         })
+
+         AnnotationGroup.create({
+             :annotation_id => anno.id,
+             :group_id => group.id,
+             :created_by => current_account.id,
+             :iteration => doc.iteration
+         })
+       end
+    end
 
     json({'temp' => true})
   end

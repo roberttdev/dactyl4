@@ -1,6 +1,7 @@
 javascript_compressor: closure
 template_function: _.template
 embed_assets: datauri
+compress_assets: off
 
 javascripts:
   core:
@@ -24,7 +25,12 @@ javascripts:
     - public/javascripts/viewer
   editor:
     - public/javascripts/editor/editor_toolbar.js
+    - public/javascripts/editor/base_annotation_listing.js
+    - public/javascripts/editor/base_group_listing.js
     - public/javascripts/editor/*.js
+    - public/javascripts/editor/de/de_annotation_listing.js
+    - public/javascripts/editor/de/de_group_listing.js
+    - public/javascripts/editor/de/*.js
     - public/javascripts/editor/**/*.js
     - app/views/jst/editor/*.jst
   search_embed:

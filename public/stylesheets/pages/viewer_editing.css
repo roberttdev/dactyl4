@@ -241,6 +241,11 @@
         cursor: pointer;
     }
 
+    .graph_data {
+        background: url(/images/embed/icons/graph.png) no-repeat center center;
+        cursor: default;
+    }
+
     .clone_item {
         background: url(/images/embed/icons/copy.png) no-repeat center center;
     }

@@ -4,12 +4,12 @@ defaults: &defaults
   server_root:          local.documentcloud.org:3000
   aws_zone:             us-east-1c
   preconfigured_ami_id: ami-11a4b57801aae468
-  ssl_on:               true
+  ssl_on:               false
 
 development:
   <<: *defaults
   ssl_on:             false
-  wpd_server:         http://local.documentcloud.org:1235
+  wpd_server:         http://local.documentcloud.org:1235/dev.html
   asset_root:         "//s3.amazonaws.com/dactyl-docs-dev"
 
 staging:

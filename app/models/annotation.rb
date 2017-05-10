@@ -147,6 +147,8 @@ class Annotation < ActiveRecord::Base
     data['account_id'] = account_id
     data['iteration'] = iteration
     data['match_id'] = match_id
+    data['is_graph_data'] = is_graph_data
+    data['anno_type'] = 'annotation'
 
     #If account ID passed in, determine whether it 'owns' this note currently (can edit, generally)
     data['owns_note'] = opts[:account] && (opts[:account].id == account_id) && (iteration == document.iteration)
@@ -183,7 +185,8 @@ class Annotation < ActiveRecord::Base
       'qa_reject_note'      => (anno_group.association_cache.keys.include?(:annotation_note) || anno_group.association_cache.keys.include?(:supp_de_note)) ? anno_group.qa_reject_note : nil,
       'templated'           => templated,
       'match_id'            => match_id,
-      'match_strength'      => match_strength
+      'match_strength'      => match_strength,
+      'is_graph_data'       => is_graph_data
     })
   end
 

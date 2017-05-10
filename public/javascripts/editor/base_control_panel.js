@@ -7,6 +7,8 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
     //****Commonly overridden properties
     //AnnoClass: class of annotation to create
     AnnoClass:            FuncUtils.stringToFunction("dc.ui.BaseAnnotationListing"),
+    //GroupClass: class of annotation to create
+    GroupClass:           FuncUtils.stringToFunction("dc.ui.BaseGroupListing"),
     //groupParam: params to pass when reloading data
     reloadParams:           {},
 
@@ -28,6 +30,8 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
     initialize : function(options) {
         var docModel = this._getDocumentModel();
         this.viewer         = currentDocument;
+
+        _.bindAll(this, 'reloadCurrent');
 
         //If standard opening process, refresh opener to update list
         if(window.opener){ window.opener.location.reload(); }
@@ -60,7 +64,7 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
 
     //Initialize group view and store.  Allow for listening of reload requests
     addGroup: function(options) {
-        var _view = new dc.ui.GroupListing(options);
+        var _view = new this.GroupClass(options);
         this.groupViewList.push(_view);
         _view.render();
         if(options['showDelete'] != false){ this.listenTo(_view, 'groupDeleted', function(group){ this.handleGroupDelete(group) }); }
@@ -195,22 +199,28 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
     createGraph: function() {
       var _thisView = this;
 
-      _thisView.clearAnnotations();
+      //Don't allow if this is the base group
+      if( this.model.get('base') ){
+          dc.ui.Dialog.alert(_.t('base_graph_error'));
+      }else{
+          _thisView.clearAnnotations();
 
-      //Trigger annotation for graph
-      dc.app.editor.annotationEditor.open(
-          this.model,
-          this.group_id,
-          false,
-          function() {},
-          'graph'
-      );
+          //Trigger annotation for graph
+          dc.app.editor.annotationEditor.open(
+              this.model,
+              this.group_id,
+              false,
+              function() {},
+              'graph'
+          );
+      }
+
     },
 
 
     //Save graph data
     saveGraph: function(anno_data) {
-      this.model.save_graph(anno_data.graph_json);
+      this.model.save_graph(anno_data, this.reloadCurrent);
     },
 
     //Clone 'anno', replacing AnnotationView 'replace'
