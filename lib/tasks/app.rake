@@ -38,7 +38,7 @@ namespace :app do
   desc "Repackage static assets"
   task :jammit do
     config = YAML.load_file("#{Rails.root}/config/document_cloud.yml")[RAILS_ENV]
-    sh "sudo su ubuntu -c \"jammit -u http://#{config['server_root']}\""
+    sh "jammit -u http://#{config['server_root']}"
   end
 
   desc "Publish all documents with expired publish_at timestamps"
