@@ -77,6 +77,45 @@ module DC
         end
       end
 
+      #Takes in web reference to image and parameters to create excerpt, and creates excerpt file
+      def create_graph_image(document, img_name, w_ratio, h_ratio, x_ratio, y_ratio)
+        ensure_directory(document.graphs_path)
+
+        orig_image = "#{document.pages_path}/#{img_name}"
+
+        # Get weight/height of image
+        result = `gm identify -format "%w,%h" #{local(orig_image)} 2>&1`.chomp
+        if $? != 0
+          raise StandardError, result
+        else
+          dims = result.split(",")
+        end
+
+        #Calculate dimensions of crop
+        width = (w_ratio.to_f * dims[0].to_i).round
+        height = (h_ratio.to_f * dims[1].to_i).round
+        x = (x_ratio.to_f * dims[0].to_i).round
+        y = (y_ratio.to_f * dims[1].to_i).round
+
+        #Calculate unique filename
+        file_header = img_name.split('-large')[0]
+        graph_image = "#{document.graphs_path}/#{file_header}"
+
+        i = 1
+        output_file = "#{graph_image}-graph#{i}.gif"
+        while File.exist?(local(output_file))
+          i = i + 1
+          output_file = "#{graph_image}-graph#{i}.gif"
+        end
+
+        result = `gm convert -crop #{width}x#{height}+#{x}+#{y} #{local(orig_image)} #{local(output_file)} 2>&1`
+        if $? != 0
+          raise StandardError, result
+        else
+          return output_file
+        end
+      end
+
       def delete_page_images(document, page_number)
         Page::IMAGE_SIZES.keys.each do |size|
           FileUtils.rm(local(document.page_image_path(page_number, size)))

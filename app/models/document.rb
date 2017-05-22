@@ -465,6 +465,10 @@ class Document < ActiveRecord::Base
     File.join(path, 'pages')
   end
 
+  def graphs_path
+    File.join(path, 'graphs')
+  end
+
   def annotations_path
     File.join(path, 'annotations')
   end
@@ -606,7 +610,7 @@ class Document < ActiveRecord::Base
   def page_image_url_template(opts={})
     tmpl = if opts[:local]
              File.join(slug, page_image_template )
-           elsif self.public? || Rails.env.development?
+           elsif self.public?
              public_page_image_template
            else
              private_page_image_template

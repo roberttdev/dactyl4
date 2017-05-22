@@ -242,6 +242,11 @@ ww
     redirect_to(current_page.authorized_image_url(size))
   end
 
+  def send_graph_image
+    response.headers["Cache-Control"] = "no-store"
+    redirect_to(DC::Store::AssetStore.new.authorized_url(Document.find(params[:id]).graphs_path + '/' + params[:page_name] + '.gif'))
+  end
+
   def send_full_text
     return not_found unless current_document(true)
     redirect_to current_document.full_text_url(:direct)

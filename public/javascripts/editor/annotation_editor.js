@@ -297,7 +297,8 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
   },
 
   saveGraph : function(params) {
-    this.trigger('saveGraph', params);
+    _api = this;
+    currentDocument.api.cleanUp(function(){ _api.trigger('saveGraph', params); });
   },
 
   updateAnnotation : function(params) {
