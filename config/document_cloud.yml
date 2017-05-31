@@ -16,12 +16,14 @@ staging:
   <<: *defaults
   cloud_crowd_server: http://localhost:8080
   server_root:        dactyl-test.denney.ws
+  wpd_server:         http://dactyl-test.denney.ws:1235
   asset_root:         "//s3.amazonaws.com/dactyl-docs-qa"
 
 production:
   <<: *defaults
   cloud_crowd_server: http://localhost:8080
   server_root:        dactyl.denney.ws
+  wpd_server:         http://dactyl.denney.ws:1235
   asset_root:         "//s3.amazonaws.com/dactyl-docs"
   db_volume_id:       vol-d4c305bd
 
