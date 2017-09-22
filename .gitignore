@@ -29,4 +29,6 @@ public/search
 vendor/solr-4.0.0/solr-webapp/webapp/*
 .bundle
 .env
+build
+
 

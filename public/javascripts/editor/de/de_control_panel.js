@@ -97,43 +97,57 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
   handleAnnotationSelect: function(anno){
       var _deView = this;
       //If previously saved point (has ID assigned)..
-      if( anno.id ){
+      if( anno.id ) {
           //If a data point is waiting for a clone response, pass response, then create copy
-          var _view = _.find(this.pointViewList, function(view){ return view.waitingForClone; });
-          if( _view ) {
+          var _view = _.find(this.pointViewList, function (view) {
+              return view.waitingForClone;
+          });
+          if (_view) {
               //First check that another anno with the same title doesn't exist; if so, prompt
-              var _dupeView = _.find(this.pointViewList, function(view){ return (anno.title == view.model.get('title')) && !view.waitingForClone });
-              if( _dupeView ){
-                  dc.ui.Dialog.confirm(_.t('duplicate_point_error'), function(){
-                      if( _dupeView.model.id != anno.id ) {
-                        //If not replacing an anno with the exact same anno, delete old and replace with new
-                        _dupeView.deletePoint();
-                        _deView.replacePoint(anno, _view);
-                        dc.app.editor.annotationEditor.syncGroupAssociation(anno.id, _deView.model.id);
-                      }else{
-                        //If the copy request is just the same anno again, just delete the empty anno
-                        _view.deletePoint();
+              var _dupeView = _.find(this.pointViewList, function (view) {
+                  return (anno.title == view.model.get('title')) && !view.waitingForClone
+              });
+              if (_dupeView) {
+                  dc.ui.Dialog.confirm(_.t('duplicate_point_error'), function () {
+                      if (_dupeView.model.id != anno.id) {
+                          //If not replacing an anno with the exact same anno, delete old and replace with new
+                          _dupeView.deletePoint();
+                          _deView.replacePoint(anno, _view);
+                          dc.app.editor.annotationEditor.syncGroupAssociation(anno.id, _deView.model.id);
+                      } else {
+                          //If the copy request is just the same anno again, just delete the empty anno
+                          _view.deletePoint();
                       }
                       return true;
-                  },{
-                      onCancel: function(){ dc.app.editor.annotationEditor.hideActiveAnnotations(); }
+                  }, {
+                      onCancel: function () {
+                          dc.app.editor.annotationEditor.hideActiveAnnotations();
+                      }
                   });
-              }else {
+              } else {
                   _deView.replacePoint(anno, _view);
                   dc.app.editor.annotationEditor.syncGroupAssociation(anno.id, this.model.id);
               }
-          }else{
+          } else {
               //If the group selected is this group, find and highlight point; otherwise save and reload proper group
-              if( anno.groups[0].group_id == _deView.model.id ) {
-                  _view = _.find(this.pointViewList, function(view){ return view.model.id == anno.id; });
-                  if( _view ){ _view.highlight(); }
-              }else {
+              if (anno.groups[0].group_id == _deView.model.id) {
+                  _view = _.find(this.pointViewList, function (view) {
+                      return view.model.id == anno.id;
+                  });
+                  if (_view) {
+                      _view.highlight();
+                  }
+              } else {
                   this.save(function () {
                       _deView.reloadPoints(anno.groups[0].group_id, anno.id);
                   });
               }
           }
-      }else{
+      }else if( anno.graph_json ){
+          //If there is graph JSON, this is a graph.  Reload to graph's base group
+          _deView.reloadPoints(anno.groups[0].group_id);
+      }
+      else{
           _view = _.find(this.pointViewList, function(view){ return view.model.get('location') == anno.location; });
           _view.highlight(anno);
       }

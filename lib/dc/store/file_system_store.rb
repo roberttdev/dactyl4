@@ -108,7 +108,7 @@ module DC
           output_file = "#{graph_image}-graph#{i}.gif"
         end
 
-        result = `gm convert -crop #{width}x#{height}+#{x}+#{y} #{local(orig_image)} #{local(output_file)} 2>&1`
+        result = `gm convert -crop #{width}x#{height}+#{x}+#{y} #{local(orig_image)} +repage #{local(output_file)} 2>&1`
         if $? != 0
           raise StandardError, result
         else

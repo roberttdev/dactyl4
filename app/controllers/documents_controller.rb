@@ -388,7 +388,6 @@ ww
     @template_list =  GroupTemplate.includes(:subtemplates).order(:name).all()
     @template_list = @template_list.to_json(:include => :subtemplates)
 
-    @wpd_server = DC::CONFIG['wpd_server']
   end
 
   def date_requested?

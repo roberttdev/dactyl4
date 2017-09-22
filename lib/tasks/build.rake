@@ -39,9 +39,17 @@ namespace :build do
   end
 
   # Pull in a new build of the Document Viewer.
-  task :viewer do
+  task :viewer, :compile_wpd do |t, args|
 
+    if args[:compile_wpd] != 'false' then
+      #Compile WPD
+      Dir.chdir '../WebPlotDigitizer'
+      sh "bash build.sh"
+    end
+
+    #Pull WPD into DV
     Dir.chdir '../document-viewer'
+    sh "sh pull_wpd.sh"
 
     FileUtils.rm_r('build') if File.exists?('build')
     sh "jammit -f -o build"
@@ -58,6 +66,7 @@ namespace :build do
     FileUtils.cp_r('public/images', 'build/images')
 
     # Export back to DocumentCloud
+    FileUtils.cp_r "public/javascripts/WPD", "../documentcloud/public/viewer"
     FileUtils.cp_r('build/images', '../documentcloud/public/viewer')
     `cat build/viewer.js build/templates.js > build/viewer_new.js`
     FileUtils.rm_r(['build/viewer.js', 'build/templates.js'])
@@ -68,6 +77,16 @@ namespace :build do
     end
     FileUtils.rm_r('build') if File.exists?('build')
 
+  end
+
+  task :graph do
+    Dir.chdir '../WebPlotDigitizer'
+
+    FileUtils.rm_r('combined.js') if File.exists?('combined.js')
+    FileUtils.rm_r('combined-compiled.js') if File.exists?('combined-compiled.js')
+    sh "bash build.sh"
+    FileUtils.cp('combined-compiled.js', '../documentcloud/public/graph/combined-compiled.js')
+    FileUtils.cp('index.html', '../documentcloud/public/graph/index.html')
   end
 
   [:search_embed, :note_embed].each do |embed|

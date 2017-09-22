@@ -18,7 +18,8 @@ class Graph < ActiveRecord::Base
         'annotation_group_id' => graph_group.id,
         'is_graph_data'       => true,
         'graph_json'          => graph_json,
-        'anno_type'           => 'graph'
+        'anno_type'           => 'graph',
+        'groups'              => [{:group_id => graph_group.group_id}]
     }
   end
 end

@@ -1,6 +1,5 @@
 defaults: &defaults
   cloud_crowd_server:	http://localhost:8080
-  wpd_server:           http://localhost:1235
   server_root:          local.documentcloud.org:3000
   aws_zone:             us-east-1c
   preconfigured_ami_id: ami-11a4b57801aae468
@@ -9,21 +8,18 @@ defaults: &defaults
 development:
   <<: *defaults
   ssl_on:             false
-  wpd_server:         http://local.documentcloud.org:1235/dev.html
   asset_root:         "//s3.amazonaws.com/dactyl-docs-dev"
 
 staging:
   <<: *defaults
   cloud_crowd_server: http://localhost:8080
   server_root:        dactyl-test.denney.ws
-  wpd_server:         http://dactyl-test.denney.ws:1235
   asset_root:         "//s3.amazonaws.com/dactyl-docs-qa"
 
 production:
   <<: *defaults
   cloud_crowd_server: http://localhost:8080
   server_root:        dactyl.denney.ws
-  wpd_server:         http://dactyl.denney.ws:1235
   asset_root:         "//s3.amazonaws.com/dactyl-docs"
   db_volume_id:       vol-d4c305bd
 

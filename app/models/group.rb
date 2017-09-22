@@ -97,7 +97,7 @@ class Group < ActiveRecord::Base
   end
 
   def is_graph_group
-    return !self.graph_groups.nil?
+    return !self.graph_groups.count == 0
   end
 
   def approved

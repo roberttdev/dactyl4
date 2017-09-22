@@ -273,7 +273,7 @@ textarea.text_area {
   font-size: 11px;
   line-height: 11px;
   padding: 5px 10px 6px;
-  height: 11px;
+  height: 10px; /* Changed from 11 to eliminate white line under search/graph buttons */
   text-align: center;
   -webkit-border-radius: 3px; -moz-border-radius: 3px; border-radius: 3px;
   box-shadow: 0 1px 2px #bababa; -webkit-box-shadow: 0 1px 2px #bababa; -moz-box-shadow: 0 1px 2px #bababa;

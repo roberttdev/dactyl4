@@ -16,7 +16,6 @@ _.extend(dc.app.editor, {
     dc.app.hotkeys.initialize();
     this.createSubViews();
     this.renderSubViews();
-    currentDocument.api.setWPDLink(options.wpd_server);
     currentDocument.api.onChangeState(this.closeAllEditors);
   },
 
