@@ -13,6 +13,7 @@ db/sphinx
 raw
 /bin
 /secrets
+public/assets
 public/extraction
 public/docs
 public/asset_store
