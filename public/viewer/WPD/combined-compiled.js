@@ -866,11 +866,11 @@ wpd.DataSeries = (function () {
             dataPoints.splice(loc);
         };
 
-        this.addPixel = function(pxi, pyi, mdata) {
-            var pointData = {x: pxi, y: pyi, metadata: mdata};
+        this.addPixel = function(pxi, pyi, mdata, extraVars) {
+            var pointData = {x: pxi, y: pyi, metadata: mdata, extraVars: extraVars};
 
-            //Need to prompt for extra variable values if extra variables
-            if( this.variableIds.length > 2 ){
+            //Need to prompt for extra variable values if extra variables (and not repopulating from json load)
+            if( !extraVars && this.variableIds.length > 2 ){
                 wpd.popup.show('extra-variable-prompt');
                 $('#pointData').val(JSON.stringify(pointData));
             }else{
@@ -3559,6 +3559,8 @@ wpd.dataSeriesManagement = (function () {
     var lockedVars = null;
 
     function manage() {
+        if (lockedVars == null) { lockedVars = ['X Value','Y Value']; }
+
         if(!wpd.appData.isAligned()) {
             wpd.messagePopup.show(wpd.gettext('manage-datasets'), wpd.gettext('manage-datasets-text'));
         } else {
@@ -3630,7 +3632,7 @@ wpd.dataSeriesManagement = (function () {
     }
 
     function viewData() {
-        close();
+        validateAndClose();
         wpd.dataTable.showTable();
     }
 
@@ -3685,9 +3687,10 @@ wpd.dataSeriesManagement = (function () {
     function populatePointFields() {
         //If field list is blank, Populate X and Y values
         if( wpd.dataSeriesManagement.activeDataSeries.variableNames.length == 0 ) {
-            lockedVars = ['X Value','Y Value'];
             addPointField();
             addPointField();
+        }else{
+            redrawPointFields();
         }
     }
 
@@ -3890,7 +3893,7 @@ wpd.dataTable = (function () {
 
             // Sorting
             if(dataCache.isFieldSortable[i]) {
-                sortingHTML += '<option value="' + dataCache.fields[i] + '">' + dataCache.fields[i] + '</option>';
+                sortingHTML += '<option value="' + dataCache.fields[i] + '">' + dataCache.fields[i].substring(0,10) + '</option>';
             }
 
             // Date formatting
@@ -7760,7 +7763,7 @@ wpd.ManualSelectionTool = (function () {
 
             } else {
 
-                activeDataSeries.addPixel(imagePos.x, imagePos.y);
+                activeDataSeries.addPixel(imagePos.x, imagePos.y, null);
                 wpd.graphicsHelper.drawPoint(imagePos, "rgb(200,0,0)");
 
             }
@@ -9421,11 +9424,15 @@ wpd.saveResume = (function () {
            plotData.dataSeriesColl[i] = new wpd.DataSeries();
            currDataset = plotData.dataSeriesColl[i];
            currDataset.name = ds.name;
+
+           currDataset.variableIds = ds.variableIds;
+           currDataset.variableNames = ds.variableNames;
+
            if(ds.metadataKeys != null) {
                currDataset.setMetadataKeys(ds.metadataKeys);
            }
            for(j = 0; j < ds.data.length; j++) {
-               currDataset.addPixel(ds.data[j].x, ds.data[j].y, ds.data[j].metadata);
+               currDataset.addPixel(ds.data[j].x, ds.data[j].y, ds.data[j].metadata, ds.data[j].extraVars);
            }
        }
 

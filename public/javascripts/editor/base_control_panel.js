@@ -200,15 +200,17 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
       var _thisView = this;
 
       //Don't allow if this is the base group
-      if( this.model.get('base') ){
+      if( this.model.get('base') ) {
           dc.ui.Dialog.alert(_.t('base_graph_error'));
+      }else if( this.model.get('is_graph_data') || this.model.get('is_graph_group') ) {
+          dc.ui.Dialog.alert(_.t('multiple_graphs_error'));
       }else{
           _thisView.clearAnnotations();
 
           //Trigger annotation for graph
           dc.app.editor.annotationEditor.open(
               this.model,
-              this.group_id,
+              this.model.id,
               false,
               function() {},
               'graph'

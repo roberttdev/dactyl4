@@ -146,11 +146,11 @@ Stroke Width <input type="range" id="eraseThickness" min="1" max="150" value="20
             </div>
 
              <div style="display:inline-block; position: absolute; top: 5px; right: 290px;" >
-                <button type="button" title="Zoom in" onclick="wpd.graphicsWidget.zoomIn();" style="border:none; width:20px;">+</button>
-                <button type="button" title="Zoom out" onclick="wpd.graphicsWidget.zoomOut();" style="border:none; width:20px;">-</button>
-                <button type="button" title="View actual size" onclick="wpd.graphicsWidget.zoom100perc();" style="border:none;">100%</button>
-                <button type="button" title="Fit to graphics area" onclick="wpd.graphicsWidget.zoomFit();" style="border:none;">Fit</button>
-                <button title="Toggle extended crosshair" onclick="wpd.graphicsWidget.toggleExtendedCrosshairBtn();" style="border:none; width:20px; background-image: url('/viewer/WPD/images/crosshair.png'); background-repeat: no-repeat; background-position: center;" id="extended-crosshair-btn">&nbsp;</button>
+                <button type="button" title="Zoom in" onclick="wpd.graphicsWidget.zoomIn();" style="border:none; min-width:20px;">+</button>
+                <button type="button" title="Zoom out" onclick="wpd.graphicsWidget.zoomOut();" style="border:none; min-width:20px;">-</button>
+                <button type="button" title="View actual size" onclick="wpd.graphicsWidget.zoom100perc();" style="border:none;min-width:20px;">100%</button>
+                <button type="button" title="Fit to graphics area" onclick="wpd.graphicsWidget.zoomFit();" style="border:none;min-width:20px;">Fit</button>
+                <button title="Toggle extended crosshair" onclick="wpd.graphicsWidget.toggleExtendedCrosshairBtn();" style="border:none;min-width:20px;background-image: url('/viewer/WPD/images/crosshair.png'); background-repeat: no-repeat; background-position: center;" id="extended-crosshair-btn">&nbsp;</button>
             </div>
 
         </div>
@@ -549,15 +549,15 @@ Stroke Width <input type="range" id="eraseThickness" min="1" max="150" value="20
 	</div>
 
     <!-- View Data -->
-	<div id="csvWindow" class="popup" style="height: 480px;">
+	<div id="csvWindow" class="popup" style="height: 430px;">
 	<div class="popupheading">Acquired Data</div>
-    <table style="width:780px;">
+    <table>
     <tr>
     <td>
     <!-- left panel -->
     <span id="data-table-dataset-control"><p>Dataset: <select id="data-table-dataset-list" onchange="wpd.dataTable.changeDataset();"></select></p></span>
     <p align="center">Variables: <span id="dataVariables"></span></p>
-	<p align="center"><textarea id="digitizedDataTable" style="width: 480px; height: 250px;"></textarea></p>
+	<p align="center"><textarea id="digitizedDataTable" style="width: 460px; height: 250px;"></textarea></p>
 	<p align="center">
 		<input type="button" value="Select All" onclick="wpd.dataTable.selectAll();"/>
         <input type="button" value="Download .CSV" onclick="wpd.dataTable.generateCSV();"/>
@@ -567,7 +567,7 @@ Stroke Width <input type="range" id="eraseThickness" min="1" max="150" value="20
 	<p align="center" class="footnote">*Plotly is a secure data analysis and graphing site with data sharing and access controls.</p>
 	<p align="center" class="footnote">Visit <a href="http://plot.ly" target="plotlyWebsite">http://plot.ly</a> for details.</p>
     </td>
-    <td valign="top" style="width:250px;">
+    <td valign="top" style="width:180px;">
     <!-- data side controls -->
     <p><b>Sort</b></p>
     <p class="leftIndent">Sort by: <select id="data-sort-variables" onchange="wpd.dataTable.reSort();"></select></p>

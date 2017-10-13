@@ -45,7 +45,7 @@
 
 .wpd-menu-header {
 	position: relative;
-	padding: 5px;
+	padding: 2px;
 	height: 18px;
 }
 
@@ -79,7 +79,7 @@ textarea { resize: none; }
 
 input[type="button"], button {
 	font-family: Verdana,sans-serif;
-    padding: 2px 3px 2px 3px;	
+    padding: 2px;
 	font-size: 13px;
 	font-weight:500;
 	color:black;

@@ -397,6 +397,7 @@
   - message: Message
   - modification: modification
   - modify_original_document: Modify Original Document
+  - multiple_graphs_error: You cannot create a graph inside of another graph's groups.
   - must_have_doc_title:
     - Please enter a title for the document
     - Please enter a title for all documents.
