@@ -27,6 +27,9 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
         this.showDelete = false;
     }
 
+    //Set reference to parent control panel
+    this.control_panel = options.control_panel;
+
     this._mainJST = JST['annotation_listing'];
   },
 
@@ -73,11 +76,9 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
     var _thisView = this;
     dc.app.editor.annotationEditor.close(function() {
       //If close succeeds, continue
-      dc.app.editor.annotationEditor.deleteAnnotation(_thisView.model, _thisView.group_id);
-      if( _thisView.model.get('annotation_group_id') ) {
-        //If this has been saved before, initiate deletion from DB.  Must check ag_id first, as this is the relevant one (as opposed to 'id' that Backbone uses, which is anno id to sync w/ DV)
-        _thisView.model.destroy({data: {group_id: _thisView.group_id}, processData: true});
-      }
+      dc.app.editor.annotationEditor.deleteHighlight(_thisView.model.get('id'), _thisView.model.get('highlight_id'));
+      _thisView.model.destroy({data: {group_id: _thisView.group_id}, processData: true});
+
       _thisView.trigger('pointDeleted', _thisView, _thisView.model.id);
       $(_thisView.el).remove();
       _thisView.setWaitingForClone(false);
@@ -98,10 +99,12 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
   //prepareForAnnotation: signal DV to create annotation and wait for response
   prepareForAnnotation : function() {
     var _thisView = this;
-    dc.app.editor.annotationEditor.open(this.model, this.group_id, this.showEdit, function(){
-      _thisView.openDocumentTab();
-      _thisView.highlight();
-    });
+    if( !_thisView.model.get('is_graph_data') ) {
+        dc.app.editor.annotationEditor.open(this.model, this.group_id, this.showEdit, function () {
+            _thisView.openDocumentTab();
+            _thisView.highlight();
+        });
+    }
   },
 
 
@@ -124,12 +127,30 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
     this.waitingForClone = turnOn;
   },
 
+  //Pass annotation data to DV, to sync
+  syncDV: function(success) {
+    dc.app.editor.annotationEditor.syncDV({
+        highlight_id: this.model.get('highlight_id'),
+        annotation_id: this.model.get('id'),
+        location: this.model.get('highlight').location
+    });
+  },
 
   //updateAnnotation: take results from Document Viewer and update annotation
   updateAnnotation: function(annoData) {
-    this.model.set(annoData);
-    this.clearAnnotation();
-    this.render();
+    var _thisView = this;
+
+    if( this.control_panel.isTitleDuplicated(annoData.title, this.model.get('id')) ){
+        dc.ui.Dialog.alert(_.t('duplicate_titles', annoData.title));
+    }else{
+        //If title is not duplicate of existing title, save
+        this.model.set(annoData);
+        this.model.save({},{success: function(){
+            _thisView.clearAnnotation();
+            _thisView.render();
+            _thisView.syncDV();
+        }});
+    }
   },
 
 

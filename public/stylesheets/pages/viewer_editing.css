@@ -551,7 +551,7 @@ body.redact_editing .DV-annotationRegion {
     position: relative;
   }
 
-  .annotation_notice {
+  .highlight_notice {
     background: yellow;
     text-align: center;
     display: none;

@@ -164,7 +164,7 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
 
     //model: Annotation, highlight: boolean
     addDataPoint: function(model, highlight) {
-        _view = new this.AnnoClass({model: model, group_id: this.model.id});
+        _view = new this.AnnoClass({model: model, group_id: this.model.id, control_panel: this});
         this.pointViewList.push(_view);
         _view.render();
 
@@ -177,7 +177,18 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
 
 
     createNewDataPoint: function() {
-        var _point = new dc.model.Annotation({group_id: this.model.id, document_id: this.model.get('document_id'), templated: false});
+        //First check for existing unsaved point; error if found
+        if( _.find(this.pointViewList, function(view){ return view.model.get('id') == null; }) ){
+            dc.ui.Dialog.alert(_.t('existing_unsaved_point'));
+            return false;
+        }
+
+        var _point = new dc.model.Annotation({
+            group_id: this.model.id,
+            document_id: this.model.get('document_id'),
+            templated: false,
+            is_graph_data: this.model.get('is_graph_data') || this.model.get('is_graph_group')
+        });
         this.model.annotations.add(_point);
         var _view = this.addDataPoint(_point);
         _view.prepareForAnnotation();
@@ -239,13 +250,6 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
     },
 
 
-    //Pass annotation data to DV, to sync
-    syncDV: function(success) {
-        dc.app.editor.annotationEditor.syncDV(this.model.annotations, this.model.id);
-        success.call();
-    },
-
-
     //React to request to Save & Exit
     saveAndExit: function(){
         this.save(window.close);
@@ -263,10 +267,10 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
         });
     },
 
-    //hasTitle: Returns whether an annotation with this title already exists
-    hasTitle: function(title) {
+    //isTitleDuplicated: Returns whether an annotation with this title already exists; allows an anno to be excepted
+    isTitleDuplicated: function(title, exceptionId) {
         for(var i=0; i < this.pointViewList.length; i++){
-            if( this.pointViewList[i].model.get('title') == title ){ return true; }
+            if( this.pointViewList[i].model.get('id') != exceptionId && this.pointViewList[i].model.get('title') == title ){ return true; }
         }
         return false;
     },

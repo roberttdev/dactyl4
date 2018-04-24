@@ -9769,469 +9769,40 @@ DV.model    = DV.model    || {};
 DV.img_slice_link = '/api/imagecrop';
 
 
-DV.AnnotationView = function(argHash){
-  this.LEFT_MARGIN      = 25;
-  this.SCROLLBAR_WIDTH  = 25;
-  this.id           = argHash.id;
-  this.page         = argHash.page;
-  this.viewer       = this.page.set.viewer;
-  this.model        = this.viewer.schema.getAnnotation(this.id);
-  this.position     = { top: argHash.top, left: argHash.left };
-  this.dimensions   = { width: argHash.width, height: argHash.height };
-  this.showWindowX  = 0;
-  this.pageEl       = argHash.pageEl;
-  this.annotationContainerEl = argHash.annotationContainerEl;
-  this.annotationEl = null;
-  this.type         = argHash.type;
-  this.state        = 'collapsed';
-  this.active       = false;
-  this.access       = argHash.access;
-  this.groupIndex   = 0;
-
-  var first_group = (this.model.anno_type == 'graph') ? null : this.model.groups[0].group_id;
-  this.renderedHTML = DV.jQuery(this.render(first_group));
-
-  this.remove();
-  this.add();
-
-  if( this.viewer.schema.recommendations ){ $('.DV-annotationTitleInput').autocomplete({source: this.viewer.schema.recommendations}); }
-
-  if(argHash.active){
-    this.viewer.helpers.setActiveAnnotationLimits(this);
-    this.viewer.events.resetTracker();
-    this.active = null;
-    // this.viewer.elements.window[0].scrollTop += this.annotationEl.offset().top;
-    this.show();
-    if (argHash.showEdit) this.showEdit();
-  }
+DV.AnnotationView = function(highlRef, annoModel){
+  this.highlight   = highlRef;
+  this.model       = annoModel;
 };
 
-// Render an annotation model to HTML, calculating all of the dimensions
-// and offsets, and running a template function.
-DV.AnnotationView.prototype.render = function(groupId){
-  var documentModel             = this.viewer.models.document;
-  var pageModel                 = this.viewer.models.pages;
-  var zoom                      = pageModel.zoomFactor();
-  var x1, x2, y1, y2;
+// Render an Annotation model to HTML
+// Receives an argHash with external data about the highlight container/context
+DV.AnnotationView.prototype.render = function(argHash){
+  var pageModel = this.highlight.viewer.models.pages;
 
-  var argHash = this.model;
-  var windowWidth = $('.DV-pages').width() - this.SCROLLBAR_WIDTH;
+  argHash.imageWidth          = pageModel.width;
+  argHash.imageHeight         = Math.round(pageModel.height * pageModel.zoomFactor());
+  argHash.author              = this.model.author || "";
+  argHash.author_organization = this.model.author_organization || "";
+  argHash.image               = pageModel.imageURL(argHash.page - 1);
+  argHash.imageTop            = argHash.top + 6;
+  argHash.title               = this.model.title;
+  argHash.text                = this.model.text;
 
-  argHash.anno_type               = this.model.anno_type;
-
-  y1                          = Math.round(argHash.y1 * zoom);
-  y2                          = Math.round(argHash.y2 * zoom);
-  if (x1 < this.LEFT_MARGIN) x1 = this.LEFT_MARGIN;
-  x1                          = Math.round(argHash.x1 * zoom);
-  x2                          = Math.round(argHash.x2 * zoom);
-
-  argHash.top                   = y1 - 5;
-  argHash.width                 = pageModel.width > $('.DV-paper').width() ? ($('.DV-paper').width() - this.LEFT_MARGIN - 5) : pageModel.width;
-  argHash.leftMargin            = 0;
-
-  //If page wider than window, fit anno edit to window
-  if( pageModel.width > windowWidth ){
-    //If larger than total page, back up so that right edge is on right edge of page, otherwise start on left edge of highlight
-    this.showWindowX = (x1+windowWidth) > pageModel.width ? pageModel.width - windowWidth : x1;
-
-    argHash.width = this.showWindowX + windowWidth - this.LEFT_MARGIN;
-
-    argHash.excerptTopMarginLeft = x1 - this.showWindowX;
-  }else{
-    //Else, fit to page
-    argHash.width = pageModel.width;
-    this.showWindowX = 0;
-    argHash.excerptTopMarginLeft = x1;
+  var returnHTML = JST['DV/views/annotation'](argHash);
+  if( this.highlight.viewer.schema.recommendations ){
+    $('.DV-annotationTitleInput', this.highlight.highlightEl).autocomplete({source: this.highlight.viewer.schema.recommendations});
   }
-  argHash.showWindowMarginLeft = this.showWindowX;
-
-  argHash.owns_note               = argHash.owns_note || false;
-
-  argHash.pageNumber              = argHash.page;
-  argHash.excerptWidth            = ((x2 - x1) - 8) > 2 ? ((x2 - x1) - 8) : 2;
-  argHash.excerptMarginLeft       = x1 - 2;
-  argHash.excerptHeight           = y2 - y1;
-  argHash.index                   = argHash.page - 1;
-  argHash.tabTop                  = (y1 < 35 ? 35 - y1 : 0) + 8;
-
-  //If data point annotation, generate data for edit/view popup
-  if( this.model.anno_type != 'graph' ){
-    //Update groupIndex to the requested group to display
-    this.groupIndex               = 0;
-    for(var i=0; i < this.model.groups.length; i++){
-      if( this.model.groups[i].group_id == groupId ) {
-        this.groupIndex = i + 1;
-      }
-    }
-
-    argHash.groupCount              = this.model.groups.length;
-    argHash.groupIndex              = this.groupIndex;
-    argHash.imageWidth              = pageModel.width;
-    argHash.imageHeight             = Math.round(pageModel.height * zoom);
-    argHash.author                  = argHash.author || "";
-    argHash.author_organization     = argHash.author_organization || "";
-    argHash.image                   = pageModel.imageURL(argHash.index);
-    argHash.imageTop                = y1 + 1;
-  }else{
-    //Graphs only have the one group currently
-    argHash.groupCount = 1;
-    argHash.groupIndex = 1;
-  }
-
-  if (argHash.access == 'public')         argHash.accessClass = 'DV-accessPublic';
-  else if (argHash.access =='exclusive')  argHash.accessClass = 'DV-accessExclusive';
-  else if (argHash.access =='private')    argHash.accessClass = 'DV-accessPrivate';
-
-  argHash.orderClass = ''; //Can remove this if no longer needed; remove from template too
-  argHash.options = this.viewer.options;
-  argHash.approvedClass = '';
-  var approvalState = this.getApprovalState();
-  if(approvalState == 1){ argHash.approvedClass = ' DV-semi-approved'; }
-  if(approvalState == 2){ argHash.approvedClass = ' DV-approved'; }
-
-  return JST['DV/views/annotation'](argHash);
+  return returnHTML;
 },
 
-
-//Find approval state of overall annotation based on annotation-group relationship statuses.
-//Returns: 0 = unapproved, 1 = semi-approved, 2 = approved
-DV.AnnotationView.prototype.getApprovalState = function(){
-  var approved = 0;
-
-  if( this.model.anno_type == 'graph' ){
-    //Graph annotations
-    if( this.model.qa_approved_by != null ){ approved = 2; }
-  }
-  else {
-    //Regular data point annotations
-    for (var i = 0; i < this.model.groups.length; i++) {
-      if (this.model.groups[i].approved_count > 0) {
-        approved++;
-      }
-    }
-
-    if (approved > 0) {
-      if (approved == this.model.groups.length) {
-        approved = 2;
-      }
-      else {
-        approved = 1;
-      }
-    }
-  }
-
-  return approved;
-},
-
-
-// Add annotation to page
-DV.AnnotationView.prototype.add = function(){
-  this.annotationEl = this.renderedHTML.appendTo(this.annotationContainerEl);
-};
-
-
-// Remove the annotation from the page
-DV.AnnotationView.prototype.remove = function(){
-  if(this.annotationEl){ this.annotationEl.remove(); }
-};
-
-
-// Redraw the HTML for this annotation
-//active: Whether to make the refreshed annotation active (optional)
-//groupId: The group to set the display to (optional)
-DV.AnnotationView.prototype.refresh = function(groupId, active) {
-  var gid = groupId ? groupId : this.model.groups[0].group_id;
-  this.renderedHTML = DV.jQuery(this.render(gid));
-  this.remove();
-  this.add();
-  if(active != false){ this.show({callbacks: false}); }else{ this.hide(true); }
-};
-
-
-// Jump to next annotation
-DV.AnnotationView.prototype.next = function(){
-  this.hide.preventRemovalOfCoverClass = true;
-
-  var annotation = this.viewer.schema.getNextAnnotation(this.id);
-  if(!annotation){
-    return;
-  }
-
-  this.page.set.showAnnotation(annotation);
-};
-
-// Jump to previous annotation
-DV.AnnotationView.prototype.previous = function(){
-  this.hide.preventRemovalOfCoverClass = true;
-  var annotation = this.viewer.schema.getPreviousAnnotation(this.id);
-  if(!annotation) {
-    return;
-  }
-  this.page.set.showAnnotation({ index: annotation.index, id: annotation.id, top: annotation.top });
-};
-
-// Show annotation
-DV.AnnotationView.prototype.show = function(argHash) {
-
-  if (this.viewer.activeAnnotation && this.viewer.activeAnnotation.id != this.id) {
-    this.viewer.activeAnnotation.hide();
-  }
-
-  if( this.model.anno_type == 'graph' ) {
-    //Graph specific popup
-    this.model.image_link == null ? this.processImage() : this.showGraphEditor();
-  }else {
-    //Data point specific popup
-
-    //Refresh page markers to latest data
-    this.annotationEl.find('.DV-groupCount').html('(' + parseInt(this.model.groupIndex) + ' of ' + parseInt(this.model.groupCount) + ')');
-  }
-
-  this.viewer.annotationToLoadId = null;
-  this.viewer.elements.window.addClass('DV-coverVisible');
-
-  this.annotationEl.find('div.DV-annotationBG').css({display: 'block', opacity: 1});
-  this.annotationEl.addClass('DV-activeAnnotation');
-
-  this.viewer.activeAnnotation = this;
-
-  // Enable annotation tracking to ensure the active state hides on scroll
-  this.viewer.helpers.addObserver('trackAnnotation');
-  this.viewer.helpers.setActiveAnnotationInNav(this.id);
-  this.active                         = true;
-  this.pageEl.parent('.DV-set').addClass('DV-activePage');
-
-  if ( (argHash && argHash.edit) || this.model.anno_type == 'graph' ) {
-    this.showEdit();
-  }
-
-  //Scroll into view (horizontally)
-  $('.DV-pages').scrollLeft(this.showWindowX);
-
-  //If annotation is a saved one, trigger events on display
-  if(!this.viewer.activeAnnotation.model.unsaved && (!argHash || argHash.callbacks != false)) {
-    this.viewer.fireSelectCallbacks(this.viewer.activeAnnotation.model);
-  }
-};
-
-
-//Provide loading message and generate cropped image based on annotation selection
-DV.AnnotationView.prototype.processImage = function(){
-  var _thisView = this;
-  this.annotationEl.find('#graph_frame').html(JST['DV/views/generatingImage']);
-
-  //Convert anno parameters to ratios for image crop
-  var pageModel               = this.viewer.models.pages;
-  var imageWidth              = pageModel.width;
-  var imageHeight             = Math.round(pageModel.height * pageModel.zoomFactor());
-
-  var anno_json = {};
-  anno_json['x_ratio'] = this.model.x1 / imageWidth;
-  anno_json['y_ratio'] = this.model.y1 / imageHeight;
-  anno_json['w_ratio'] = (this.model.x2 - this.model.x1) / imageWidth;
-  anno_json['h_ratio'] = (this.model.y2 - this.model.y1) / imageHeight;
-
-  //Determine name of large image
-  var image_url = this.page.getPageImageURL();
-  anno_json['img_name'] = image_url.substring(0, image_url.lastIndexOf("-")) + '-large' + image_url.substring(image_url.lastIndexOf("."), image_url.length);
-  anno_json['img_name']= anno_json['img_name'].substring(0, anno_json['img_name'].lastIndexOf("?") );
-
-  DV.jQuery.ajax({
-    url: DV.img_slice_link,
-    type: 'POST',
-    data: anno_json,
-    dataType: 'json',
-    success: function(resp){
-      _thisView.model.image_link = resp.filename;
-      _thisView.showGraphEditor();
-    },
-    failure: function(){
-      alert('Image generation failed!');
-    }
-  });
-};
-
-
-//Show WPD
-DV.AnnotationView.prototype.showGraphEditor = function(){
-  var _thisAnnoView = this;
-  var iframe = this.annotationEl.find('#graph_frame')[0];
-  this.viewer.wpd_api.setActiveAnnoView(this);
-
-  //Grab height of image being sent to WPD, use it to set height of anno window
-  var _width, _height;
-  $("<img/>").attr("src", _thisAnnoView.model.image_link).load(function() {
-    var frame_height = this.height > 475 ? this.height : 475;
-    $(iframe).height(frame_height);
-
-      if( !DV.WPD_loaded ){
-          //If WPD JS isn't loaded, load and initialize
-          var script = document.createElement('script');
-          script.src = '/viewer/WPD/combined-compiled.js';
-          script.onload = _thisAnnoView.initWPD.bind(_thisAnnoView);
-          document.body.appendChild(script);
-          DV.WPD_loaded = true;
-      }else{
-          _thisAnnoView.initWPD();
-      }
-
-      $(iframe).html(JST['WPD/wpd']);
-  });
-};
-
-DV.AnnotationView.prototype.initWPD = function(){
-    var graph_json =  this.model.graph_json ? JSON.parse(this.model.graph_json) : null;
-    wpd.iframe_api.setParentMsgFunction(this.viewer.wpd_api.receiveMessage.bind(this.viewer.wpd_api));
-    wpd.initApp(true, this.model.image_link, graph_json);
-};
-
-DV.AnnotationView.prototype.setWPDJSON = function(json){
-  this.annotationEl.find('.DV-graphData').val(json);
-  //Update data status
-  this.updateDataStatus(true);
-};
-
-
-DV.AnnotationView.prototype.updateDataStatus = function(is_saved){
-  var el = this.annotationEl.find('.DV-data_status');
-  if(is_saved){
-    el.removeClass('status_unsaved');
-    el.addClass('status_saved');
-    el.text('Saved');
-
-  }else{
-    el.removeClass('status_saved');
-    el.addClass('status_unsaved');
-    el.text('Unsaved');
-  }
-};
-
-
-//Process a request to hide an annotation; prompt user if necessary; call success if not user-cancelled
-DV.AnnotationView.prototype.requestHide = function(forceOverlayHide, success){
-  _thisView = this;
-
-  //If editing and data has changed, ask for confirmation before hiding
-  var isEditing = this.annotationEl.hasClass('DV-editing');
-  compareTitle = this.model.title == null ? "" : this.model.title;
-  compareText = this.model.text == null ? "" : this.model.text;
-  compareExt = this.model.extension == null ? "" : this.model.extension;
-
-  var hasChanged = false;
-  if( this.model.anno_type == 'graph' ){
-    hasChanged = isEditing && (this.annotationEl.find('.DV-annotationTitleInput ').val() != compareTitle || this.annotationEl.find('.DV-annotationExtension').val() != compareExt)
-  }else{
-    hasChanged = isEditing && (this.annotationEl.find('.DV-annotationTitleInput ').val() != compareTitle || this.annotationEl.find('.DV-annotationTextArea').val() != compareText);
-  }
-
-  if( isEditing && hasChanged ){
-    var _anno_view = this;
-    $('#noSaveDialog').dialog({
-      modal: true,
-      dialogClass: 'dv-dialog',
-      height: 100,
-      buttons: [
-        {
-          text: "OK",
-          click: function() {
-            _anno_view.hide(forceOverlayHide);
-            success.call();
-            $(this).dialog( "close" );
-          }
-        },
-        {
-          text: "Cancel",
-          click: function() {
-            $(this).dialog( "close" );
-          }
-        }
-      ]
-    });
-  }else{
-    this.hide(forceOverlayHide);
-    success.call();
-  }
-};
-
-
-// Hide annotation
-DV.AnnotationView.prototype.hide = function(forceOverlayHide){
-  var pageNumber = parseInt(this.viewer.elements.currentPage.text(),10);
-
-  if(this.type !== 'page'){
-    this.annotationEl.find('div.DV-annotationBG').css({ opacity: 0, display: 'none' });
-  }
-
-  var isEditing = this.annotationEl.hasClass('DV-editing');
-
-  this.annotationEl.removeClass('DV-editing DV-activeAnnotation');
-  if(forceOverlayHide === true){
-    this.viewer.elements.window.removeClass('DV-coverVisible');
-  }
-  if(this.hide.preventRemovalOfCoverClass === false || !this.hide.preventRemovalOfCoverClass){
-    this.viewer.elements.window.removeClass('DV-coverVisible');
-    this.hide.preventRemovalOfCoverClass = false;
-  }
-
-  //If unsaved, just remove completely
-  if(this.viewer.activeAnnotation && this.viewer.activeAnnotation.model.unsaved){ this.remove(); }
-
-  // stop tracking this annotation
-  this.viewer.activeAnnotation                = null;
-  this.viewer.events.trackAnnotation.h        = null;
-  this.viewer.events.trackAnnotation.id       = null;
-  this.viewer.events.trackAnnotation.combined = null;
-  this.active                                 = false;
-  this.viewer.pageSet.setActiveAnnotation(null);
-  this.viewer.helpers.removeObserver('trackAnnotation');
-  this.viewer.helpers.setActiveAnnotationInNav();
-  this.pageEl.parent('.DV-set').removeClass('DV-activePage');
-  this.removeConnector(true);
-
-};
-
-// Toggle annotation
-DV.AnnotationView.prototype.toggle = function(argHash){
-  if (this.viewer.activeAnnotation && (this.viewer.activeAnnotation != this)){
-    this.viewer.activeAnnotation.hide();
-  }
-
-  if (this.type === 'page') return;
-
-  this.annotationEl.toggleClass('DV-activeAnnotation');
-  if(this.active == true){
-    this.hide(true);
-  }else{
-    this.show();
-  }
-};
-
-// Show hover annotation state
-DV.AnnotationView.prototype.drawConnector = function(){
-  if(this.active != true){
-    this.viewer.elements.window.addClass('DV-annotationActivated');
-    this.annotationEl.addClass('DV-annotationHover');
-  }
-};
-
-// Remove hover annotation state
-DV.AnnotationView.prototype.removeConnector = function(force){
-  if(this.active != true){
-    this.viewer.elements.window.removeClass('DV-annotationActivated');
-    this.annotationEl.removeClass('DV-annotationHover');
-  }
-};
 
 // Show edit controls
 DV.AnnotationView.prototype.showEdit = function() {
-    //Graph specific
-   // argHash.top                   = 25;
-    //argHash.width                 = $('.DV-paper').width() - 40;
-    //argHash.leftMargin            = (pageModel.width - ($('.DV-paper')).width())/2 > 0 ? 0 : (pageModel.width - ($('.DV-paper')).width()) / 2;
-    //argHash.showWindowMarginLeft  = 0;
-
-  this.annotationEl.addClass('DV-editing');
-  this.viewer.$('.DV-annotationTitleInput', this.annotationEl).val() ? this.viewer.$('.DV-annotationTextArea', this.annotationEl).focus() : this.viewer.$('.DV-annotationTitleInput', this.annotationEl).focus() ;
+    if( this.highlight.viewer.$('.DV-annotationTitleInput', this.highlight.highlightEl).val() ) {
+      this.highlight.viewer.$('.DV-annotationTextArea', this.highlight.highlightEl).focus();
+    }else{
+      this.highlight.viewer.$('.DV-annotationTitleInput', this.highlight.highlightEl).focus();
+    }
 };
 
 
@@ -10327,6 +9898,390 @@ DV.Elements = function(viewer){
 // Get and store an element reference
 DV.Elements.prototype.getElement = function(elementQuery,force){
   this[elementQuery.name] = this._viewer.$(elementQuery.query);
+};
+
+DV.HighlightView = function(argHash){
+  this.LEFT_MARGIN      = 25;
+  this.SCROLLBAR_WIDTH  = 25;
+  this.id           = argHash.id;
+  this.page         = argHash.page;
+  this.viewer       = this.page.set.viewer;
+  this.model        = this.viewer.schema.getHighlight(this.id);
+  this.position     = { top: argHash.top, left: argHash.left };
+  this.dimensions   = { width: argHash.width, height: argHash.height };
+  this.showWindowX  = 0;
+  this.pageEl       = argHash.pageEl;
+  this.highlightContainerEl = argHash.highlightContainerEl;
+  this.highlightEl = null;
+  this.type         = argHash.type;
+  this.state        = 'collapsed';
+  this.active       = false;
+
+
+  if (argHash.access == 'public')         this.accessClass = 'DV-accessPublic';
+  else if (argHash.access =='exclusive')  this.accessClass = 'DV-accessExclusive';
+  else if (argHash.access =='private')    this.accessClass = 'DV-accessPrivate';
+
+  this.renderedHTML = DV.jQuery(this.render());
+
+  this.remove();
+  this.add();
+
+  if(argHash.active){
+    this.viewer.helpers.setActiveHighlightLimits(this);
+    this.viewer.events.resetTracker();
+    this.active = null;
+    this.show();
+    if (argHash.showEdit) this.showEdit();
+  }
+};
+
+// Render an highlight model to HTML, calculating all of the dimensions
+// and offsets, and running a template function.
+DV.HighlightView.prototype.render = function(){
+  var documentModel             = this.viewer.models.document;
+  var pageModel                 = this.viewer.models.pages;
+  var zoom                      = pageModel.zoomFactor();
+  var x1, x2, y1, y2;
+
+  var argHash = this.model;
+  var windowWidth = $('.DV-pages').width() - this.SCROLLBAR_WIDTH;
+
+  y1                          = Math.round(argHash.y1 * zoom);
+  y2                          = Math.round(argHash.y2 * zoom);
+  if (x1 < this.LEFT_MARGIN) x1 = this.LEFT_MARGIN;
+  x1                          = Math.round(argHash.x1 * zoom);
+  x2                          = Math.round(argHash.x2 * zoom);
+
+  argHash.top                   = y1 - 5;
+  argHash.width                 = pageModel.width > $('.DV-paper').width() ? ($('.DV-paper').width() - this.LEFT_MARGIN - 5) : pageModel.width;
+  argHash.leftMargin            = 0;
+
+  //If page wider than window, fit anno edit to window
+  if( pageModel.width > windowWidth ){
+    //If larger than total page, back up so that right edge is on right edge of page, otherwise start on left edge of highlight
+    this.showWindowX = (x1+windowWidth) > pageModel.width ? pageModel.width - windowWidth : x1;
+
+    argHash.width = this.showWindowX + windowWidth - this.LEFT_MARGIN;
+
+    argHash.excerptTopMarginLeft = x1 - this.showWindowX;
+  }else{
+    //Else, fit to page
+    argHash.width = pageModel.width;
+    this.showWindowX = 0;
+    argHash.excerptTopMarginLeft = x1;
+  }
+  argHash.showWindowMarginLeft = this.showWindowX;
+
+  argHash.excerptWidth            = ((x2 - x1) - 8) > 2 ? ((x2 - x1) - 8) : 2;
+  argHash.excerptMarginLeft       = x1 - 2;
+  argHash.excerptHeight           = y2 - y1;
+  argHash.tabTop                  = (y1 < 35 ? 35 - y1 : 0) + 8;
+
+  argHash.options = this.viewer.options;
+  argHash.accessClass = this.accessClass;
+  argHash.approvedClass = '';
+  var approvalState = this.getApprovalState();
+  if(approvalState == 1){ argHash.approvedClass = ' DV-semi-approved'; }
+  if(approvalState == 2){ argHash.approvedClass = ' DV-approved'; }
+
+  //Generate inner content
+  this.content = DV.Schema.helpers.getCurrentHighlightContent(this.model);
+  if( this.content.type == 'graph'){
+      this.innerView = new DV.GraphView(this.content);
+  }else{
+      this.innerView = new DV.AnnotationView(this, this.content.content);
+  }
+  argHash.innerHTML = this.innerView.render(argHash);
+
+  return  JST['DV/views/highlight'](argHash);
+},
+
+
+//Find approval state of overall highlight based on highlight-group relationship statuses.
+//Returns: 0 = unapproved, 1 = semi-approved, 2 = approved
+DV.HighlightView.prototype.getApprovalState = function(){
+  var approval_state = 0;
+  var all_approved = true;
+
+  DV._.each(this.model.annotations, function(anno){ (anno.qc_approved_by != null)? approval_state = 1 : all_approved = false; });
+  DV._.each(this.model.graphs, function(graph){ (graph.qc_approved_by != null)? approval_state = 1 : all_approved = false; });
+
+  return (all_approved) ? 2: approval_state;
+},
+
+
+// Add highlight to page
+DV.HighlightView.prototype.add = function(){
+  this.highlightEl = this.renderedHTML.appendTo(this.highlightContainerEl);
+};
+
+
+// Remove the highlight from the page
+DV.HighlightView.prototype.remove = function(){
+  if(this.highlightEl){ this.highlightEl.remove(); }
+};
+
+
+// Redraw the HTML for this highlight
+//active: Whether to make the refreshed highlight active (optional)
+DV.HighlightView.prototype.refresh = function(active, edit) {
+  this.renderedHTML = DV.jQuery(this.render());
+  this.remove();
+  this.add();
+  if(active != false){ this.show({callbacks: false, edit: edit}); }else{ this.hide(true); }
+};
+
+
+// Jump to next highlight
+DV.HighlightView.prototype.next = function(){
+  this.hide.preventRemovalOfCoverClass = true;
+
+  var highlight = this.viewer.schema.getNextHighlight(this.id);
+  if(!highlight){
+    return;
+  }
+
+  this.page.set.showHighlight(highlight);
+};
+
+// Jump to previous highlight
+DV.HighlightView.prototype.previous = function(){
+  this.hide.preventRemovalOfCoverClass = true;
+  var highlight = this.viewer.schema.getPreviousHighlight(this.id);
+  if(!highlight) {
+    return;
+  }
+  this.page.set.showHighlight({ index: highlight.index, id: highlight.id, top: highlight.top });
+};
+
+// Show highlight
+DV.HighlightView.prototype.show = function(argHash) {
+
+  if (this.viewer.activeHighlight && this.viewer.activeHighlight.id != this.id) {
+    this.viewer.activeHighlight.hide();
+  }
+
+  if( this.model.anno_type == 'graph' ) {
+    //Graph specific popup
+    this.model.image_link == null ? this.processImage() : this.showGraphEditor();
+  }else {
+    //Data point specific popup
+
+    //Refresh page markers to latest data
+    this.highlightEl.find('.DV-groupCount').html('(' + parseInt(this.model.groupIndex) + ' of ' + parseInt(this.model.groupCount) + ')');
+  }
+
+  this.viewer.highlightToLoadId = null;
+  this.viewer.elements.window.addClass('DV-coverVisible');
+
+  this.highlightEl.find('div.DV-highlightBG').css({display: 'block', opacity: 1});
+  this.highlightEl.addClass('DV-activeHighlight');
+
+  this.viewer.activeHighlight = this;
+
+  // Enable highlight tracking to ensure the active state hides on scroll
+  this.viewer.helpers.addObserver('trackHighlight');
+  this.viewer.helpers.setActiveHighlightInNav(this.id);
+  this.active                         = true;
+  this.pageEl.parent('.DV-set').addClass('DV-activePage');
+
+  if ( (argHash && argHash.edit) || this.model.anno_type == 'graph' ) {
+    this.showEdit();
+  }
+
+  //Scroll into view (horizontally)
+  $('.DV-pages').scrollLeft(this.showWindowX);
+
+  //If highlight content is saved, trigger events on display
+  if(!this.content.content.unsaved && (!argHash || argHash.callbacks != false)) {
+    this.viewer.fireSelectCallbacks(this.assembleContentForDC());
+  }
+};
+
+
+//Assemble content structure for DC consumption
+DV.HighlightView.prototype.assembleContentForDC = function(){
+  var dcContent = this.content;
+  dcContent.content.location = this.model.location;
+  dcContent.content.highlight_id = this.model.id;
+  return dcContent;
+}
+
+
+//Show WPD
+DV.HighlightView.prototype.showGraphEditor = function(){
+  var _thisAnnoView = this;
+  var iframe = this.highlightEl.find('#graph_frame')[0];
+  this.viewer.wpd_api.setActiveAnnoView(this);
+
+  //Grab height of image being sent to WPD, use it to set height of anno window
+  var _width, _height;
+  $("<img/>").attr("src", _thisAnnoView.model.image_link).load(function() {
+    var frame_height = this.height > 475 ? this.height : 475;
+    $(iframe).height(frame_height);
+
+      if( !DV.WPD_loaded ){
+          //If WPD JS isn't loaded, load and initialize
+          var script = document.createElement('script');
+          script.src = '/viewer/WPD/combined-compiled.js';
+          script.onload = _thisAnnoView.initWPD.bind(_thisAnnoView);
+          document.body.appendChild(script);
+          DV.WPD_loaded = true;
+      }else{
+          _thisAnnoView.initWPD();
+      }
+
+      $(iframe).html(JST['WPD/wpd']);
+  });
+};
+
+DV.HighlightView.prototype.initWPD = function(){
+    var graph_json =  this.model.graph_json ? JSON.parse(this.model.graph_json) : null;
+    wpd.iframe_api.setParentMsgFunction(this.viewer.wpd_api.receiveMessage.bind(this.viewer.wpd_api));
+    wpd.initApp(true, this.model.image_link, graph_json);
+};
+
+DV.HighlightView.prototype.setWPDJSON = function(json){
+  this.highlightEl.find('.DV-graphData').val(json);
+  //Update data status
+  this.updateDataStatus(true);
+};
+
+
+DV.HighlightView.prototype.updateDataStatus = function(is_saved){
+  var el = this.highlightEl.find('.DV-data_status');
+  if(is_saved){
+    el.removeClass('status_unsaved');
+    el.addClass('status_saved');
+    el.text('Saved');
+
+  }else{
+    el.removeClass('status_saved');
+    el.addClass('status_unsaved');
+    el.text('Unsaved');
+  }
+};
+
+
+//Process a request to hide an highlight; prompt user if necessary; call success if not user-cancelled
+DV.HighlightView.prototype.requestHide = function(forceOverlayHide, success){
+  _thisView = this;
+
+  //If editing and data has changed, ask for confirmation before hiding
+  var isEditing = this.highlightEl.hasClass('DV-editing');
+  compareTitle = this.content.title == null ? "" : this.model.title;
+  compareText = this.content.text == null ? "" : this.model.text;
+
+  var hasChanged = false;
+  if( this.content.type == 'graph' ){
+    //TO-DO
+  }else{
+    hasChanged = isEditing && (this.highlightEl.find('.DV-annotationTitleInput ').val() != compareTitle || this.highlightEl.find('.DV-annotationTextArea').val() != compareText);
+  }
+
+  if( isEditing && hasChanged ){
+    var _anno_view = this;
+    $('#noSaveDialog').dialog({
+      modal: true,
+      dialogClass: 'dv-dialog',
+      height: 100,
+      buttons: [
+        {
+          text: "OK",
+          click: function() {
+            _anno_view.hide(forceOverlayHide);
+            success.call();
+            $(this).dialog( "close" );
+          }
+        },
+        {
+          text: "Cancel",
+          click: function() {
+            $(this).dialog( "close" );
+          }
+        }
+      ]
+    });
+  }else{
+    this.hide(forceOverlayHide);
+    success.call();
+  }
+};
+
+
+// Hide highlight
+DV.HighlightView.prototype.hide = function(forceOverlayHide){
+  var pageNumber = parseInt(this.viewer.elements.currentPage.text(),10);
+
+  if(this.type !== 'page'){
+    this.highlightEl.find('div.DV-highlightBG').css({ opacity: 0, display: 'none' });
+  }
+
+  var isEditing = this.highlightEl.hasClass('DV-editing');
+
+  this.highlightEl.removeClass('DV-editing DV-activeHighlight');
+  if(forceOverlayHide === true){
+    this.viewer.elements.window.removeClass('DV-coverVisible');
+  }
+  if(this.hide.preventRemovalOfCoverClass === false || !this.hide.preventRemovalOfCoverClass){
+    this.viewer.elements.window.removeClass('DV-coverVisible');
+    this.hide.preventRemovalOfCoverClass = false;
+  }
+
+  //If unsaved, just remove completely
+  if(this.viewer.activeHighlight && this.content.content.unsaved){ this.remove(); }
+
+  // stop tracking this highlight
+  this.viewer.activeHighlight                = null;
+  this.viewer.events.trackHighlight.h        = null;
+  this.viewer.events.trackHighlight.id       = null;
+  this.viewer.events.trackHighlight.combined = null;
+  this.active                                 = false;
+  this.viewer.pageSet.setActiveHighlight(null);
+  this.viewer.helpers.removeObserver('trackHighlight');
+  this.viewer.helpers.setActiveHighlightInNav();
+  this.pageEl.parent('.DV-set').removeClass('DV-activePage');
+  this.removeConnector(true);
+
+};
+
+// Toggle highlight
+DV.HighlightView.prototype.toggle = function(argHash){
+  if (this.viewer.activeHighlight && (this.viewer.activeHighlight != this)){
+    this.viewer.activeHighlight.hide();
+  }
+
+  if (this.type === 'page') return;
+
+  this.highlightEl.toggleClass('DV-activeHighlight');
+  if(this.active == true){
+    this.hide(true);
+  }else{
+    this.show();
+  }
+};
+
+// Show hover highlight state
+DV.HighlightView.prototype.drawConnector = function(){
+  if(this.active != true){
+    this.viewer.elements.window.addClass('DV-highlightActivated');
+    this.highlightEl.addClass('DV-highlightHover');
+  }
+};
+
+// Remove hover highlight state
+DV.HighlightView.prototype.removeConnector = function(force){
+  if(this.active != true){
+    this.viewer.elements.window.removeClass('DV-highlightActivated');
+    this.highlightEl.removeClass('DV-highlightHover');
+  }
+};
+
+// Show edit controls
+DV.HighlightView.prototype.showEdit = function() {
+  this.highlightEl.addClass('DV-editing');
+  this.innerView.showEdit();
 };
 
 // Handles JavaScript history management and callbacks. To use, register a
@@ -10635,7 +10590,7 @@ DV.Page = function(viewer, argHash){
   this.pageImageEl      = this.getPageImage();
 
   this.pageEl           = this.el.find('div.DV-page');
-  this.annotationContainerEl = this.el.find('div.DV-annotations');
+  this.highlightContainerEl = this.el.find('div.DV-highlights');
   this.coverEl          = this.el.find('div.DV-cover');
   this.loadTimer        = null;
   this.hasLayerPage     = false;
@@ -10646,13 +10601,13 @@ DV.Page = function(viewer, argHash){
   this.offset           = null;
   this.pageNumber       = null;
   this.zoom             = 1;
-  this.annotations      = [];
+  this.highlights      = [];
 
   // optimizations
   var m = this.viewer.models;
   this.model_document     = m.document;
   this.model_pages        = m.pages;
-  this.model_annotations  = m.annotations;
+  this.model_highlights  = m.highlights;
   this.model_chapters     = m.chapters;
 };
 
@@ -10680,7 +10635,7 @@ DV.Page.prototype.getPageNoteHeight = function() {
   return this.model_pages.pageNoteHeights[this.index];
 };
 
-// Draw the current page and its associated layers/annotations
+// Draw the current page and its associated layers/highlights
 // Will stop if page index appears the same or force boolean is passed
 DV.Page.prototype.draw = function(argHash) {
 
@@ -10703,49 +10658,41 @@ DV.Page.prototype.draw = function(argHash) {
   this.sizeImage();
   this.position();
 
-  // Only draw annotations if page number has changed or the
-  // forceAnnotationRedraw flag is true.
-  if(this.pageNumber != this.index+1 || argHash.forceAnnotationRedraw === true){
-    //If the removed page has the active annotation, hide/cancel it
-    if( this.viewer.activeAnnotation && (this.pageNumber == this.viewer.activeAnnotation.model.page) ){
-      this.viewer.activeAnnotation.hide();
+  // Only draw highlights if page number has changed or the
+  // forceHighlightRedraw flag is true.
+  if(this.pageNumber != this.index+1 || argHash.forceHighlightRedraw === true){
+    //If the removed page has the active highlight, hide/cancel it
+    if( this.viewer.activeHighlight && (this.pageNumber == this.viewer.activeHighlight.model.page) ){
+      this.viewer.activeHighlight.hide();
     }
 
-    for(var i = 0; i < this.annotations.length;i++){
-      this.annotations[i].remove();
-      delete this.annotations[i];
-      this.hasLayerRegional = false;
-      this.hasLayerPage     = false;
+    for(var i = 0; i < this.highlights.length;i++){
+      this.highlights[i].remove();
+      delete this.highlights[i];
     }
-    this.annotations = [];
+    this.highlights = [];
 
-    // if there are annotations for this page, it will proceed and attempt to draw
-    var byPage = this.viewer.schema.data.annotationsByPage[this.index];
+    // if there are highlights for this page, it will proceed and attempt to draw
+    var byPage = this.viewer.schema.data.highlightsByPage[this.index];
     if (byPage) {
-      // Loop through all annotations and add to page
+      // Loop through all highlights and add to page
       for (var i=0; i < byPage.length; i++) {
-        var anno = byPage[i];
+        var highl = byPage[i];
 
-        if(anno.id === this.viewer.annotationToLoadId){
+        if(highl.id === this.viewer.highlightToLoadId){
           var active = true;
-          if (anno.id === this.viewer.annotationToLoadEdit) argHash.edit = true;
-          if (this.viewer.openingAnnotationFromHash) {
+          if (anno.id === this.viewer.highlightToLoadEdit) argHash.edit = true;
+          if (this.viewer.openingHighlightFromHash) {
             this.viewer.helpers.jump(this.index, (anno.top || 0) - 37);
-            this.viewer.openingAnnotationFromHash = false;
+            this.viewer.openingHighlightFromHash = false;
           }
         }else{
           var active = false;
         }
 
-        if(anno.type == 'page'){
-          this.hasLayerPage     = true;
-        }else if(anno.type == 'regional'){
-          this.hasLayerRegional = true;
-        }
+        var newHighlight = this.createPageHighlight(highl, active, argHash.edit);
 
-        var newAnno = this.createPageAnnotation(anno, active, argHash.edit);
-
-        this.annotations.push(newAnno);
+        this.highlights.push(newHighlight);
 
       }
     }
@@ -10756,22 +10703,34 @@ DV.Page.prototype.draw = function(argHash) {
     // Draw remove overlay if page is removed.
     this.drawRemoveOverlay();
   }
-  // Update the page type
-  this.setPageType();
-
 };
+
+
+//Create Page Highlight from regular Highlight and return
+DV.Page.prototype.createPageHighlight = function(highl, active, edit) {
+    return new DV.HighlightView({
+        id: highl.id,
+        anno_type: highl.anno_type,
+        page: this,
+        pageEl: this.pageEl,
+        highlightContainerEl: this.highlightContainerEl,
+        pageNumber: this.pageNumber,
+        state: 'collapsed',
+        top: highl.y1,
+        left: highl.x1,
+        width: highl.x1 + highl.x2,
+        height: highl.y1 + highl.y2,
+        active: active,
+        showEdit: edit,
+        type: highl.type,
+        groups: highl.groups,
+        access: highl.access
+    });
+};
+
 
 DV.Page.prototype.drawRemoveOverlay = function() {
   this.removedOverlayEl.toggleClass('visible', !!this.viewer.models.removedPages[this.index+1]);
-};
-
-DV.Page.prototype.setPageType = function(){
-  if(this.annotations.length > 0){
-    if(this.hasLayerPage === true)    { this.el.addClass('DV-layer-page'); }
-    if(this.hasLayerRegional === true){ this.el.addClass('DV-layer-page'); }
-  } else {
-    this.el.removeClass('DV-layer-page DV-layer-regional');
-  }
 };
 
 // Position Y coordinate of this page in the view based on current offset in the Document model
@@ -10864,80 +10823,79 @@ DV.Page.prototype.drawImage = function(imageURL) {
 };
 
 
-//Create Page Annotation from regular Annotation and return
-DV.Page.prototype.createPageAnnotation = function(anno, active, edit) {
-  return new DV.AnnotationView({
-    id: anno.id,
-    anno_type: anno.anno_type,
+//Create Page Highlight from regular Highlight and return
+DV.Page.prototype.createHighlight = function(highl, active, edit) {
+  return new DV.HighlightView({
+    id: highl.id,
     page: this,
     pageEl: this.pageEl,
-    annotationContainerEl: this.annotationContainerEl,
+    highlightContainerEl: this.highlightContainerEl,
     pageNumber: this.pageNumber,
     state: 'collapsed',
-    top: anno.y1,
-    left: anno.x1,
-    width: anno.x1 + anno.x2,
-    height: anno.y1 + anno.y2,
+    top: highl.y1,
+    left: highl.x1,
+    width: highl.x1 + highl.x2,
+    height: highl.y1 + highl.y2,
     active: active,
     showEdit: edit,
-    type: anno.type,
-    groups: anno.groups,
-    access: anno.access
+    highlights: highl.highlights,
+    graphs: highl.graphs,
+    access: highl.access
   });
 };
 
 
-//Create new annotation and add it to existing annotation list
-DV.Page.prototype.addPageAnnotation = function(anno){
-  var newAnno = this.createPageAnnotation(anno, false, true);
-  var insertIndex = DV._.sortedIndex(this.annotations, newAnno, function(anno){
-    return anno.position.top;
+//Create new highlight and add it to existing highlight list
+DV.Page.prototype.addHighlight = function(highl){
+  var newHighl = this.createHighlight(highl, false, true);
+  var insertIndex = DV._.sortedIndex(this.highlights, newHighl, function(highl){
+    return highl.position.top;
   });
-  this.annotations.splice(insertIndex, 0, newAnno);
+  this.highlights.splice(insertIndex, 0, newHighl);
 };
 
 
-//Remove annotation from annotation list
-DV.Page.prototype.removePageAnnotation = function(anno){
-  var removeAnno = this.findAnnotationView(anno.id);
-  if(removeAnno) {
-    removeAnno.remove();
-    this.annotations = DV._.without(this.annotations, removeAnno);
+//Remove highlight from highlight list
+DV.Page.prototype.removeHighlight = function(highl){
+  var removeHighl = this.findHighlightView(highl.id);
+  if(removeHighl) {
+    removeHighl.remove();
+    this.highlights = DV._.without(this.highlights, removeHighl);
     this.viewer.elements.window.removeClass('DV-coverVisible');
   }
 };
 
 
-//Refresh annotation
-//active: Whether to make the refreshed annotation active (optional)
-//groupId: The group to set the display to (optional)
-DV.Page.prototype.refreshPageAnnotation = function(anno, groupId, active){
-  var refreshAnno = this.findAnnotationView(anno.id);
-  refreshAnno.refresh(groupId, active);
+//Refresh highlight
+//active: Whether to make the refreshed highlight active (optional)
+//edit: Whether to put refreshed highlight in edit view (optional)
+DV.Page.prototype.refreshHighlight = function(highl, active, edit){
+  var refreshHighl = this.findHighlightView(highl.id);
+  refreshHighl.refresh(active, edit);
 };
 
 
-// Check page's annotations in schema and add any missing ones
-DV.Page.prototype.syncAnnotations = function() {
-  var byPage = this.viewer.schema.data.annotationsByPage[this.index];
+// Check page's highlights in schema and add any missing ones
+DV.Page.prototype.syncHighlights = function() {
+  var byPage = this.viewer.schema.data.highlightsByPage[this.index];
   if (byPage) {
-    // Loop through all annotations and splice in any additions
+    // Loop through all highlights and splice in any additions
     for (var i=0; i < byPage.length; i++) {
       var anno = byPage[i];
 
-      if( i >= this.annotations.length || (anno.id != this.annotations[i].id) ) {
-        var newAnno = this.createPageAnnotation(anno, false, true);
+      if( i >= this.highlights.length || (anno.id != this.highlights[i].id) ) {
+        var newAnno = this.createHighlight(anno, false, true);
 
-        this.annotations.splice(i, 0, newAnno);
+        this.highlights.splice(i, 0, newAnno);
       }
     }
   }
 };
 
 
-//Find annotation view on page by annotation ID
-DV.Page.prototype.findAnnotationView = function(annoID){
-  return _.find(this.annotations, function (listAnno) { return listAnno.id == annoID; });
+//Find highlight view on page by highlight ID
+DV.Page.prototype.findHighlightView = function(highlID){
+  return _.find(this.highlights, function (listHighl) { return listHighl.id == highlID; });
 }
 
 // PageSet is a pseudo-presenter/view which manages and paints
@@ -10999,23 +10957,23 @@ DV.PageSet.prototype.getPages = function(){
   return _pages;
 };
 
-// basic reflow to ensure zoomlevel is right, pages are in the right place and annotation limits are correct
+// basic reflow to ensure zoomlevel is right, pages are in the right place and highlight limits are correct
 DV.PageSet.prototype.reflowPages = function() {
   this.viewer.models.pages.resize();
-  this.viewer.helpers.setActiveAnnotationLimits();
+  this.viewer.helpers.setActiveHighlightLimits();
   this.redraw(false, true);
 };
 
-// reflow the pages without causing the container to resize or annotations to redraw
+// reflow the pages without causing the container to resize or highlights to redraw
 DV.PageSet.prototype.simpleReflowPages = function(){
-  this.viewer.helpers.setActiveAnnotationLimits();
+  this.viewer.helpers.setActiveHighlightLimits();
   this.redraw(false, false);
 };
 
-// hide any active annotations
+// hide any active highlights
 DV.PageSet.prototype.cleanUp = function(){
-  if(this.viewer.activeAnnotation){
-    this.viewer.activeAnnotation.hide(true);
+  if(this.viewer.activeHighlight){
+    this.viewer.activeHighlight.hide(true);
   }
 };
 
@@ -11040,18 +10998,18 @@ DV.PageSet.prototype.zoom = function(argHash){
     this.viewer.thumbnails.lazyloadThumbnails();
   }
 
-  if(this.viewer.activeAnnotation != null){
+  if(this.viewer.activeHighlight != null){
     // FIXME:
 
     var args = {
       index: this.viewer.models.document.currentIndex(),
-      top: this.viewer.activeAnnotation.top,
-      id: this.viewer.activeAnnotation.id
+      top: this.viewer.activeHighlight.top,
+      id: this.viewer.activeHighlight.id
     };
-    this.viewer.activeAnnotation = null;
+    this.viewer.activeHighlight = null;
 
-    this.showAnnotation(args);
-    this.viewer.helpers.setActiveAnnotationLimits(this.viewer.activeAnnotation);
+    this.showHighlight(args);
+    this.viewer.helpers.setActiveHighlightLimits(this.viewer.activeHighlight);
   }else{
     var _offset      = Math.round(this.viewer.models.pages.height * diffPercentage);
     this.viewer.helpers.jump(this.viewer.models.document.currentIndex(),_offset);
@@ -11075,77 +11033,74 @@ DV.PageSet.prototype.draw = function(pageCollection){
   }
 };
 
-DV.PageSet.prototype.redraw = function(stopResetOfPosition, redrawAnnotations) {
-  if (this.pages['p0']) this.pages['p0'].draw({ force: true, forceAnnotationRedraw : redrawAnnotations });
-  if (this.pages['p1']) this.pages['p1'].draw({ force: true, forceAnnotationRedraw : redrawAnnotations });
-  if (this.pages['p2']) this.pages['p2'].draw({ force: true, forceAnnotationRedraw : redrawAnnotations });
+DV.PageSet.prototype.redraw = function(stopResetOfPosition, redrawHighlights) {
+  if (this.pages['p0']) this.pages['p0'].draw({ force: true, forceHighlightRedraw : redrawHighlights });
+  if (this.pages['p1']) this.pages['p1'].draw({ force: true, forceHighlightRedraw : redrawHighlights });
+  if (this.pages['p2']) this.pages['p2'].draw({ force: true, forceHighlightRedraw : redrawHighlights });
 
-  if(redrawAnnotations && this.viewer.activeAnnotation){
-    this.viewer.helpers.jump(this.viewer.activeAnnotation.page.index,this.viewer.activeAnnotation.position.top - 37);
+  if(redrawHighlights && this.viewer.activeHighlight){
+    this.viewer.helpers.jump(this.viewer.activeHighlight.page.index,this.viewer.activeHighlight.position.top - 37);
   }
 };
 
-//Add annotation to its page. Takes in standard (schema) anno hash
-DV.PageSet.prototype.addPageAnnotation = function(anno){
-  this.getPageByNumber(anno.page).addPageAnnotation(anno);
+//Add highlight to its page. Takes in standard (schema) hash
+DV.PageSet.prototype.addHighlight = function(highl){
+  this.getPageByNumber(highl.page).addHighlight(highl);
 };
 
-//Remove annotation from its page. Takes in standard (schema) anno hash
-DV.PageSet.prototype.removePageAnnotation = function(anno){
+//Remove highlight from its page. Takes in standard (schema) anno hash
+DV.PageSet.prototype.removeHighlight = function(highl){
   //If page is visible, send remove request to it
-  var page = this.getPageByNumber(anno.page);
-  if(page){ page.removePageAnnotation(anno); }
+  var page = this.getPageByNumber(highl.page);
+  if(page){ page.removeHighlight(highl); }
 };
 
-//Refresh annotation display. Takes in standard (schema) anno hash
-//active: Whether to make the refreshed annotation active (optional)
-//groupId: The group to set the display to (optional)
-DV.PageSet.prototype.refreshPageAnnotation = function(anno, groupId, active){
+//Refresh highlight display. Takes in standard (schema) anno hash
+//active: Whether to make the refreshed highlight active (optional)
+//edit: Whether to put the refreshed highlight in edit mode (optional)
+DV.PageSet.prototype.refreshHighlight = function(highl, active, edit){
   //If page is visible, send refresh request to it
-  var page = this.getPageByNumber(anno.page);
-  if(page){ page.refreshPageAnnotation(anno, groupId, active); }
+  var page = this.getPageByNumber(highl.page);
+  if(page){ page.refreshHighlight(highl, active, edit); }
 };
 
-// set the annotation to load ahead of time
-DV.PageSet.prototype.setActiveAnnotation = function(annotationId, edit){
-  this.viewer.annotationToLoadId   = annotationId;
-  this.viewer.annotationToLoadEdit = edit ? annotationId : null;
+// set the highlight to load ahead of time
+DV.PageSet.prototype.setActiveHighlight = function(highlightId, edit){
+  this.viewer.highlightToLoadId   = highlightId;
+  this.viewer.highlightToLoadEdit = edit ? highlightId : null;
 };
 
-// a funky fucking mess to jump to the annotation that is active
-DV.PageSet.prototype.showAnnotation = function(argHash, showHash){
+// a funky fucking mess to jump to the highlight that is active
+//argHash: highlight_id, ???
+DV.PageSet.prototype.showHighlight = function(argHash, showHash){
   showHash = showHash || {};
 
-  showHash.anno_type = argHash.anno_type;
-
-  // if state is ViewAnnotation, jump to the appropriate position in the view
+  // if state is ViewHighlight, jump to the appropriate position in the view
   // else
-  // hide active annotations and locate the position of the next annotation
+  // hide active highlights and locate the position of the next highlight
   // NOTE: This needs work
-  if(this.viewer.state === 'ViewAnnotation'){
+  if(this.viewer.state === 'ViewHighlight'){
 
-    var offset = this.viewer.$('.DV-allAnnotations div[rel=aid-'+argHash.id+']')[0].offsetTop;
+    var offset = this.viewer.$('.DV-allHighlights div[rel=aid-'+argHash.id+']')[0].offsetTop;
     this.viewer.elements.window.scrollTop(offset+10,'fast');
-    this.viewer.helpers.setActiveAnnotationInNav(argHash.id);
-    this.viewer.activeAnnotationId = argHash.id;
+    this.viewer.helpers.setActiveHighlightInNav(argHash.highlight_id);
+    this.viewer.activeHighlightId = argHash.highlight_id;
   }else{
-    this.viewer.helpers.removeObserver('trackAnnotation');
-    this.viewer.activeAnnotationId = null;
-    if(this.viewer.activeAnnotation != null){
-      this.viewer.activeAnnotation.hide();
+    this.viewer.helpers.removeObserver('trackHighlight');
+    this.viewer.activeHighlightId = null;
+    if(this.viewer.activeHighlight != null){
+      this.viewer.activeHighlight.hide();
     }
-    this.setActiveAnnotation(argHash.id, showHash.edit);
+    this.setActiveHighlight(argHash.highlight_id, showHash.edit);
 
-    var isPage = this.viewer.schema.data.annotationsById[argHash.id].type == 'page';
-    var nudge  = isPage ? -7 : 36;
-    var offset = argHash.top - nudge;
+    var offset = argHash.top - 36;
 
     for(var i = 0; i <= 2; i++){
       if (this.pages['p' + i]) {
-        for(var n = 0; n < this.pages['p'+i].annotations.length; n++){
-          if(this.pages['p'+i].annotations[n].id === argHash.id){
+        for(var n = 0; n < this.pages['p'+i].highlights.length; n++){
+          if(this.pages['p'+i].highlights[n].id === argHash.id){
             this.viewer.helpers.jump(argHash.index, offset);
-            this.pages['p'+i].annotations[n].show(showHash);
+            this.pages['p'+i].highlights[n].show(showHash);
             return;
           }
         }
@@ -11324,7 +11279,7 @@ DV.Thumbnails.prototype.loadImages = function(startPage, endPage) {
 // {
 //   'en': {
 //     doc: 'Document',
-//     annot: 'Annotation'
+//     annot: 'Highlight'
 //   },{
 //     'zh': {
 //       doc:'文件'
@@ -11522,71 +11477,75 @@ DV.Schema.prototype.importCanonicalDocument = function(json, view_only) {
   DV._.uniqueId();
   // Ensure at least empty arrays for sections.
   json.sections               = DV._.sortBy(json.sections || [], function(sec){ return sec.page; });
-  json.annotations            = json.annotations || [];
+  json.highlights             = json.highlights || [];
   json.canonicalURL           = json.canonical_url;
   this.document               = DV.jQuery.extend(true, {}, json);
   // Everything after this line is for back-compatibility.
   this.data.title             = json.title;
   this.data.totalPages        = !view_only ? json.pages : 1;
-  this.data.totalAnnotations  = json.annotations.length;
+  this.data.totalHighlights   = json.highlights.length;
   this.data.sections          = json.sections;
   this.data.chapters          = [];
-  this.data.annotationsById   = {};
-  this.data.annotationsByPage = [];
+  this.data.highlightsById   = {};
+  this.data.highlightsByPage = [];
   this.data.translationsURL   = json.resources.translations_url;
-  DV._.each(json.annotations, DV.jQuery.proxy(this.loadAnnotation, this));
+  DV._.each(json.highlights, DV.jQuery.proxy(this.loadHighlight, this));
 };
 
-// Load an annotation into the Schema, starting from the canonical format.
-DV.Schema.prototype.loadAnnotation = function(anno) {
-  //Only load annos with highlights already set
-  if(anno.location) {
-      if (anno.id) anno.server_id = anno.id;
-      var idx = anno.page - 1;
-      anno.id = anno.id || parseInt(DV._.uniqueId());
-      anno.title = anno.title || '';
-      anno.extension = anno.extension || '';
-      anno.text = anno.content || '';
-      anno.access = anno.access || 'public';
-      anno.type = anno.location && anno.location.image ? 'region' : 'page';
-      if (anno.type === 'region') {
-          var loc = DV.jQuery.map(anno.location.image.split(','), function (n, i) {
-              return parseInt(n, 10);
-          });
-          anno.y1 = loc[0];
-          anno.x2 = loc[1];
-          anno.y2 = loc[2];
-          anno.x1 = loc[3];
-      } else if (anno.type === 'page') {
-          anno.y1 = 0;
-          anno.x2 = 0;
-          anno.y2 = 0;
-          anno.x1 = 0;
-      }
-      this.data.annotationsById[anno.id] = anno;
-      var page = this.data.annotationsByPage[idx] = this.data.annotationsByPage[idx] || [];
-      var insertionIndex = DV._.sortedIndex(page, anno, function (a) {
-          return a.y1;
+// Load an highlight into the Schema, starting from the canonical format.
+DV.Schema.prototype.loadHighlight = function(highl) {
+  //Only load highlights with locations already set
+  if(highl.location) {
+      if (highl.id) highl.server_id = highl.id;
+      var idx = highl.page - 1;
+      highl.id = highl.id || parseInt(DV._.uniqueId());
+
+      var loc = DV.jQuery.map(highl.location.image.split(','), function (n, i) {
+          return parseInt(n, 10);
+      });
+      highl.y1 = loc[0];
+      highl.x2 = loc[1];
+      highl.y2 = loc[2];
+      highl.x1 = loc[3];
+
+      highl.displayIndex = 0;
+
+      //Apply highlight defaults
+      DV._.each(highl.annotations, function(anno){
+          anno.server_id = anno.id;
+          anno.title = anno.title || '';
+          anno.extension = anno.extension || '';
+          anno.text = anno.content || '';
+          anno.access = anno.access || 'public';
+          anno.unsaved = anno.id ? false : true;
       });
 
-      page.splice(insertionIndex, 0, anno);
+      this.data.highlightsById[highl.id] = highl;
+      var page = this.data.highlightsByPage[idx] = this.data.highlightsByPage[idx] || [];
+      var insertionIndex = DV._.sortedIndex(page, highl, function (h) {
+          return h.y1;
+      });
+
+      page.splice(insertionIndex, 0, highl);
   }
-  return anno;
+  return highl;
 };
 
 
-//Populate an anno-group relationship with data from client, if missing.  Return generated anno ref
-DV.Schema.prototype.addAnnotationGroup = function(annoId, groupId) {
-  var dvAnno = this.findAnnotation({id: annoId});
-  var newGroup = {group_id: groupId, approved_count: 0}
-  if( dvAnno.groups.indexOf(groupId) < 0 ){ dvAnno.groups.push(newGroup); }
-  return dvAnno;
+//Set reference to active content: hash should contain highlight_id and either anno_id or graph_id to set as active
+DV.Schema.prototype.setActiveContent = function(highlightInfo) {
+  var highl = this.findHighlight({id: highlightInfo.highlight_id});
+  if( "anno_id" in highlightInfo ){
+    highl.displayIndex = highl.annotations.findIndex(function(anno){ anno.server_id == highlightInfo.anno_id; });
+  }else if( "graph_id" in highlightInfo ){
+    highl.displayIndex = highl.graphs.findIndex(function(graph){ graph.server_id == highlightInfo.graph_id; }) + highl.annotations.length;
+  }
 };
 
 
-//Update an annotation-group's approval status and return it
+//Update an highlight-group's approval status and return it
 DV.Schema.prototype.markApproval = function(anno_id, group_id, approval){
-  var matchedAnno = this.getAnnotation(anno_id);
+  var matchedAnno = this.getHighlight(anno_id);
 
   //Update anno approved count
   for(var i=0; i < matchedAnno.groups.length; i++){
@@ -11600,83 +11559,101 @@ DV.Schema.prototype.markApproval = function(anno_id, group_id, approval){
 };
 
 
-//Remove anno-group relationship; if last one, remove total annotation.  Return true if anno is fully removed, false otherwise
-DV.Schema.prototype.removeAnnotationGroup = function(anno, groupId){
-  if( anno.groups && anno.groups.length > 1 ){
-    anno.groups.splice(anno.groups.indexOf(groupId), 1);
-    return false;
+//Add blank highlight content
+DV.Schema.prototype.addHighlightContent = function(highl, content_type){
+  if( content_type == 'annotation' ){
+    highl.annotations.push({
+      server_id: '',
+      title: '',
+      extension: '',
+      text: '',
+      access: 'public',
+      unsaved: true
+    });
+    highl.displayIndex = highl.annotations.length - 1;
+  }else{
+
   }
-  else {
-    this.removeAnnotation(anno);
+}
+
+//Remove highlight-content relationship; if last one, remove total highlight.  Return true if all content is fully removed, false otherwise
+DV.Schema.prototype.removeHighlightContent = function(highl, highlightInfo){
+  if( "anno_id" in highlightInfo ){
+    highl.annotations.splice(highl.annotations.findIndex(function(anno){ anno.server_id == highlightInfo.anno_id; }), 1);
+  }else if( "graph_id" in highlightInfo ){
+    highl.graphs.splice(DV._.findIndex(highl.graphs, function(graph){ graph.server_id == highlightInfo.graph_id; }), 1);
   }
+  return ( (!highl.annotations || highl.annotations.length < 1) && (!highl.graphs || highl.graphs.length < 1) ) ? true : false;
 };
 
-//Remove graph annotation
-DV.Schema.prototype.removeAnnotation = function(anno){
+//Remove graph highlight
+DV.Schema.prototype.removeHighlight = function(anno){
   var i = anno.page - 1;
-  this.data.annotationsByPage[i] = DV._.without(this.data.annotationsByPage[i], anno);
-  delete this.data.annotationsById[anno.id];
+  this.data.highlightsByPage[i] = DV._.without(this.data.highlightsByPage[i], anno);
+  delete this.data.highlightsById[anno.id];
   return true;
 };
 
 
-//Reload annotation schema
-DV.Schema.prototype.reloadAnnotations = function(annos) {
-    this.data.annotationsById = {};
-    this.data.annotationsByPage = {};
-    DV._.each(annos, DV.jQuery.proxy(this.loadAnnotation, this));
+//Reload highlight schema
+DV.Schema.prototype.reloadHighlights = function(annos) {
+    this.data.highlightsById = {};
+    this.data.highlightsByPage = {};
+    DV._.each(annos, DV.jQuery.proxy(this.loadHighlight, this));
 };
 
 
-//Match annotation data passed in with an existing annotation
-DV.Schema.prototype.findAnnotation = function(anno) {
-  var annos = null;
+//Match highlight data passed in with an existing highlight
+DV.Schema.prototype.findHighlight = function(highl) {
+  var highls = null;
   //Try ID first
-  if(anno.id) { annos = _.find(this.data.annotationsById, function (listAnno) { return listAnno.server_id == anno.id; }); }
+  if(highl.id) { highls = _.find(this.data.highlightsById, function (listHighl) { return listHighl.server_id == highl.id; }); }
   //If no ID match, and image data exists, match on highlight image
-  if(!annos && anno.location){ annos = _.find(this.data.annotationsById, function (listAnno) { return listAnno.location.image == anno.location.image; }); }
+  if(!highls && highl.location){ highls = _.find(this.data.highlightsById, function (listHighl) { return listHighl.location.image == highl.location.image; }); }
 
-  //If a group was passed, set the selected group index to that group
-  if( anno.group_id ) {
-    for (var i = 0; i < annos.groups.length; i++) {
-      if (annos.groups[i].group_id == anno.group_id) {
-        annos.groupIndex = i+1;
+  return highls;
+};
+
+
+//Populate the missing new highlight info with data from client
+//highlightInfo: highlight ID, as well as anno or graph ID and location
+DV.Schema.prototype.syncIDs = function(highlightInfo) {
+  //Sync missing IDs
+  var unsynced = _.filter(this.data.highlightsById, function(listHighl){ return listHighl.server_id == null; });
+  unsynced.map(function(highl){
+    if( highl.location == highlightInfo.location ){
+      highl.server_id = highlightInfo.highlight_id;
+      if( highlightInfo.annotation_id ){
+          unsyncedAnnos = _.filter(highl.annotations, function(anno){ return anno.server_id == null; });
+          unsyncedAnnos[0].server_id = highlightInfo.annotation_id;
+          unsyncedAnnos[0].unsaved = false;
+      }
+      if( highlightInfo.graph_id ){
+          unsyncedGraphs = _.filter(highl.graphs, function(graph){ return graph.server_id == null; });
+          unsyncedGraphs[0].server_id = highlightInfo.graph_id;
+          unsyncedGraphs[0].unsaved = false;
       }
     }
-  }
-
-  return annos;
-};
-
-
-//Populate any missing annotation server IDs with data from client
-//locationIds: hash containing ID and location
-DV.Schema.prototype.syncIDs = function(locationIds) {
-  //Sync missing IDs
-  var unsynced = _.filter(this.data.annotationsById, function(listAnno){ return listAnno.server_id == null; });
-  unsynced.map(function(anno){
-    var toSync = _.find(locationIds, function(pair){ return pair.location ? pair.location.image == anno.location.image : false; });
-    if( toSync ){ anno.server_id = toSync.id; }
   });
 };
 
 
-// Returns the list of annotations on a given page.
-DV.Schema.prototype.getAnnotationsByPage = function(_index){
-  return this.schemaData.annotationsByPage[_index];
+// Returns the list of highlights on a given page.
+DV.Schema.prototype.getHighlightsByPage = function(_index){
+  return this.schemaData.highlightsByPage[_index];
 };
 
 
-// Get an annotation by id, with backwards compatibility for argument hashes.
-DV.Schema.prototype.getAnnotation = function(identifier) {
-  if (identifier.id) return this.data.annotationsById[identifier.id];
-  if (identifier.index && !identifier.id) throw new Error('looked up an annotation without an id'); // TRANSLATE ??
-  return this.data.annotationsById[identifier];
+// Get an highlight by id, with backwards compatibility for argument hashes.
+DV.Schema.prototype.getHighlight = function(identifier) {
+  if (identifier.id) return this.data.highlightsById[identifier.id];
+  if (identifier.index && !identifier.id) throw new Error('looked up an highlight without an id'); // TRANSLATE ??
+  return this.data.highlightsById[identifier];
 };
 
 
-DV.Schema.prototype.getFirstAnnotation = function(){
-  var byPage = this.data.annotationsByPage;
+DV.Schema.prototype.getFirstHighlight = function(){
+  var byPage = this.data.highlightsByPage;
   for(var i=0; i < byPage.length; i++){
     if( byPage[i] != null && byPage[i].length > 0 ){ return byPage[i][0]; }
   }
@@ -11685,8 +11662,8 @@ DV.Schema.prototype.getFirstAnnotation = function(){
 };
 
 
-DV.Schema.prototype.getLastAnnotation = function(){
-  var byPage = this.data.annotationsByPage;
+DV.Schema.prototype.getLastHighlight = function(){
+  var byPage = this.data.highlightsByPage;
   for(var i=byPage.length - 1; i >= 0; i--){
     if( byPage[i] != null && byPage[i].length > 0 ){ return byPage[i][byPage.length - 1]; }
   }
@@ -11695,8 +11672,8 @@ DV.Schema.prototype.getLastAnnotation = function(){
 };
 
 
-DV.Schema.prototype.getNextAnnotation = function(currentId) {
-  var anno = this.data.annotationsById[currentId];
+DV.Schema.prototype.getNextHighlight = function(currentId) {
+  var anno = this.data.highlightsById[currentId];
   if( anno.groupIndex < anno.groupCount ){
     //If there are more group associations in anno, advance association counter and return this anno
     anno.groupIndex++;
@@ -11706,7 +11683,7 @@ DV.Schema.prototype.getNextAnnotation = function(currentId) {
     anno.groupIndex = 1;
 
     var pid = anno.page - 1;
-    var byPage = this.data.annotationsByPage;
+    var byPage = this.data.highlightsByPage;
     if( byPage[pid][byPage[pid].length - 1] == anno ){
       //If this is last anno on its page, find next page with anno.. if hit end of document, return first anno
       for(var i=(pid + 1); i < byPage.length; i++){
@@ -11714,7 +11691,7 @@ DV.Schema.prototype.getNextAnnotation = function(currentId) {
           return byPage[i][0];
         }
       }
-      return this.getFirstAnnotation();
+      return this.getFirstHighlight();
     }
     else{
       var nextAnno = null;
@@ -11727,8 +11704,8 @@ DV.Schema.prototype.getNextAnnotation = function(currentId) {
 };
 
 
-DV.Schema.prototype.getPreviousAnnotation = function(currentId) {
-  var anno = this.data.annotationsById[currentId];
+DV.Schema.prototype.getPreviousHighlight = function(currentId) {
+  var anno = this.data.highlightsById[currentId];
   if (anno.groupIndex != 1) {
     //If there are more group associations in anno, reduce association counter and return this anno
     anno.groupIndex--;
@@ -11736,7 +11713,7 @@ DV.Schema.prototype.getPreviousAnnotation = function(currentId) {
   } else {
     var returnAnno = null;
     var pid = anno.page - 1;
-    var byPage = this.data.annotationsByPage;
+    var byPage = this.data.highlightsByPage;
     if (byPage[pid][0] == anno) {
       //If this is first anno on its page, find first prev page with anno.. if hit end of document, return last anno
       for (var i = (pid - 1); i >= 0; i--) {
@@ -11746,7 +11723,7 @@ DV.Schema.prototype.getPreviousAnnotation = function(currentId) {
         }
       }
       if (returnAnno == null) {
-        returnAnno = this.getLastAnnotation();
+        returnAnno = this.getLastHighlight();
       }
     }
     else {
@@ -11784,7 +11761,7 @@ DV.Schema.elements =
   { name: 'currentPage',        query: 'span.DV-currentPage'},
   { name: 'well',               query: 'div.DV-well'},
   { name: 'collection',         query: 'div.DV-pageCollection'},
-  //{ name: 'annotations',        query: 'div.DV-allAnnotations'},
+  //{ name: 'highlights',        query: 'div.DV-allHighlights'},
   { name: 'navigation',         query: 'div.DV-navigation' },
   //{ name: 'chaptersContainer',  query: 'div.DV-chaptersContainer' },
   { name: 'searchInput',        query: 'input.DV-searchInput' },
@@ -11862,7 +11839,7 @@ DV.model.Document = function(viewer){
   if (this.zoomLevel > maxZoom) this.zoomLevel = maxZoom;
 
   if( this.viewer.options.view_only ){
-    this.view_only_anno = data.annotationsById[0];
+    this.view_only_anno = data.highlightsById[0];
   }
 };
 
@@ -12175,79 +12152,41 @@ DV.Schema.events = {
   },
 
   resetTracker: function(){
-    this.viewer.activeAnnotation = null;
-    this.trackAnnotation.combined     = null;
-    this.trackAnnotation.h            = null;
+    this.viewer.activeHighlight = null;
+    this.trackHighlight.combined     = null;
+    this.trackHighlight.h            = null;
   },
-  trackAnnotation: function(){
+  trackHighlight: function(){
     var viewer          = this.viewer;
     var helpers         = this.helpers;
     var scrollPosition  = this.elements.window[0].scrollTop;
 
-    if(viewer.activeAnnotation){
-      var annotation      = viewer.activeAnnotation;
-      var trackAnnotation = this.trackAnnotation;
+    if(viewer.activeHighlight){
+      var highlight      = viewer.activeHighlight;
+      var trackHighlight = this.trackHighlight;
 
 
-      if(trackAnnotation.id != annotation.id){
-        trackAnnotation.id = annotation.id;
-        helpers.setActiveAnnotationLimits(annotation);
+      if(trackHighlight.id != highlight.id){
+        trackHighlight.id = highlight.id;
+        helpers.setActiveHighlightLimits(highlight);
       }
-      if(!viewer.activeAnnotation.annotationEl.hasClass('DV-editing') &&
-         (scrollPosition > (trackAnnotation.h) || scrollPosition < trackAnnotation.combined)) {
-        annotation.hide(true);
-        viewer.pageSet.setActiveAnnotation(null);
-        viewer.activeAnnotation   = null;
-        trackAnnotation.h         = null;
-        trackAnnotation.id        = null;
-        trackAnnotation.combined  = null;
+      if(!viewer.activeHighlight.highlightEl.hasClass('DV-editing') &&
+         (scrollPosition > (trackHighlight.h) || scrollPosition < trackHighlight.combined)) {
+        highlight.hide(true);
+        viewer.pageSet.setActiveHighlight(null);
+        viewer.activeHighlight   = null;
+        trackHighlight.h         = null;
+        trackHighlight.id        = null;
+        trackHighlight.combined  = null;
       }
     }else{
-      viewer.pageSet.setActiveAnnotation(null);
-      viewer.activeAnnotation   = null;
-      trackAnnotation.h         = null;
-      trackAnnotation.id        = null;
-      trackAnnotation.combined  = null;
-      helpers.removeObserver('trackAnnotation');
+      viewer.pageSet.setActiveHighlight(null);
+      viewer.activeHighlight   = null;
+      trackHighlight.h         = null;
+      trackHighlight.id        = null;
+      trackHighlight.combined  = null;
+      helpers.removeObserver('trackHighlight');
     }
-  }
-};
-DV.Schema.events.ViewAnnotation = {
-  next: function(e){
-    var viewer              = this.viewer;
-    var activeAnnotationId  = viewer.activeAnnotationId;
-    var nextAnnotation      = (activeAnnotationId === null) ?
-        viewer.schema.getFirstAnnotation() : viewer.schema.getNextAnnotation(activeAnnotationId);
-
-    if (!nextAnnotation){
-      return false;
-    }
-
-    viewer.pageSet.showAnnotation(nextAnnotation);
-    this.helpers.setAnnotationPosition(nextAnnotation.position);
-
-
-  },
-  previous: function(e){
-    var viewer              = this.viewer;
-    var activeAnnotationId  = viewer.activeAnnotationId;
-
-    var previousAnnotation = (!activeAnnotationId) ?
-    viewer.schema.getFirstAnnotation() : viewer.schema.getPreviousAnnotation(activeAnnotationId);
-    if (!previousAnnotation){
-      return false;
-    }
-
-    viewer.pageSet.showAnnotation(previousAnnotation);
-    this.helpers.setAnnotationPosition(previousAnnotation.position);
-
-
-  },
-  search: function(e){
-    e.preventDefault();
-    this.viewer.open('ViewSearch');
-
-    return false;
   }
 };
 DV.Schema.events.ViewDocument = {
@@ -12270,6 +12209,44 @@ DV.Schema.events.ViewDocument = {
     return false;
   }
 }
+DV.Schema.events.ViewHighlight = {
+  next: function(e){
+    var viewer              = this.viewer;
+    var activeHighlightId  = viewer.activeHighlightId;
+    var nextHighlight      = (activeHighlightId === null) ?
+        viewer.schema.getFirstHighlight() : viewer.schema.getNextHighlight(activeHighlightId);
+
+    if (!nextHighlight){
+      return false;
+    }
+
+    viewer.pageSet.showHighlight(nextHighlight);
+    this.helpers.setHighlightPosition(nextHighlight.position);
+
+
+  },
+  previous: function(e){
+    var viewer              = this.viewer;
+    var activeHighlightId  = viewer.activeHighlightId;
+
+    var previousHighlight = (!activeHighlightId) ?
+    viewer.schema.getFirstHighlight() : viewer.schema.getPreviousHighlight(activeHighlightId);
+    if (!previousHighlight){
+      return false;
+    }
+
+    viewer.pageSet.showHighlight(previousHighlight);
+    this.helpers.setHighlightPosition(previousHighlight.position);
+
+
+  },
+  search: function(e){
+    e.preventDefault();
+    this.viewer.open('ViewSearch');
+
+    return false;
+  }
+};
 DV.Schema.events.ViewSearch = {
   next: function(e){
     var nextPage = this.models.document.nextPage();
@@ -12342,31 +12319,31 @@ DV._.extend(DV.Schema.events, {
     this.handleHashChangeViewDocumentPage(page);
   },
 
-  // #document/p[pageID]/a[annotationID]
-  handleHashChangeViewDocumentAnnotation: function(page,annotation){
+  // #document/p[pageID]/a[highlightID]
+  handleHashChangeViewDocumentHighlight: function(page,highlight){
     var pageIndex   = parseInt(page,10) - 1;
-    var annotation  = parseInt(annotation,10);
+    var highlight  = parseInt(highlight,10);
 
     if(this.viewer.state === 'ViewDocument'){
-      this.viewer.pageSet.showAnnotation(this.viewer.schema.data.annotationsById[annotation]);
+      this.viewer.pageSet.showHighlight(this.viewer.schema.data.highlightsById[highlight]);
     }else{
       this.models.document.setPageIndex(pageIndex);
-      this.viewer.pageSet.setActiveAnnotation(annotation);
-      this.viewer.openingAnnotationFromHash = true;
+      this.viewer.pageSet.setActiveHighlight(highlight);
+      this.viewer.openingHighlightFromHash = true;
       this.viewer.open('ViewDocument');
     }
   },
 
-  // #annotation/a[annotationID]
-  handleHashChangeViewAnnotationAnnotation: function(annotation){
-    var annotation  = parseInt(annotation,10);
+  // #highlight/a[highlightID]
+  handleHashChangeViewHighlightHighlight: function(highlight){
+    var highlight  = parseInt(highlight,10);
     var viewer = this.viewer;
 
-    if(viewer.state === 'ViewAnnotation'){
-      viewer.pageSet.showAnnotation(this.viewer.schema.data.annotationsById[annotation]);
+    if(viewer.state === 'ViewHighlight'){
+      viewer.pageSet.showHighlight(this.viewer.schema.data.highlightsById[highlight]);
     }else{
-      viewer.activeAnnotationId = annotation;
-      this.viewer.open('ViewAnnotation');
+      viewer.activeHighlightId = highlight;
+      this.viewer.open('ViewHighlight');
     }
   },
 
@@ -12424,7 +12401,7 @@ DV._.extend(DV.Schema.events, {
   handleNavigation: function(e){
     var el          = this.viewer.$(e.target);
     var triggerEl   = el.closest('.DV-trigger');
-    var noteEl      = el.closest('.DV-annotationMarker');
+    var noteEl      = el.closest('.DV-highlightMarker');
     var chapterEl   = el.closest('.DV-chapter');
     if (!triggerEl.length) return;
 
@@ -12432,19 +12409,19 @@ DV._.extend(DV.Schema.events, {
       return chapterEl.toggleClass('DV-collapsed');
 
     }else if (noteEl.length) {
-      var aid         = noteEl[0].id.replace('DV-annotationMarker-','');
-      var annotation  = this.viewer.schema.getAnnotation(aid);
-      var pageNumber  = parseInt(annotation.index,10)+1;
+      var aid         = noteEl[0].id.replace('DV-highlightMarker-','');
+      var highlight  = this.viewer.schema.getHighlight(aid);
+      var pageNumber  = parseInt(highlight.index,10)+1;
 
       if(this.viewer.state === 'ViewText'){
-        this.loadText(annotation.index);
+        this.loadText(highlight.index);
 
         // this.viewer.history.save('text/p'+pageNumber);
       }else{
         if (this.viewer.state === 'ViewThumbnails') {
           this.viewer.open('ViewDocument');
         }
-        this.viewer.pageSet.showAnnotation(annotation);
+        this.viewer.pageSet.showHighlight(highlight);
       }
 
     } else if (chapterEl.length) {
@@ -12477,7 +12454,7 @@ DV.Schema.helpers = {
 
     HOST_EXTRACTOR : (/https?:\/\/([^\/]+)\//),
 
-    annotationClassName: '.DV-annotation',
+    highlightClassName: '.DV-highlight',
 
     // Bind all events for the docviewer
     // live/delegate are the preferred methods of event attachment
@@ -12510,9 +12487,9 @@ DV.Schema.helpers = {
       viewer.$('.DV-navControls').delegate('span.DV-next','click', compiled.next);
       viewer.$('.DV-navControls').delegate('span.DV-previous','click', compiled.previous);
 
-      viewer.$('.DV-annotationView').delegate('.DV-trigger','click',function(e){
+      viewer.$('.DV-highlightView').delegate('.DV-trigger','click',function(e){
         e.preventDefault();
-        context.open('ViewAnnotation');
+        context.open('ViewHighlight');
       });
       viewer.$('.DV-documentView').delegate('.DV-trigger','click',function(e){
         // history.save('document/p'+context.models.document.currentPage());
@@ -12541,21 +12518,20 @@ DV.Schema.helpers = {
 
       this.elements.viewer.delegate('.DV-fullscreen', 'click', DV._.bind(this.openFullScreen, this));
 
-      var boundToggle  = DV.jQuery.proxy(this.annotationBridgeToggle, this);
+      var boundToggle  = DV.jQuery.proxy(this.highlightBridgeToggle, this);
       var collection   = this.elements.collection;
 
-      collection.delegate('.DV-annotationTab','click', boundToggle);
-      collection.delegate('.DV-annotationRegion','click', DV.jQuery.proxy(this.annotationBridgeShow, this));
-      collection.delegate('.DV-annotationNext','click', DV.jQuery.proxy(this.annotationBridgeNext, this));
-      collection.delegate('.DV-annotationPrevious','click', DV.jQuery.proxy(this.annotationBridgePrevious, this));
-      collection.delegate('.DV-showEdit','click', DV.jQuery.proxy(this.showAnnotationEdit, this));
-      collection.delegate('.DV-cancelEdit','click', DV.jQuery.proxy(this.cancelAnnotationEdit, this));
-      collection.delegate('.DV-saveAnnotation','click', DV.jQuery.proxy(this.saveAnnotation, this));
-      collection.delegate('.DV-saveAnnotationDraft','click', DV.jQuery.proxy(this.saveAnnotation, this));
+      collection.delegate('.DV-highlightTab','click', boundToggle);
+      collection.delegate('.DV-highlightRegion','click', DV.jQuery.proxy(this.highlightBridgeShow, this));
+      collection.delegate('.DV-highlightNext','click', DV.jQuery.proxy(this.highlightBridgeNext, this));
+      collection.delegate('.DV-highlightPrevious','click', DV.jQuery.proxy(this.highlightBridgePrevious, this));
+      collection.delegate('.DV-showEdit','click', DV.jQuery.proxy(this.showHighlightEdit, this));
+      collection.delegate('.DV-cancelEdit','click', DV.jQuery.proxy(this.cancelHighlightEdit, this));
+      collection.delegate('.DV-saveAnnotation','click', DV.jQuery.proxy(this.saveHighlight, this));
       collection.delegate('.DV-pageNumber', 'click', DV._.bind(this.permalinkPage, this, 'document'));
       collection.delegate('.DV-textCurrentPage', 'click', DV._.bind(this.permalinkPage, this, 'text'));
-      collection.delegate('.DV-annotationTitle', 'click', DV._.bind(this.permalinkAnnotation, this));
-      collection.delegate('.DV-permalink', 'click', DV._.bind(this.permalinkAnnotation, this));
+      collection.delegate('.DV-annotationTitle', 'click', DV._.bind(this.permalinkHighlight, this));
+      collection.delegate('.DV-permalink', 'click', DV._.bind(this.permalinkHighlight, this));
 
       // Thumbnails
       viewer.$('.DV-thumbnails').delegate('.DV-thumbnail-page', 'click', function(e) {
@@ -12590,7 +12566,7 @@ DV.Schema.helpers = {
       this.elements.window.live('mousedown',
         function(e){
           var el = viewer.$(e.target);
-          if (el.parents().is('.DV-annotation') || el.is('.DV-annotation')) return true;
+          if (el.parents().is('.DV-highlight') || el.is('.DV-highlight')) return true;
           if(context.elements.window.hasClass('DV-coverVisible')){
             if((el.width() - parseInt(e.clientX,10)) >= 15){
               cleanUp();
@@ -12635,7 +12611,7 @@ DV.Schema.helpers = {
 
     // We're entering the Notes tab -- make sure that there are no data-src
     // attributes remaining.
-    ensureAnnotationImages : function() {
+    ensureHighlightImages : function() {
       this.viewer.$(".DV-img[data-src]").each(function() {
         var el = DV.jQuery(this);
         el.attr('src', el.attr('data-src'));
@@ -12734,16 +12710,16 @@ DV.Schema.helpers = {
       this.viewer.history.save(mode + '/p' + number);
     },
 
-    // Click to open an annotation's permalink.
-    permalinkAnnotation : function(e) {
-      var id   = this.viewer.$(e.target).closest('.DV-annotation').attr('data-id');
-      var anno = this.viewer.schema.getAnnotation(id);
+    // Click to open an highlight's permalink.
+    permalinkHighlight : function(e) {
+      var id   = this.viewer.$(e.target).closest('.DV-highlight').attr('data-id');
+      var anno = this.viewer.schema.getHighlight(id);
       var sid  = anno.server_id || anno.id;
       if (this.viewer.state == 'ViewDocument') {
-        this.viewer.pageSet.showAnnotation(anno);
+        this.viewer.pageSet.showHighlight(anno);
         this.viewer.history.save('document/p' + anno.pageNumber + '/a' + sid);
       } else {
-        this.viewer.history.save('annotation/a' + sid);
+        this.viewer.history.save('highlight/a' + sid);
       }
     },
 
@@ -12772,14 +12748,14 @@ DV.Schema.helpers = {
 
     gotoPage: function(e){
       e.preventDefault();
-      var aid           = this.viewer.$(e.target).parents('.DV-annotation').attr('rel').replace('aid-','');
-      var annotation    = this.viewer.schema.getAnnotation(aid);
+      var aid           = this.viewer.$(e.target).parents('.DV-highlight').attr('rel').replace('aid-','');
+      var highlight    = this.viewer.schema.getHighlight(aid);
       var viewer        = this.viewer;
 
       if(viewer.state !== 'ViewDocument'){
-        this.models.document.setPageIndex(annotation.index);
+        this.models.document.setPageIndex(highlight.index);
         viewer.open('ViewDocument');
-        // this.viewer.history.save('document/p'+(parseInt(annotation.index,10)+1));
+        // this.viewer.history.save('document/p'+(parseInt(highlight.index,10)+1));
       }
     },
 
@@ -12790,8 +12766,8 @@ DV.Schema.helpers = {
 
       // construct url fragment based on current viewer state
       switch (this.viewer.state) {
-        case 'ViewAnnotation':
-          url += '#annotation/a' + this.viewer.activeAnnotationId; // default to the top of the annotations page.
+        case 'ViewHighlight':
+          url += '#highlight/a' + this.viewer.activeHighlightId; // default to the top of the highlights page.
           break;
         case 'ViewDocument':
           url += '#document/p' + currentPage;
@@ -12831,7 +12807,7 @@ DV.Schema.helpers = {
     },
 
     toggleContent: function(toggleClassName){
-      this.elements.viewer.removeClass('DV-viewText DV-viewSearch DV-viewDocument DV-viewAnnotations DV-viewThumbnails').addClass('DV-'+toggleClassName);
+      this.elements.viewer.removeClass('DV-viewText DV-viewSearch DV-viewDocument DV-ViewHighlights DV-viewThumbnails').addClass('DV-'+toggleClassName);
     },
 
     jump: function(pageIndex, modifier, forceRedraw){
@@ -12900,11 +12876,11 @@ DV.Schema.helpers = {
       history.register(/p(\d*)$/, DV._.bind(events.handleHashChangeLegacyViewDocumentPage,this.events));
       history.register(/p=(\d*)$/, DV._.bind(events.handleHashChangeLegacyViewDocumentPage,this.events));
 
-      // Handle annotation loading in document view
-      history.register(/document\/p(\d*)\/a(\d*)$/, DV._.bind(events.handleHashChangeViewDocumentAnnotation,this.events));
+      // Handle highlight loading in document view
+      history.register(/document\/p(\d*)\/a(\d*)$/, DV._.bind(events.handleHashChangeViewDocumentHighlight,this.events));
 
-      // Handle annotation loading in annotation view
-      history.register(/annotation\/a(\d*)$/, DV._.bind(events.handleHashChangeViewAnnotationAnnotation,this.events));
+      // Handle highlight loading in highlight view
+      history.register(/highlight\/a(\d*)$/, DV._.bind(events.handleHashChangeViewHighlightHighlight,this.events));
 
       // Handle loading of the pages view
       history.register(/pages$/, DV._.bind(events.handleHashChangeViewPages, events));
@@ -12974,7 +12950,7 @@ DV.Schema.helpers = {
         var opts = this.viewer.options;
         this.viewer.open('ViewDocument');
         if (opts.note) {
-          this.viewer.pageSet.showAnnotation(this.viewer.schema.data.annotationsById[opts.note]);
+          this.viewer.pageSet.showHighlight(this.viewer.schema.data.highlightsById[opts.note]);
         } else if (opts.page) {
           this.jump(opts.page - 1);
         }
@@ -12993,94 +12969,12 @@ DV.Schema.helpers = {
 
 };
 
-DV._.extend(DV.Schema.helpers, {
-  getAnnotationModel : function(annoEl) {
-    var annoId = parseInt(annoEl.attr('data-id').match(/\d+/), 10);
-    return this.viewer.schema.getAnnotation(annoId);
-  },
-  // Return the annotation Object that connects with the element in the DOM
-  getAnnotationObject: function(annotation){
-
-    var annotation    = this.viewer.$(annotation);
-    var annotationId  = annotation.attr('id').replace(/DV\-annotation\-|DV\-listAnnotation\-/,'');
-    var pageId        = annotation.closest('div.DV-set').attr('data-id');
-
-    for(var i = 0; (annotationObject = this.viewer.pageSet.pages[pageId].annotations[i]); i++){
-      if(annotationObject.id == annotationId){
-        // cleanup
-        annotation = null;
-        return annotationObject;
-      }
-    }
-
-    return false;
-
-  },
-  // Set of bridges to access annotation methods
-  // Toggle
-  annotationBridgeToggle: function(e){
-    e.preventDefault();
-    var annotationObject = this.getAnnotationObject(this.viewer.$(e.target).closest(this.annotationClassName));
-    annotationObject.toggle();
-  },
-  // Show annotation
-  annotationBridgeShow: function(e){
-    e.preventDefault();
-    var annotationObject = this.getAnnotationObject(this.viewer.$(e.target).closest(this.annotationClassName));
-    annotationObject.show();
-  },
-  // Hide annotation
-  annotationBridgeHide: function(e){
-    e.preventDefault();
-    var annotationObject = this.getAnnotationObject(this.viewer.$(e.target).closest(this.annotationClassName));
-    annotationObject.hide(true);
-  },
-  // Jump to the next annotation
-  annotationBridgeNext: function(e){
-    e.preventDefault();
-    var annotationObject = this.getAnnotationObject(this.viewer.$(e.target).closest(this.annotationClassName));
-    annotationObject.next();
-  },
-  // Jump to the previous annotation
-  annotationBridgePrevious: function(e){
-    e.preventDefault();
-    var annotationObject = this.getAnnotationObject(this.viewer.$(e.target).closest(this.annotationClassName));
-    annotationObject.previous();
-  },
-  // Update currentpage text to indicate current annotation
-  setAnnotationPosition: function(_position){
-    this.elements.currentPage.text(_position);
-  },
-  // Update active annotation limits
-  setActiveAnnotationLimits: function(annotation){
-    var annotation = (annotation) ? annotation : this.viewer.activeAnnotation;
-
-    if(!annotation || annotation == null){
-      return;
-    }
-
-    var elements  = this.elements;
-    var aPage     = annotation.page;
-    var aEl       = annotation.annotationEl;
-    var aPosTop   = annotation.position.top * this.models.pages.zoomFactor();
-    var _trackAnnotation = this.events.trackAnnotation;
-
-    if(annotation.type === 'page'){
-      _trackAnnotation.h          = aEl.outerHeight()+aPage.getOffset();
-      _trackAnnotation.combined   = (aPage.getOffset()) - elements.window.height();
-    }else{
-      _trackAnnotation.h          = aEl.height()+aPosTop-20+aPage.getOffset()+aPage.getPageNoteHeight();
-      _trackAnnotation.combined   = (aPosTop-20+aPage.getOffset()+aPage.getPageNoteHeight()) - elements.window.height();
-    }
-
-  }
-});
- // Renders the navigation sidebar for chapters and annotations.
+ // Renders the navigation sidebar for chapters and highlights.
 DV._.extend(DV.Schema.helpers, {
 
-  showAnnotations : function() {
-    if (this.viewer.options.showAnnotations === false) return false;
-    return DV._.size(this.viewer.schema.data.annotationsById) > 0;
+  showHighlights : function() {
+    if (this.viewer.options.showHighlights === false) return false;
+    return DV._.size(this.viewer.schema.data.highlightsById) > 0;
   },
 
   renderViewer: function(){
@@ -13103,8 +12997,8 @@ DV._.extend(DV.Schema.helpers, {
     var contribs = doc.contributor && doc.contributor_organization &&
                    ('' + doc.contributor + ', '+ doc.contributor_organization);
 
-    var showAnnotations = this.showAnnotations();
-    var printNotesURL = (showAnnotations) && doc.resources.print_annotations;
+    var showHighlights = this.showHighlights();
+    var printNotesURL = (showHighlights) && doc.resources.print_highlights;
 
     var viewerOptions = {
       options : this.viewer.options,
@@ -13145,7 +13039,7 @@ DV._.extend(DV.Schema.helpers, {
   // the sidebar.
   displayNavigation : function() {
     var doc = this.viewer.schema.document;
-    var missing = (!doc.description && !DV._.size(this.viewer.schema.data.annotationsById) && !this.viewer.schema.data.sections.length);
+    var missing = (!doc.description && !DV._.size(this.viewer.schema.data.highlightsById) && !this.viewer.schema.data.sections.length);
     this.viewer.$('.DV-supplemental').toggleClass('DV-noNavigation', missing);
   },
 
@@ -13166,14 +13060,14 @@ DV._.extend(DV.Schema.helpers, {
 
     /* ---------------------------------------------------- start the nav helper methods */
     var getAnnotionsByRange = function(rangeStart, rangeEnd){
-      var annotations = [];
+      var highlights = [];
       for(var i = rangeStart, len = rangeEnd; i < len; i++){
         if(notes[i]){
-          annotations.push(notes[i]);
+          highlights.push(notes[i]);
           nav[i] = '';
         }
       }
-      return annotations.join('');
+      return highlights.join('');
     };
 
     var createChapter = function(chapter){
@@ -13183,23 +13077,23 @@ DV._.extend(DV.Schema.helpers, {
       return (JST['DV/views/chapterNav'](chapter));
     };
 
-    var createNavAnnotations = function(annotationIndex){
-      var renderedAnnotations = [];
-      var annotations = me.viewer.schema.data.annotationsByPage[annotationIndex];
+    var createNavHighlights = function(highlightIndex){
+      var renderedHighlights = [];
+      var highlights = me.viewer.schema.data.highlightsByPage[highlightIndex];
 
-      for (var j=0; j<annotations.length; j++) {
-        var annotation = annotations[j];
-        renderedAnnotations.push(JST['DV/views/annotationNav'](annotation));
-        bolds.push("#DV-selectedAnnotation-" + annotation.id + " #DV-annotationMarker-" + annotation.id + " .DV-navAnnotationTitle");
+      for (var j=0; j<highlights.length; j++) {
+        var highlight = highlights[j];
+        renderedHighlights.push(JST['DV/views/highlightNav'](highlight));
+        bolds.push("#DV-selectedHighlight-" + highlight.id + " #DV-highlightMarker-" + highlight.id + " .DV-navHighlightTitle");
       }
-      return renderedAnnotations.join('');
+      return renderedHighlights.join('');
     };
     /* ---------------------------------------------------- end the nav helper methods */
 
-    if (this.showAnnotations()) {
+    if (this.showHighlights()) {
       for(var i = 0,len = this.models.document.totalPages; i < len;i++){
-        if(this.viewer.schema.data.annotationsByPage[i]){
-          nav[i]   = createNavAnnotations(i);
+        if(this.viewer.schema.data.highlightsByPage[i]){
+          nav[i]   = createNavHighlights(i);
           notes[i] = nav[i];
         }
       }
@@ -13213,12 +13107,12 @@ DV._.extend(DV.Schema.helpers, {
         section.id         = section.id || parseInt(DV._.uniqueId());
         section.pageNumber = section.page;
         section.endPage    = nextSection ? nextSection.page - 1 : this.viewer.schema.data.totalPages;
-        var annotations    = getAnnotionsByRange(section.pageNumber - 1, section.endPage);
+        var highlights    = getAnnotionsByRange(section.pageNumber - 1, section.endPage);
 
-        if(annotations != '') {
+        if(highlights != '') {
           section.navigationExpander       = navigationExpander;
           section.navigationExpanderClass  = 'DV-hasChildren';
-          section.noteViews                = annotations;
+          section.noteViews                = highlights;
           nav[section.pageNumber - 1]      = createChapter(section);
         } else {
           section.navigationExpanderClass  = 'DV-noChildren';
@@ -13235,7 +13129,7 @@ DV._.extend(DV.Schema.helpers, {
     var chaptersContainer = this.viewer.$('div.DV-chaptersContainer');
     chaptersContainer.html(navigationView);
     chaptersContainer.unbind('click').bind('click',this.events.compile('handleNavigation'));
-    this.viewer.schema.data.sections.length || DV._.size(this.viewer.schema.data.annotationsById) ?
+    this.viewer.schema.data.sections.length || DV._.size(this.viewer.schema.data.highlightsById) ?
        chaptersContainer.show() : chaptersContainer.hide();
     this.displayNavigation();
 
@@ -13261,17 +13155,17 @@ DV._.extend(DV.Schema.helpers, {
     }
 
     // Hide and show navigation flags:
-    var showAnnotations = this.showAnnotations();
+    var showHighlights = this.showHighlights();
     var showPages       = this.models.document.totalPages > 1;
     var showSearch      = (this.viewer.options.search !== false) &&
                           (this.viewer.options.text !== false) &&
                           (!this.viewer.options.width || this.viewer.options.width >= 540);
-    var noFooter = (!showAnnotations && !showPages && !showSearch && !this.viewer.options.sidebar);
+    var noFooter = (!showHighlights && !showPages && !showSearch && !this.viewer.options.sidebar);
 
 
-    // Hide annotations, if there are none:
-    var $annotationsView = this.viewer.$('.DV-annotationView');
-    $annotationsView[showAnnotations ? 'show' : 'hide']();
+    // Hide highlights, if there are none:
+    var $highlightsView = this.viewer.$('.DV-highlightView');
+    $highlightsView[showHighlights ? 'show' : 'hide']();
 
     // Hide the text tab, if it's disabled.
     if (showSearch) {
@@ -13290,13 +13184,13 @@ DV._.extend(DV.Schema.helpers, {
     }
 
     // Hide the Documents tab if it's the only tab left.
-    if (!showAnnotations && !showPages && !showSearch) {
+    if (!showHighlights && !showPages && !showSearch) {
       this.viewer.$('.DV-views').hide();
     }
 
     this.viewer.api.roundTabCorners();
 
-    // Hide the entire sidebar, if there are no annotations or sections.
+    // Hide the entire sidebar, if there are no highlights or sections.
     //var showChapters = this.models.chapters.chapters.length > 0;
 
     // Remove and re-render the nav controls.
@@ -13305,7 +13199,7 @@ DV._.extend(DV.Schema.helpers, {
     if (showPages || this.viewer.options.sidebar) {
       var navControls = JST['DV/views/navControls']({
         totalPages: this.viewer.schema.data.totalPages,
-        totalAnnotations: this.viewer.schema.data.totalAnnotations
+        totalHighlights: this.viewer.schema.data.totalHighlights
       });
       this.viewer.$('.DV-navControlsContainer').html(navControls);
     }
@@ -13326,7 +13220,7 @@ DV._.extend(DV.Schema.helpers, {
 
     // Check if the zoom is showing, and if not, shorten the width of search
     DV._.defer(DV._.bind(function() {
-      if ((this.elements.viewer.width() <= 700) && (showAnnotations || showPages || showSearch)) {
+      if ((this.elements.viewer.width() <= 700) && (showHighlights || showPages || showSearch)) {
         this.viewer.$('.DV-controls').addClass('DV-narrowControls');
       }
     }, this));
@@ -13349,48 +13243,48 @@ DV._.extend(DV.Schema.helpers, {
 });
 
 DV._.extend(DV.Schema.helpers,{
-  showAnnotationEdit : function(e) {
-    var annoEl = this.viewer.$(e.target).closest(this.annotationClassName);
+  showHighlightEdit : function(e) {
+    var annoEl = this.viewer.$(e.target).closest(this.highlightClassName);
     var area   = this.viewer.$('.DV-annotationTextArea', annoEl);
     annoEl.addClass('DV-editing');
     area.focus();
   },
 
 
-  cancelAnnotationEdit : function(e) {
-    var annoEl = this.viewer.$(e.target).closest(this.annotationClassName);
-    var anno   = this.getAnnotationModel(annoEl);
-    this.viewer.$('.DV-annotationTitleInput', annoEl).val(anno.title);
-    this.viewer.$('.DV-annotationTextArea', annoEl).val(anno.text);
-    if (anno.unsaved) {
-      (anno.groupCount > 0) ? this.viewer.schema.removeAnnotationGroup(anno, anno.groups[anno.groupIndex - 1].group_id) : this.viewer.schema.removeAnnotation(anno);
-      this.viewer.pageSet.removePageAnnotation(anno);
-    } else {
-      annoEl.removeClass('DV-editing');
+  cancelHighlightEdit : function(e) {
+    var highEl = this.viewer.$(e.target).closest(this.highlightClassName);
+    var highl   = this.getHighlightModel(highEl);
+    var content = DV.Schema.helpers.getCurrentHighlightContent(highl);
+
+    if( content.type == 'anno' ){
+      var anno = content.content;
+      this.viewer.$('.DV-annotationTitleInput', highEl).val(anno.title);
+      this.viewer.$('.DV-annotationTextArea', highEl).val(anno.text);
+      if (anno.unsaved) {
+          if( this.viewer.schema.removeHighlightContent(highl, {anno_id: anno.id}) ){
+            this.viewer.schema.removeHighlight(highl);
+            this.viewer.pageSet.removeHighlight(highl);
+          }
+      } else {
+          highEl.removeClass('DV-editing');
+      }
     }
     this.viewer.fireCancelCallbacks(anno);
   },
 
 
-  saveAnnotation : function(e, option) {
+  saveHighlight : function(e) {
     var target = this.viewer.$(e.target);
-    var annoEl = target.closest(this.annotationClassName);
-    var anno   = this.getAnnotationModel(annoEl);
-    if (!anno) return;
+    var highEl = target.closest(this.highlightClassName);
+    var highl  = this.getHighlightModel(highEl);
+    if (!highl) return;
 
-    if (target.hasClass('DV-saveAnnotationDraft'))  anno.access = 'exclusive';
-    else if (annoEl.hasClass('DV-accessExclusive')) anno.access = 'public';
-
-    anno.unsaved             = false;
-    anno.owns_note           = anno.owns_note;
-    anno.author              = anno.author || dc.account.name;
-    anno.author_organization = anno.author_organization || (dc.account.isReal && dc.account.organization.name);
-
-    anno.anno_type == 'graph' ? this.saveGraph(anno, annoEl, option) : this.saveDataPoint(anno, annoEl, option)
+    var content = this.getCurrentHighlightContent(highl);
+    content.type == 'graph' ? this.saveGraph(highl, highEl) : this.saveDataPoint(highl, highEl)
   },
 
 
-  saveGraph : function(anno, annoEl, option){
+  saveGraph : function(anno, annoEl){
     //For graphs, make sure data was exported
     if($(annoEl).find('.status_unsaved').length != 0){
         this.viewer.$('.DV-data_error', annoEl).html(DV.t('unsaved_data_error'));
@@ -13405,25 +13299,132 @@ DV._.extend(DV.Schema.helpers,{
   },
 
 
-  saveDataPoint : function(anno, annoEl, option){
-    anno.title = this.viewer.$('.DV-annotationTitleInput', annoEl).val();
+  saveDataPoint : function(highl, highEl){
+    var content = this.getCurrentHighlightContent(highl).content;
+    content.access              = 'public';
+    content.unsaved             = false;
+    content.author              = content.author || dc.account.name;
+    content.author_organization = content.author_organization || (dc.account.isReal && dc.account.organization.name);
+    content.title = this.viewer.$('.DV-annotationTitleInput', highEl).val();
 
-    if ($.trim(anno.title).length == 0) {
-        this.viewer.$('.DV-annotationTitleInput', annoEl).addClass('error');
-        this.viewer.$('.DV-errorMsg', annoEl).html(DV.t('no_title_error'));
+    if ($.trim(content.title).length == 0) {
+        this.viewer.$('.DV-annotationTitleInput', highEl).addClass('error');
+        this.viewer.$('.DV-errorMsg', highEl).html(DV.t('no_title_error'));
         return;
     }
 
-    anno.text = this.viewer.$('.DV-annotationTextArea', annoEl).val();
+    content.text = this.viewer.$('.DV-annotationTextArea', highEl).val();
 
-    annoEl.removeClass('DV-editing');
-    this.viewer.fireSaveCallbacks(anno);
+    //Assemble content-specific object for saving
+    var saveObj = content;
+    content.type = 'anno';
+    content.highlight = {
+      id: highl.server_id,
+      location: highl.location,
+      page_number: highl.page
+    }
 
-    this.viewer.pageSet.refreshPageAnnotation(anno);
+    this.viewer.fireSaveCallbacks(saveObj);
+
+
   }
 
 });
 
+DV._.extend(DV.Schema.helpers, {
+  getHighlightModel : function(annoEl) {
+    var annoId = parseInt(annoEl.attr('data-id').match(/\d+/), 10);
+    return this.viewer.schema.getHighlight(annoId);
+  },
+  // Return the highlight Object that connects with the element in the DOM
+  getHighlightObject: function(highlight){
+
+    var highlight    = this.viewer.$(highlight);
+    var highlightId  = highlight.attr('id').replace(/DV\-highlight\-|DV\-listHighlight\-/,'');
+    var pageId        = highlight.closest('div.DV-set').attr('data-id');
+
+    for(var i = 0; (highlightObject = this.viewer.pageSet.pages[pageId].highlights[i]); i++){
+      if(highlightObject.id == highlightId){
+        // cleanup
+        highlight = null;
+        return highlightObject;
+      }
+    }
+
+    return false;
+
+  },
+
+
+  //Return current content for highlight and what type it is
+  getCurrentHighlightContent : function(highl){
+    if(highl.displayIndex > highl.annotations.length){
+      return {type: 'graph', content: highl.graphs[highl.displayIndex - highl.annotations.length]};
+    }else{
+      return {type: 'anno', content: highl.annotations[highl.displayIndex]};
+    }
+  },
+
+
+  // Set of bridges to access highlight methods
+  // Toggle
+  highlightBridgeToggle: function(e){
+    e.preventDefault();
+    var highlightObject = this.getHighlightObject(this.viewer.$(e.target).closest(this.highlightClassName));
+    highlightObject.toggle();
+  },
+  // Show highlight
+  highlightBridgeShow: function(e){
+    e.preventDefault();
+    var highlightObject = this.getHighlightObject(this.viewer.$(e.target).closest(this.highlightClassName));
+    highlightObject.show();
+  },
+  // Hide highlight
+  highlightBridgeHide: function(e){
+    e.preventDefault();
+    var highlightObject = this.getHighlightObject(this.viewer.$(e.target).closest(this.highlightClassName));
+    highlightObject.hide(true);
+  },
+  // Jump to the next highlight
+  highlightBridgeNext: function(e){
+    e.preventDefault();
+    var highlightObject = this.getHighlightObject(this.viewer.$(e.target).closest(this.highlightClassName));
+    highlightObject.next();
+  },
+  // Jump to the previous highlight
+  highlightBridgePrevious: function(e){
+    e.preventDefault();
+    var highlightObject = this.getHighlightObject(this.viewer.$(e.target).closest(this.highlightClassName));
+    highlightObject.previous();
+  },
+  // Update currentpage text to indicate current highlight
+  setHighlightPosition: function(_position){
+    this.elements.currentPage.text(_position);
+  },
+  // Update active highlight limits
+  setActiveHighlightLimits: function(highlight){
+    var highlight = (highlight) ? highlight : this.viewer.activeHighlight;
+
+    if(!highlight || highlight == null){
+      return;
+    }
+
+    var elements  = this.elements;
+    var aPage     = highlight.page;
+    var aEl       = highlight.highlightEl;
+    var aPosTop   = highlight.position.top * this.models.pages.zoomFactor();
+    var _trackHighlight = this.events.trackHighlight;
+
+    if(highlight.type === 'page'){
+      _trackHighlight.h          = aEl.outerHeight()+aPage.getOffset();
+      _trackHighlight.combined   = (aPage.getOffset()) - elements.window.height();
+    }else{
+      _trackHighlight.h          = aEl.height()+aPosTop-20+aPage.getOffset()+aPage.getPageNoteHeight();
+      _trackHighlight.combined   = (aPosTop-20+aPage.getOffset()+aPage.getPageNoteHeight()) - elements.window.height();
+    }
+
+  }
+});
 DV._.extend(DV.Schema.helpers, {
   resetNavigationState: function(){
     var elements = this.elements;
@@ -13433,9 +13434,9 @@ DV._.extend(DV.Schema.helpers, {
   setActiveChapter: function(chapterId){
     if (chapterId) this.elements.chaptersContainer.attr('id','DV-selectedChapter-'+chapterId);
   },
-  setActiveAnnotationInNav: function(annotationId){
-    if(annotationId != null){
-      this.elements.navigation.attr('id','DV-selectedAnnotation-'+annotationId);
+  setActiveHighlightInNav: function(highlightId){
+    if(highlightId != null){
+      this.elements.navigation.attr('id','DV-selectedHighlight-'+highlightId);
     }else{
       this.elements.navigation.attr('id','');
     }
@@ -13652,7 +13653,6 @@ DV.Schema.helpers.TranslationAliases = [
 
 DV.WPD_API = function(){
   this.current_anno_view = null;
-  window.addEventListener('message', $.proxy(this.receiveMessage, this));
 };
 
 DV.WPD_API.prototype.setActiveAnnoView = function(currentView){
@@ -13673,7 +13673,7 @@ DV.WPD_API.prototype.receiveMessage = function(message) {
       break;
     }
     case 'dataChange': {
-      //Update annotation to reflect that WPD data has changed
+      //Update highlight to reflect that WPD data has changed
       this.current_anno_view.updateDataStatus(false);
       break;
     }
@@ -13720,24 +13720,24 @@ DV.Schema.states = {
     this.models.document.computeOffsets();
     this.helpers.addObserver('drawPages');
     this.helpers.registerHashChangeEvents();
-    this.dragReporter = new DV.DragReporter(this, '.DV-pageCollection',DV.jQuery.proxy(this.helpers.shift, this), { ignoreSelector: '.DV-annotationContent' });
+    this.dragReporter = new DV.DragReporter(this, '.DV-pageCollection',DV.jQuery.proxy(this.helpers.shift, this), { ignoreSelector: '.DV-highlightContent' });
     this.helpers.startCheckTimer();
     this.helpers.handleInitialState();
     DV._.defer(DV._.bind(this.helpers.autoZoomPage, this.helpers));
   },
 
-  ViewAnnotation: function(){
+  ViewHighlight: function(){
     this.helpers.reset(); // in construction.js
-    this.helpers.ensureAnnotationImages();
-    this.activeAnnotationId = null;
+    this.helpers.ensureHighlightImages();
+    this.activeHighlightId = null;
     this.acceptInput.deny();
-    // Nudge IE to force the annotations to repaint.
+    // Nudge IE to force the highlights to repaint.
     if (DV.jQuery.browser.msie) {
-      this.elements.annotations.css({zoom : 0});
-      this.elements.annotations.css({zoom : 1});
+      this.elements.highlights.css({zoom : 0});
+      this.elements.highlights.css({zoom : 1});
     }
 
-    this.helpers.toggleContent('viewAnnotations');
+    this.helpers.toggleContent('ViewHighlights');
     this.compiled.next();
     return true;
   },
@@ -13961,35 +13961,43 @@ DV.Api.prototype = {
     }
   },
 
-  getAnnotationsByPageIndex : function(idx) {
-    return this.viewer.schema.getAnnotationsByPage(idx);
+  getHighlightsByPageIndex : function(idx) {
+    return this.viewer.schema.getHighlightsByPage(idx);
   },
 
-  getAnnotation : function(aid) {
-    return this.viewer.schema.getAnnotation(aid);
+  getHighlight : function(aid) {
+    return this.viewer.schema.getHighlight(aid);
   },
 
-  // Add a new annotation to the document, prefilled to any extent.
-  addAnnotation : function(anno) {
-    anno = this.viewer.schema.loadAnnotation(anno);
-    this.viewer.pageSet.addPageAnnotation(anno);
-    this.viewer.pageSet.showAnnotation(anno, {active: true, edit : true});
-    return anno;
+  // Add a new highlight to the document, prefilled to any extent.
+  addHighlight : function(highl) {
+    highl = this.viewer.schema.loadHighlight(highl);
+    this.viewer.pageSet.addHighlight(highl);
+    this.viewer.pageSet.showHighlight(highl, {active: true, edit : true});
+    return highl;
   },
 
-  // Find annotation and make it the active one
-  selectAnnotation: function(anno, showEdit) {
-      anno = this.viewer.schema.findAnnotation(anno);
-      this.viewer.pageSet.showAnnotation(anno, {active: true, edit : showEdit});
+  //Add more content to existing highlight
+  addContentToHighlight: function(highlightId, content_type){
+      highl = this.viewer.schema.findHighlight({id: highlightId });
+      this.viewer.schema.addHighlightContent(highl, content_type);
+      this.viewer.pageSet.refreshHighlight(highl, true, true);
   },
 
-  // Remove annotation/group relationship (and annotation if no relationships left)
-  deleteAnnotation: function(anno, group) {
-      anno = this.viewer.schema.findAnnotation(anno);
-      if ( this.viewer.schema.removeAnnotationGroup(anno, group) ) {
-        this.viewer.pageSet.removePageAnnotation(anno);
+  // Find highlight and make it the active one
+  selectHighlight: function(highlightInfo, showEdit) {
+      this.viewer.schema.setActiveContent(highlightInfo);
+      this.viewer.pageSet.showHighlight(highlightInfo, {active: true, edit : showEdit});
+  },
+
+  // Remove highlight/group relationship (and highlight if no relationships left)
+  deleteHighlight: function(highlightInfo) {
+      highl = this.viewer.schema.findHighlight({id: highlightInfo.highlight_id });
+
+      if ( this.viewer.schema.removeHighlightContent(highl, highlightInfo) ) {
+        this.viewer.pageSet.removeHighlight(highl);
       }else{
-        this.viewer.pageSet.refreshPageAnnotation(anno);
+        this.viewer.pageSet.refreshHighlight(highl);
       }
   },
 
@@ -13998,41 +14006,43 @@ DV.Api.prototype = {
     this.viewer.schema.setRecommendations(recArray);
   },
 
-  //Populate any missing annotation IDs with data from client
+  //Populate any missing highlight IDs with data from client
   //locationIds: hash containing ID and location
-  syncAnnotationIDs: function(locationIds) {
-      this.viewer.schema.syncIDs(locationIds);
+  syncHighlightIDs: function(highlightInfo) {
+      this.viewer.schema.syncIDs(highlightInfo);
+      this.viewer.activeHighlight.highlightEl.removeClass('DV-editing');
+      this.viewer.pageSet.refreshHighlight(this.viewer.activeHighlight.model);
   },
 
   //Pass group association to DV, to update DV defs if necessary
-  syncGroupAnnotation: function(annoId, groupId){
-      var syncedAnno = this.viewer.schema.addAnnotationGroup(annoId, groupId);
-      this.viewer.pageSet.refreshPageAnnotation(syncedAnno, groupId);
+  syncGroupHighlight: function(annoId, groupId){
+      var syncedAnno = this.viewer.schema.addHighlightGroup(annoId, groupId);
+      this.viewer.pageSet.refreshHighlight(syncedAnno, groupId);
   },
 
-  //Reload current annotations store with passed in annotations
-  reloadAnnotations: function(annos){
-      this.viewer.schema.reloadAnnotations(annos);
+  //Reload current highlights store with passed in highlights
+  reloadHighlights: function(annos){
+      this.viewer.schema.reloadHighlights(annos);
       this.viewer.pageSet.redraw(true, true);
   },
 
-  // Register a callback for when an annotation is saved.
-  onAnnotationSave : function(callback) {
+  // Register a callback for when an highlight is saved.
+  onHighlightSave : function(callback) {
     this.viewer.saveCallbacks.push(callback);
   },
 
-  // Register a callback for when an annotation is deleted.
-  onAnnotationDelete : function(callback) {
+  // Register a callback for when an highlight is deleted.
+  onHighlightDelete : function(callback) {
     this.viewer.deleteCallbacks.push(callback);
   },
 
-  // Register a callback for when an annotation is deleted.
-  onAnnotationSelect : function(callback) {
+  // Register a callback for when an highlight is deleted.
+  onHighlightSelect : function(callback) {
     this.viewer.selectCallbacks.push(callback);
   },
 
   // Register a callback for when annotating is cancelled.
-  onAnnotationCancel : function(callback) {
+  onHighlightCancel : function(callback) {
     this.viewer.cancelCallbacks.push(callback);
   },
 
@@ -14105,24 +14115,23 @@ DV.Api.prototype = {
     delete DV.viewers[this.viewer.schema.document.id];
   },
 
-  //Request to abandon current active annotation (hide or remove); call success if request succeeds (i.e. not user cancelled)
+  //Request to abandon current active highlight (hide or remove); call success if request succeeds (i.e. not user cancelled)
   cleanUp: function(success) {
-    if(this.viewer.activeAnnotation){
-      var anno = this.viewer.activeAnnotation.model;
-      if( anno.unsaved == true ){
+    if(this.viewer.activeHighlight){
+      var highl = this.viewer.activeHighlight.model;
+      var content = DV.Schema.helpers.getCurrentHighlightContent(highl);
+      if( content.content.unsaved == true ){
         var _api = this;
-        this.viewer.activeAnnotation.requestHide(true, function(){
+        this.viewer.activeHighlight.requestHide(true, function(){
           //If unsaved, just remove completely
-          if(anno.anno_type == 'graph'){
-            _api.viewer.schema.removeAnnotation(anno);
-          }else{
-            _api.viewer.schema.removeAnnotationGroup(anno, anno.groups[0].group_id);
-          }
-          _api.viewer.pageSet.removePageAnnotation(anno);
+          var content = DV.Schema.helpers.getCurrentHighlightContent(highl);
+          var toRemove = (content.type == 'graph') ? {graph_id: content.id} : {anno_id: content.content.server_id};
+          _api.viewer.schema.removeHighlightContent(highl, toRemove);
+          _api.viewer.pageSet.removeHighlight(highl);
           if(success){ success.call(); }
         });
       }else {
-        this.viewer.activeAnnotation.requestHide(true, success);
+        this.viewer.activeHighlight.requestHide(true, success);
       }
     }else{
       if(success){ success.call(); }
@@ -14133,7 +14142,7 @@ DV.Api.prototype = {
   //Activate/deactivate 'approved' view for anno (temporary, data does not update)
   markApproval: function(anno_id, group_id, approval) {
       var anno = this.viewer.schema.markApproval(anno_id, group_id, approval);
-      this.viewer.pageSet.refreshPageAnnotation(anno, group_id, false);
+      this.viewer.pageSet.refreshHighlight(anno, group_id, false);
   },
 
   // ---------------------- Enter/Leave Edit Modes -----------------------------
@@ -14210,7 +14219,7 @@ DV.DocumentViewer = function(options) {
   this.scrollPosition     = null;
   this.checkTimer         = {};
   this.busy               = false;
-  this.annotationToLoadId = null;
+  this.highlightToLoadId = null;
   this.dragReporter       = null;
   this.compiled           = {};
   this.tracker            = {};
@@ -14285,20 +14294,20 @@ DV.DocumentViewer.prototype.notifyChangedState = function() {
   DV._.each(this.onStateChangeCallbacks, function(c) { c(); });
 };
 
-DV.DocumentViewer.prototype.fireSaveCallbacks  = function(anno) {
-  DV._.each(this.saveCallbacks, function(c){ c(anno); });
+DV.DocumentViewer.prototype.fireSaveCallbacks  = function(highl_content) {
+  DV._.each(this.saveCallbacks, function(c){ c(highl_content); });
 };
 
-DV.DocumentViewer.prototype.fireDeleteCallbacks = function(anno) {
-  DV._.each(this.deleteCallbacks, function(c){ c(anno); });
+DV.DocumentViewer.prototype.fireDeleteCallbacks = function(highl_content) {
+  DV._.each(this.deleteCallbacks, function(c){ c(highl_content); });
 };
 
-DV.DocumentViewer.prototype.fireSelectCallbacks = function(anno) {
-  DV._.each(this.selectCallbacks, function(c){ c(anno); });
+DV.DocumentViewer.prototype.fireSelectCallbacks = function(highl_content) {
+  DV._.each(this.selectCallbacks, function(c){ c(highl_content); });
 };
 
-DV.DocumentViewer.prototype.fireCancelCallbacks = function(anno) {
-  DV._.each(this.cancelCallbacks, function (c) { c(anno); });
+DV.DocumentViewer.prototype.fireCancelCallbacks = function(highl_content) {
+  DV._.each(this.cancelCallbacks, function (c) { c(highl_content); });
 };
 
 // Record a hit on this document viewer.
@@ -14341,7 +14350,7 @@ DV.load = function(documentRep, options) {
     viewer.loadModels();
 
     //If view-only, determine page to show
-    if( options.view_only ){ viewer.view_only_page = json.annotations[0].page; }
+    if( options.view_only ){ viewer.view_only_page = json.highlights[0].page; }
 
     DV.jQuery(function() {
       viewer.open('InitialLoad');
@@ -14385,21 +14394,23 @@ if (DV.onload) DV._.defer(DV.onload);
 (function(){
 window.JST = window.JST || {};
 
-window.JST['DV/views/annotation'] = DV._.template('<div class="DV-annotation <%= orderClass %> <%= accessClass %> <% if (owns_note) { %>DV-ownsAnnotation<% } %>" style="top:<%= top %>px; width:<%= width %>px; margin-left: <%=leftMargin%>px;" id="DV-annotation-<%= id %>" data-id="<%= id %>">\n\n  <div class="DV-annotationTab" style="top:<%= tabTop %>px;">\n    <div class="DV-annotationClose DV-trigger">\n      <% if (access == \'exclusive\') { %>\n        <div class="DV-annotationDraftDot DV-editHidden"></div>\n      <% } %>\n    </div>\n  </div>\n\n  <div class="DV-annotationRegion <%= approvedClass %>" style="margin-left:<%= excerptMarginLeft - 4 %>px; height:<%= excerptHeight %>px; width:<%= excerptWidth - 1 %>px;">\n    <div class="<%= accessClass %>">\n      <div class="DV-annotationEdge DV-annotationEdgeTop"></div>\n      <div class="DV-annotationEdge DV-annotationEdgeRight"></div>\n      <div class="DV-annotationEdge DV-annotationEdgeBottom"></div>\n      <div class="DV-annotationEdge DV-annotationEdgeLeft"></div>\n      <div class="DV-annotationCorner DV-annotationCornerTopLeft"></div>\n      <div class="DV-annotationCorner DV-annotationCornerTopRight"></div>\n      <div class="DV-annotationCorner DV-annotationCornerBottomLeft"></div>\n      <div class="DV-annotationCorner DV-annotationCornerBottomRight"></div>\n    </div>\n    <div class="DV-annotationRegionExclusive"></div>\n  </div>\n\n  <div class="DV-annotationContent" style="margin-left: <%= showWindowMarginLeft %>px;">\n\n<%  /**************\n      GRAPH OVERLAY\n      *************/\n    if (anno_type == \'graph\') {%>\n      <div>\n        <input class="DV-graphData" type="hidden"/>\n        <div id="graph_frame"></div>\n      </div>\n      <div class="DV-annotationMeta <%= accessClass %>">\n        <div class="DV-annotationEditControls DV-editVisible">\n          <div class="DV-clearfix">\n            <div class="minibutton default DV-saveAnnotation float_right"><%= DV.t(\'save\') %></div>\n            <div class="minibutton DV-cancelEdit float_right"><%= DV.t(\'cancel\') %></div>\n            <div class="float_right DV-data_status_div">\n              <div class="DV-data_status status_unsaved">Unsaved</div>\n              <div class="DV-data_status_label">Data Status:</div>\n            </div>\n            <div class="float_right DV-data_error"></div>\n          </div>\n        </div>\n      </div>\n<%  }else{\n      /******************\n        DATA POINT OVERLAY\n        ******************/ %>\n      <div class="DV-annotationExcerpt" style="height:<%= excerptHeight %>px;">\n        <div class="DV-annotationExcerptImageTop" style="height:<%= excerptHeight %>px; width:<%= excerptWidth %>px;left:<%= excerptTopMarginLeft %>px;">\n\n          <img class="DV-img" src="<%= image %>" style="left:<%= -(excerptMarginLeft + 1) %>px; top:-<%= imageTop %>px;" width="<%= imageWidth %>" />\n\n        </div>\n        <div class="DV-annotationExcerptImage" style="height:<%= excerptHeight %>px;">\n          <img class="DV-img" src="<%= image %>" style="left:<%= -(showWindowMarginLeft) %>px; top:-<%= imageTop %>px;" width="<%= imageWidth %>" />\n        </div>\n      </div>\n\n      <div class="DV-annotationHeader DV-clearfix">\n            <div class="DV-pagination DV-editHidden">\n              <!--<span class="DV-trigger DV-annotationPrevious" title="<%= DV.t(\'previous_note\') %>"><%= DV.t(\'previous\') %></span>-->\n              <span class="DV-groupCount">(<%= groupIndex %> of <%= groupCount %>)</span>\n              <!--<span class="DV-trigger DV-annotationNext" title="<%= DV.t(\'next_note\') %>"><%= DV.t(\'next\') %></span>-->\n            </div>\n            <div class="DV-annotationGoto DV-editHidden"><div class="DV-trigger"><%= DV.t(\'pg\') %><%= pageNumber %></div></div>\n            <div class="DV-annotationTitle DV-editHidden"><%- title %></div>\n            <input class="DV-annotationTitleInput DV-editVisible" type="text" placeholder="<%= DV.t(\'annotation_title\') %>" value="<%- title.replace(/"/g, \'&quot;\') %>" />\n            <div class="DV-errorMsg"></div>\n            <% if (access == \'exclusive\') { %>\n              <div class="DV-annotationDraftLabel DV-editHidden DV-interface"><%= DV.t(\'draft\') %></div>\n            <% } else if (access == \'private\') { %>\n              <div class="DV-privateLock DV-editHidden" title="<%= DV.t(\'private_note\',2) %>"></div>\n            <% } %>\n            <div class="DV-showEdit DV-editHidden <%= accessClass %>"></div>\n      </div>\n\n      <div class="DV-annotationBody DV-editHidden">\n        <%- text %>\n      </div>\n      <textarea class="DV-annotationTextArea DV-editVisible"><%- text %></textarea>\n\n      <div class="DV-annotationMeta <%= accessClass %>">\n        <% if (author) { %>\n          <div class="DV-annotationAuthor DV-interface DV-editHidden">\n            <%= DV.t(\'note_by\', author ) %><% if (author_organization) { %>, <i><%= author_organization %></i><% } %>\n          </div>\n        <% } %>\n        <% if (access == \'exclusive\') { %>\n          <div class="DV-annotationWarning DV-interface DV-editHidden">\n            <%= DV.t(\'draft_note_visible\') %>\n          </div>\n        <% } else if (access == \'private\') { %>\n          <div class="DV-annotationWarning DV-interface DV-editHidden">\n            <%= DV.t(\'private_note_visible\') %>\n          </div>\n        <% } %>\n        <div class="DV-annotationEditControls DV-editVisible">\n          <div class="DV-clearfix">\n            <div class="minibutton default DV-saveAnnotation float_right">\n              <% if (access == \'exclusive\') { %>\n                <%= DV.t(\'publish\') %>\n              <% } else { %>\n                <%= DV.t(\'save\') %>\n              <% } %>\n            </div>\n            <div class="minibutton DV-cancelEdit float_right"><%= DV.t(\'cancel\') %></div>\n          </div>\n        </div>\n      </div>\n<% } %>\n  </div>\n</div>\n');
-window.JST['DV/views/annotationNav'] = DV._.template('<div class="DV-annotationMarker" id="DV-annotationMarker-<%= id %>">\n  <span class="DV-trigger">\n    <span class="DV-navAnnotationTitle"><%= title %></span>&nbsp;<span class="DV-navPageNumber"><%= DV.t(\'pg\') %> <%= page %></span>\n  </span>\n</div>');
+window.JST['DV/views/annotation'] = DV._.template('  <div class="DV-highlightExcerpt" style="height:<%= excerptHeight %>px;">\n    <div class="DV-highlightExcerptImageTop" style="height:<%= excerptHeight %>px; width:<%= excerptWidth %>px;left:<%= excerptTopMarginLeft %>px;">\n\n      <img class="DV-img" src="<%= image %>" style="left:<%= -(excerptMarginLeft + 1) %>px; top:-<%= imageTop %>px;" width="<%= imageWidth %>" />\n\n    </div>\n    <div class="DV-highlightExcerptImage" style="height:<%= excerptHeight %>px;">\n      <img class="DV-img" src="<%= image %>" style="left:<%= -(showWindowMarginLeft) %>px; top:-<%= imageTop %>px;" width="<%= imageWidth %>" />\n    </div>\n  </div>\n\n  <div class="DV-annotationHeader DV-clearfix">\n        <div class="DV-pagination DV-editHidden">\n          <!--<span class="DV-trigger DV-highlightPrevious" title="<%= DV.t(\'previous_note\') %>"><%= DV.t(\'previous\') %></span>-->\n          <!--<span class="DV-trigger DV-highlightNext" title="<%= DV.t(\'next_note\') %>"><%= DV.t(\'next\') %></span>-->\n        </div>\n        <div class="DV-annotationGoto DV-editHidden"><div class="DV-trigger"><%= DV.t(\'pg\') %></div></div>\n        <div class="DV-annotationTitle DV-editHidden"><%- title %></div>\n        <input class="DV-annotationTitleInput DV-editVisible" type="text" placeholder="<%= DV.t(\'annotation_title\') %>" value="<%- title.replace(/"/g, \'&quot;\') %>" />\n        <div class="DV-errorMsg"></div>\n        <div class="DV-showEdit DV-editHidden <%= accessClass %>"></div>\n  </div>\n\n  <div class="DV-annotationBody DV-editHidden">\n    <%- text %>\n  </div>\n  <textarea class="DV-annotationTextArea DV-editVisible"><%- text %></textarea>\n\n  <div class="DV-annotationMeta <%= accessClass %>">\n    <% if (author) { %>\n      <div class="DV-annotationAuthor DV-interface DV-editHidden">\n        <%= DV.t(\'note_by\', author ) %><% if (author_organization) { %>, <i><%= author_organization %></i><% } %>\n      </div>\n    <% } %>\n    <div class="DV-annotationEditControls DV-editVisible">\n      <div class="DV-clearfix">\n        <div class="minibutton default DV-saveAnnotation float_right">\n             <%= DV.t(\'save\') %>\n        </div>\n        <div class="minibutton DV-cancelEdit float_right"><%= DV.t(\'cancel\') %></div>\n      </div>\n    </div>\n  </div>');
 window.JST['DV/views/chapterNav'] = DV._.template('<div id="DV-chapter-<%= id %>" class="DV-chapter <%= navigationExpanderClass %>">\n  <div class="DV-first">\n    <%= navigationExpander %>\n    <span class="DV-trigger">\n      <span class="DV-navChapterTitle"><%= title %></span>&nbsp;<span class="DV-navPageNumber"><%= DV.t(\'pg\') %>&nbsp;<%= pageNumber %></span>\n    </span>\n  </div>\n  <%= noteViews %>\n</div>');
 window.JST['DV/views/descriptionContainer'] = DV._.template('<% if (description) { %>\n  <div class="DV-description">\n    <div class="DV-descriptionHead">\n      <span class="DV-descriptionToggle DV-showDescription DV-trigger"><%= DV.t(\'toggle_description\') %></span>\n      <%= DV.t(\'description\') %>\n    </div>\n    <div class="DV-descriptionText"><%= description %></div>\n  </div>\n<% } %>\n');
 window.JST['DV/views/footer'] = DV._.template('<% if (!options.sidebar) { %>\n  <div class="DV-footer">\n    <div class="DV-fullscreenContainer"></div>\n    <div class="DV-navControlsContainer"></div>\n  </div>\n<% } %>');
 window.JST['DV/views/fullscreenControl'] = DV._.template('<div class="DV-fullscreen" title="<%= DV.t(\'view_fullscreen\') %>"></div>\n');
 window.JST['DV/views/generatingImage'] = DV._.template('<div id="generating_img_notice">Generating Image...</div>');
+window.JST['DV/views/graph'] = DV._.template('  <div>\n    <input class="DV-graphData" type="hidden"/>\n    <div id="graph_frame"></div>\n  </div>\n  <div class="DV-annotationMeta <%= accessClass %>">\n    <div class="DV-annotationEditControls DV-editVisible">\n      <div class="DV-clearfix">\n        <div class="minibutton default DV-saveAnnotation float_right"><%= DV.t(\'save\') %></div>\n        <div class="minibutton DV-cancelEdit float_right"><%= DV.t(\'cancel\') %></div>\n        <div class="float_right DV-data_error"></div>\n      </div>\n    </div>\n  </div>\n');
 window.JST['DV/views/header'] = DV._.template('<div class="DV-header">\n  <div class="DV-headerHat" class="DV-clearfix">\n    <div class="DV-branding">\n      <% if (story_url) { %>\n        <span class="DV-storyLink"><%= story_url %></span>\n      <% } %>\n    </div>\n    <div class="DV-title">\n      <%= title %>\n    </div>\n  </div>\n</div>\n\n<div id="noSaveDialog">You will lose your changes.  Continue?</div>\n');
-window.JST['DV/views/navControls'] = DV._.template('<div class="DV-navControls DV-clearfix">\n  <span class="DV-trigger DV-previous">&laquo;</span>\n  <div class="DV-clearfix DV-pageNumberContainer">\n    <span class="DV-currentPagePrefix"><%= DV.t(\'page\') %></span>\n    <span class="DV-currentAnnotationPrefix"><%= DV.t(\'note\') %>&nbsp;</span>\n    <span class="DV-currentPage">1</span>\n    <span class="DV-currentPageSuffix"><%= DV.t(\'of\') %>&nbsp;\n      <span class="DV-totalPages"><%= totalPages %></span>\n      <span class="DV-totalAnnotations"><%= totalAnnotations %></span>                        \n    </span>\n  </div>\n  <span class="DV-trigger DV-next">&raquo;</span>\n</div>');
+window.JST['DV/views/highlight'] = DV._.template('<div class="DV-highlight <%= accessClass %> DV-ownsHighlight" style="top:<%= top %>px; width:<%= width %>px; margin-left: <%=leftMargin%>px;" id="DV-highlight-<%= id %>" data-id="<%= id %>">\n\n  <div class="DV-highlightTab" style="top:<%= tabTop %>px;">\n    <div class="DV-highlightClose DV-trigger">\n    </div>\n  </div>\n\n  <div class="DV-highlightRegion <%= approvedClass %>" style="margin-left:<%= excerptMarginLeft - 4 %>px; height:<%= excerptHeight %>px; width:<%= excerptWidth - 1 %>px;">\n    <div class="<%= accessClass %>">\n      <div class="DV-highlightEdge DV-highlightEdgeTop"></div>\n      <div class="DV-highlightEdge DV-highlightEdgeRight"></div>\n      <div class="DV-highlightEdge DV-highlightEdgeBottom"></div>\n      <div class="DV-highlightEdge DV-highlightEdgeLeft"></div>\n      <div class="DV-highlightCorner DV-highlightCornerTopLeft"></div>\n      <div class="DV-highlightCorner DV-highlightCornerTopRight"></div>\n      <div class="DV-highlightCorner DV-highlightCornerBottomLeft"></div>\n      <div class="DV-highlightCorner DV-highlightCornerBottomRight"></div>\n    </div>\n    <!--<div class="DV-highlightRegionExclusive"></div>-->\n  </div>\n\n  <div class="DV-highlightContent" style="margin-left: <%= showWindowMarginLeft %>px;">\n  <%= innerHTML %>\n  </div>\n</div>\n');
+window.JST['DV/views/highlightNav'] = DV._.template('<div class="DV-highlightMarker" id="DV-highlightMarker-<%= id %>">\n  <span class="DV-trigger">\n    <span class="DV-navHighlightTitle">Highlight <%= id %></span>&nbsp;<span class="DV-navPageNumber"><%= DV.t(\'pg\') %> <%= page %></span>\n  </span>\n</div>');
+window.JST['DV/views/navControls'] = DV._.template('<div class="DV-navControls DV-clearfix">\n  <span class="DV-trigger DV-previous">&laquo;</span>\n  <div class="DV-clearfix DV-pageNumberContainer">\n    <span class="DV-currentPagePrefix"><%= DV.t(\'page\') %></span>\n    <span class="DV-currentHighlightPrefix"><%= DV.t(\'note\') %>&nbsp;</span>\n    <span class="DV-currentPage">1</span>\n    <span class="DV-currentPageSuffix"><%= DV.t(\'of\') %>&nbsp;\n      <span class="DV-totalPages"><%= totalPages %></span>\n      <span class="DV-totalHighlights"><%= totalHighlights %></span>\n    </span>\n  </div>\n  <span class="DV-trigger DV-next">&raquo;</span>\n</div>');
 window.JST['DV/views/navigationExpander'] = DV._.template('<span class="DV-trigger DV-expander"><%= DV.t(\'expand\') %></span>');
-window.JST['DV/views/pageAnnotation'] = DV._.template('<div class="DV-annotation DV-pageNote <%= orderClass %> <%= accessClass %> <% if (owns_note) { %>DV-ownsAnnotation<% } %>" style="top:<%= top %>px;" id="DV-annotation-<%= id %>" data-id="<%= id %>">\n  <div class="DV-annotationTab">\n    <div class="DV-annotationClose DV-trigger"><%= DV.t(\'pg\') %> <%= pageNumber %></div>\n  </div>\n\n  <div class="DV-annotationContent">\n    <!-- Header -->\n    <div class="DV-annotationHeader DV-clearfix">\n      <div class="DV-pagination DV-editHidden">\n        <span class="DV-trigger DV-annotationPrevious" title="<%= DV.t(\'previous_note\') %>"><%= DV.t(\'previous\') %></span>\n        <span class="DV-trigger DV-annotationNext" title="<%= DV.t(\'next_note\') %>"><%= DV.t(\'next\') %></span>\n      </div>\n      <div class="DV-annotationGoto DV-editHidden"><div class="DV-trigger"><%= DV.t(\'pg\') %><%= pageNumber %></div></div>\n      <div class="DV-annotationTitle DV-editHidden"><%= title %></div>\n      <input class="DV-annotationTitleInput DV-editVisible" type="text" placeholder="<%= DV.t(\'annotation_title\') %>" value="<%= title.replace(/"/g, \'&quot;\') %>" />\n      <% if (access == \'exclusive\') { %>\n        <div class="DV-annotationDraftLabel DV-editHidden DV-interface"><%= DV.t(\'draft\') %></div>\n      <% } else if (access == \'private\') { %>\n        <div class="DV-privateLock DV-editHidden" title="<%= DV.t(\'private_note\',2) %>"></div>\n      <% } %>\n      <span class="DV-permalink DV-editHidden" title="<%= DV.t(\'link_to_note\') %>"></span>\n      <div class="DV-showEdit DV-editHidden <%= accessClass %>"></div>\n    </div>\n\n    <div class="DV-annotationBody DV-editHidden">\n      <%= text %>\n    </div>\n    <textarea class="DV-annotationTextArea DV-editVisible" style="width: <%= bWidth %>px;"><%= text %></textarea>\n\n    <div class="DV-annotationMeta <%= accessClass %>">\n      <% if (author) { %>\n        <div class="DV-annotationAuthor DV-interface DV-editHidden">\n          <%= DV.t(\'note_by\', author ) %><% if (author_organization) { %>, <i><%= author_organization %></i><% } %>\n        </div>\n      <% } %>\n      <% if (access == \'exclusive\') { %>\n        <div class="DV-annotationWarning DV-interface DV-editHidden">\n          <%= DV.t(\'draft_note_visible\') %>\n        </div>\n      <% } else if (access == \'private\') { %>\n        <div class="DV-annotationWarning DV-interface DV-editHidden">\n          <%= DV.t(\'private_note_visible\') %>\n        </div>\n      <% } %>\n      <div class="DV-annotationEditControls DV-editVisible">\n        <div class="DV-clearfix">\n          <div class="minibutton warn DV-deleteAnnotation float_left"><%= DV.t(\'delete\') %></div>\n          <div class="minibutton default DV-saveAnnotation float_right">\n            <% if (access == \'exclusive\') { %>\n              <%= DV.t(\'publish\') %>\n            <% } else { %>\n              <%= DV.t(\'save\') %>\n            <% } %>\n          </div>\n          <% if (access == \'public\' || access == \'exclusive\') { %>\n            <div class="minibutton DV-saveAnnotationDraft float_right"><%= DV.t(\'save_as_draft\') %></div>\n          <% } %>\n          <div class="minibutton DV-cancelEdit float_right"><%= DV.t(\'cancel\') %></div>\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n');
-window.JST['DV/views/pages'] = DV._.template('<div class="DV-set p<%= pageIndex %>" data-id="p<%= pageIndex %>" style="top:0;left:0px;height:893px;width:700px;">\n  <div class="DV-overlay"></div>\n  <div class="DV-pageNoteInsert" title="<%= DV.t(\'click_add_page_note\') %>">\n    <div class="DV-annotationTab">\n      <div class="DV-annotationClose"></div>\n    </div>\n    <div class="DV-annotationDivider"></div>\n  </div>\n  <div class="DV-pageMeta"><span class="DV-pageNumber"><%= DV.t(\'pg\') %> <%= pageNumber %></span></div>\n  <div class="DV-annotations"></div>\n  <div class="DV-page" style="height:863px;width:700px;">\n    <span class="DV-loading-top"><%= DV.t(\'loading\') %></span>\n    <span class="DV-loading-bottom"><%= DV.t(\'loading\') %></span>\n    <div class="DV-cover"></div>\n    <img class="DV-pageImage" <%= pageImageSource ? \'src="\' + pageImageSource + \'"\' : \'\' %> height="863" />\n  </div>\n</div>');
+window.JST['DV/views/pageAnnotation'] = DV._.template('<div class="DV-highlight DV-pageNote <%= orderClass %> <%= accessClass %> <% if (owns_note) { %>DV-ownsHighlight<% } %>" style="top:<%= top %>px;" id="DV-highlight-<%= id %>" data-id="<%= id %>">\n  <div class="DV-highlightTab">\n    <div class="DV-highlightClose DV-trigger"><%= DV.t(\'pg\') %> <%= pageNumber %></div>\n  </div>\n\n  <div class="DV-highlightContent">\n    <!-- Header -->\n    <div class="DV-annotationHeader DV-clearfix">\n      <div class="DV-pagination DV-editHidden">\n        <span class="DV-trigger DV-highlightPrevious" title="<%= DV.t(\'previous_note\') %>"><%= DV.t(\'previous\') %></span>\n        <span class="DV-trigger DV-highlightNext" title="<%= DV.t(\'next_note\') %>"><%= DV.t(\'next\') %></span>\n      </div>\n      <div class="DV-annotationGoto DV-editHidden"><div class="DV-trigger"><%= DV.t(\'pg\') %><%= pageNumber %></div></div>\n      <div class="DV-annotationTitle DV-editHidden"><%= title %></div>\n      <input class="DV-annotationTitleInput DV-editVisible" type="text" placeholder="<%= DV.t(\'annotation_title\') %>" value="<%= title.replace(/"/g, \'&quot;\') %>" />\n      <% if (access == \'exclusive\') { %>\n        <div class="DV-highlightDraftLabel DV-editHidden DV-interface"><%= DV.t(\'draft\') %></div>\n      <% } else if (access == \'private\') { %>\n        <div class="DV-privateLock DV-editHidden" title="<%= DV.t(\'private_note\',2) %>"></div>\n      <% } %>\n      <span class="DV-permalink DV-editHidden" title="<%= DV.t(\'link_to_note\') %>"></span>\n      <div class="DV-showEdit DV-editHidden <%= accessClass %>"></div>\n    </div>\n\n    <div class="DV-annotationBody DV-editHidden">\n      <%= text %>\n    </div>\n    <textarea class="DV-annotationTextArea DV-editVisible" style="width: <%= bWidth %>px;"><%= text %></textarea>\n\n    <div class="DV-annotationMeta <%= accessClass %>">\n      <% if (author) { %>\n        <div class="DV-annotationAuthor DV-interface DV-editHidden">\n          <%= DV.t(\'note_by\', author ) %><% if (author_organization) { %>, <i><%= author_organization %></i><% } %>\n        </div>\n      <% } %>\n      <% if (access == \'exclusive\') { %>\n        <div class="DV-highlightWarning DV-interface DV-editHidden">\n          <%= DV.t(\'draft_note_visible\') %>\n        </div>\n      <% } else if (access == \'private\') { %>\n        <div class="DV-highlightWarning DV-interface DV-editHidden">\n          <%= DV.t(\'private_note_visible\') %>\n        </div>\n      <% } %>\n      <div class="DV-annotationEditControls DV-editVisible">\n        <div class="DV-clearfix">\n          <div class="minibutton warn DV-deleteHighlight float_left"><%= DV.t(\'delete\') %></div>\n          <div class="minibutton default DV-saveAnnotation float_right">\n            <% if (access == \'exclusive\') { %>\n              <%= DV.t(\'publish\') %>\n            <% } else { %>\n              <%= DV.t(\'save\') %>\n            <% } %>\n          </div>\n          <% if (access == \'public\' || access == \'exclusive\') { %>\n            <div class="minibutton DV-saveAnnotationDraft float_right"><%= DV.t(\'save_as_draft\') %></div>\n          <% } %>\n          <div class="minibutton DV-cancelEdit float_right"><%= DV.t(\'cancel\') %></div>\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n');
+window.JST['DV/views/pages'] = DV._.template('<div class="DV-set p<%= pageIndex %>" data-id="p<%= pageIndex %>" style="top:0;left:0px;height:893px;width:700px;">\n  <div class="DV-overlay"></div>\n  <div class="DV-pageNoteInsert" title="<%= DV.t(\'click_add_page_note\') %>">\n    <div class="DV-highlightTab">\n      <div class="DV-highlightClose"></div>\n    </div>\n    <div class="DV-highlightDivider"></div>\n  </div>\n  <div class="DV-pageMeta"><span class="DV-pageNumber"><%= DV.t(\'pg\') %> <%= pageNumber %></span></div>\n  <div class="DV-highlights"></div>\n  <div class="DV-page" style="height:863px;width:700px;">\n    <span class="DV-loading-top"><%= DV.t(\'loading\') %></span>\n    <span class="DV-loading-bottom"><%= DV.t(\'loading\') %></span>\n    <div class="DV-cover"></div>\n    <img class="DV-pageImage" <%= pageImageSource ? \'src="\' + pageImageSource + \'"\' : \'\' %> height="863" />\n  </div>\n</div>');
 window.JST['DV/views/thumbnails'] = DV._.template('<% for (; page <= endPage; page++) { %>\n  <% var url = imageUrl.replace(/\{page\}/, page) ; %>\n  <div class="DV-thumbnail" id="DV-thumbnail-<%= page %>" data-pageNumber="<%= page %>">\n    <div class="DV-overlay">\n      <div class=\'DV-caret\'></div>\n    </div>\n    <div class="DV-thumbnail-page">\n      <div class="DV-thumbnail-select">\n        <div class="DV-thumbnail-shadow"></div>\n        <img class="DV-thumbnail-image" data-src="<%= url %>" />\n      </div>\n      <div class="DV-pageNumber DV-pageMeta"><span class="DV-pageNumberText"><span class="DV-pageNumberTextUnderline"><%= DV.t(\'pg\') %> <%= page %></span></span></div>\n    </div>\n  </div>\n<% } %>\n');
 window.JST['DV/views/unsupported'] = DV._.template('<div class="DV-unsupported">\n  <div class="DV-intro">\n    <% if (viewer.schema.document.resources && viewer.schema.document.resources.pdf) { %>\n      <a href="<%= viewer.schema.document.resources.pdf %>"><%= DV.t(\'dl_as_pdf\') %></a>\n    <% } %>\n    <br />\n    <br />\n    <%= DV.t(\'must_upgrade\') %>\n  </div>\n  <div class="DV-browsers">\n    <div class="DV-browser">\n      <a href="http://www.google.com/chrome">\n        <div class="DV-image DV-chrome"> </div>Chrome\n      </a>\n    </div>\n    <div class="DV-browser">\n      <a href="http://www.apple.com/safari/download/">\n        <div class="DV-image DV-safari"> </div>Safari\n      </a>\n    </div>\n    <div class="DV-browser">\n      <a href="http://www.mozilla.com/en-US/firefox/firefox.html">\n        <div class="DV-image DV-firefox"> </div>Firefox\n      </a>\n    </div>\n    <br style="clear:both;" />\n  </div>\n  <div class="DV-after">\n    <%= DV.t(\'install_chrome_frame\', \'<br/><a href="http://www.google.com/chromeframe">\',\'</a>\') %>\n  </div>\n</div>\n');
-window.JST['DV/views/viewerHorizontal'] = DV._.template('<!--[if lte IE 8]><div class="DV-docViewer DV-clearfix DV-viewDocument DV-ie <% if (autoZoom) { %>DV-autoZoom<% } %> <% if (mini) { %>DV-mini<% } %> <% if (!options.sidebar) { %>DV-hideSidebar<% } else { %>DV-hideFooter<% } %>"><![endif]-->\n<!--[if (!IE)|(gte IE 9)]><!--><div class="DV-docViewer DV-clearfix DV-viewDocument <% if (autoZoom) { %>DV-autoZoom<% } %> <% if (mini) { %>DV-mini<% } %> <% if (!options.sidebar) { %>DV-hideSidebar<% } else { %>DV-hideFooter<% } %>"><!-- <![endif]-->\n  \n  <div class="DV-docViewerWrapper">\n  \n    <%= header %>\n    <div class="DV-docViewer-Container">\n    \n      <div class="DV-searchBarWrapper">\n        <div class="DV-searchBar">\n          <span class="DV-trigger DV-closeSearch"><%= DV.t(\'CLOSE\') %></span>\n          <div class="DV-searchPagination DV-foundResult">\n            <div class="DV-searchResults">\n              <span class="DV-resultPrevious DV-trigger"><%= DV.t(\'previous\') %></span>\n              <span class="DV-currentSearchResult"></span>\n              <span class="DV-totalSearchResult"></span>\n              <span><% DV.t(\'for\') %> &ldquo;<span class="DV-searchQuery"></span>&rdquo;</span>\n              <span class="DV-resultNext DV-trigger"><%= DV.t(\'next\') %></span>\n            </div>\n          </div>\n        </div>\n      </div>\n    \n      <div class="DV-pages horizontal <% if (!options.sidebar) { %>DV-hide-sidebar<% } %>">\n        <div class="DV-paper">\n          <div class="DV-zoomControls">\n            <span class="DV-zoomLabel"><%= DV.t(\'zoom\') %></span>\n            <div class="DV-zoomBox"></div>\n          </div>\n          <div class="DV-thumbnails"></div>\n          <div class="DV-pageCollection">\n            <div class="DV-bar" style=""></div>\n            <div class="DV-allAnnotations">\n            </div>\n            <div class="DV-text">\n              <div class="DV-textSearch DV-clearfix">\n          \n              </div>\n              <div class="DV-textPage">\n                <span class="DV-textCurrentPage"></span>\n                <pre class="DV-textContents"></pre>\n              </div>\n            </div>\n            <%= pages %>\n          </div>\n        </div>\n      </div>\n    \n      <div width="265px" class="DV-sidebar <% if (!options.sidebar) { %>DV-hide<% } %>" style="display:none;">\n        <div class="DV-well horizontal">\n\n        </div>\n      </div>\n    </div>\n    \n    <%= footer %>\n    \n  </div>\n\n</div>\n');
-window.JST['DV/views/viewerVertical'] = DV._.template('<!--[if lte IE 8]><div class="DV-docViewer DV-clearfix DV-viewDocument DV-ie <% if (autoZoom) { %>DV-autoZoom<% } %> <% if (mini) { %>DV-mini<% } %> <% if (!options.sidebar) { %>DV-hideSidebar<% } else { %>DV-hideFooter<% } %>"><![endif]-->\n<!--[if (!IE)|(gte IE 9)]><!--><div class="DV-docViewer DV-clearfix DV-viewDocument <% if (autoZoom) { %>DV-autoZoom<% } %> <% if (mini) { %>DV-mini<% } %> <% if (!options.sidebar) { %>DV-hideSidebar<% } else { %>DV-hideFooter<% } %>"><!-- <![endif]-->\n  \n  <div class="DV-docViewerWrapper">\n  \n    <%= header %>\n    <div class="DV-docViewer-Container">\n    \n      <div class="DV-searchBarWrapper">\n        <div class="DV-searchBar">\n          <span class="DV-trigger DV-closeSearch"><%= DV.t(\'CLOSE\') %></span>\n          <div class="DV-searchPagination DV-foundResult">\n            <div class="DV-searchResults">\n              <span class="DV-resultPrevious DV-trigger"><%= DV.t(\'previous\') %></span>\n              <span class="DV-currentSearchResult"></span>\n              <span class="DV-totalSearchResult"></span>\n              <span><% DV.t(\'for\') %> &ldquo;<span class="DV-searchQuery"></span>&rdquo;</span>\n              <span class="DV-resultNext DV-trigger"><%= DV.t(\'next\') %></span>\n            </div>\n          </div>\n        </div>\n      </div>\n    \n      <div class="DV-pages vertical <% if (!options.sidebar) { %>DV-hide-sidebar<% } %>">\n        <div class="DV-paper">\n          <div class="DV-zoomControls">\n            <span class="DV-zoomLabel"><%= DV.t(\'zoom\') %></span>\n            <div class="DV-zoomBox"></div>\n          </div>\n          <div class="DV-thumbnails"></div>\n          <div class="DV-pageCollection">\n            <div class="DV-bar" style=""></div>\n            <div class="DV-allAnnotations">\n            </div>\n            <div class="DV-text">\n              <div class="DV-textSearch DV-clearfix">\n          \n              </div>\n              <div class="DV-textPage">\n                <span class="DV-textCurrentPage"></span>\n                <pre class="DV-textContents"></pre>\n              </div>\n            </div>\n            <%= pages %>\n          </div>\n        </div>\n      </div>\n    \n      <div class="DV-sidebar <% if (!options.sidebar) { %>DV-hide<% } %>" style="display:none;">\n        <div class="DV-well vertical"></div>\n      </div>\n    </div>\n    \n    <%= footer %>\n    \n  </div>\n\n</div>\n');
-window.JST['WPD/wpd'] = DV._.template('<!DOCTYPE html>\n<html>\n<!-- \n	WebPlotDigitizer - http://arohatgi.info/WebPlotDigitizer\n\n	Copyright 2010-2016 Ankit Rohatgi <ankitrohatgi@hotmail.com>\n\n	This file is part of WebPlotDigitizer.\n\n    WebPlotDigitizer is free software: you can redistribute it and/or modify\n    it under the terms of the GNU General Public License as published by\n    the Free Software Foundation, either version 3 of the License, or\n    (at your option) any later version.\n\n    WebPlotDigitizer is distributed in the hope that it will be useful,\n    but WITHOUT ANY WARRANTY; without even the implied warranty of\n    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n    GNU General Public License for more details.\n\n    You should have received a copy of the GNU General Public License\n    along with WebPlotDigitizer.  If not, see <http://www.gnu.org/licenses/>.\n-->\n\n<head>\n<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/> \n<meta name="Description" content="WebPlotDigitizer v3.10 - Web based tool to extract numerical data from plots and graph images."/>\n<meta name="Keywords" content="Plot, Digitizer, WebPlotDigitizer, Ankit Rohatgi, Extract Data, Convert Plots, XY, Polar, Ternary, Map, HTML5"/>\n<meta name="Author" content="Ankit Rohatgi"/>\n<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>\n<meta http-equiv="Pragma" content="no-cache"/>\n<meta http-equiv="Expires" content="0"/>\n<title>WebPlotDigitizer - Copyright 2010-2016 Ankit Rohatgi</title>\n\n\n\n</head>\n\n<body>\n\n<div id="loadingCurtain" style="position: absolute; top: 0px; left: 0px; z-index: 100; width: 100%; height: 100%; background-color: white;">\nLoading application, please wait...\n<br/>\n<br/>\nProblems loading? Make sure you have a recent version of Google Chrome, Firefox, Safari or Internet Explorer 11 installed.\n</div>\n\n<div id="allContainer">\n    <!-- toolbar + graphics -->\n    <div id="mainContainer">\n        <div id="topContainer">\n            <div id="menuButtonsContainer"><div class="wpd-menu">\n    <div class="wpd-menu-header">File</div>\n    <div class="wpd-menu-dropdown">\n        <ul>\n            <li id="wpd-filemenu-loadimage" onclick="wpd.popup.show(\'loadNewImage\');">Load Image</li>\n            <li id="wpd-filemenu-capture" onclick="wpd.webcamCapture.start();">Webcam Capture</li>\n            <li id="wpd-filemenu-runscript" onclick="wpd.scriptInjector.start();">Run Script</li>\n            <li id="wpd-filemenu-saveimage" onclick="wpd.graphicsWidget.saveImage();">Save Image</li>\n            <li id="wpd-filemenu-exportdata" onclick="wpd.saveResume.save();">Export JSON</li>\n            <li id="wpd-filemenu-import" onclick="wpd.saveResume.load();">Import JSON</li>\n        </ul>\n    </div>\n</div>\n<!--\n<div class="wpd-menu">\n    <div class="wpd-menu-header">Image</div>\n    <div class="wpd-menu-dropdown">\n        <ul>\n            <li>Restore Image</li>\n            <li>Crop</li>\n            <li>Rotate</li>\n            <li>Resize</li>\n            <li>Grayscale</li>\n            <li>Threshold</li>\n        </ul>\n    </div>\n</div>\n-->\n<div class="wpd-menu">\n    <div class="wpd-menu-header">Axes</div>\n    <div class="wpd-menu-dropdown">\n        <ul>\n            <li id="wpd-axesmenu-defineaxes" onclick="wpd.alignAxes.editAlignment();">Calibrate Axes</li>\n            <li id="wpd-axesmenu-grid" onclick="wpd.gridDetection.start();">Remove Grid</li>\n            <!-- <li id="wpd-axesmenu-perspective" onclick="wpd.perspective.start();">Perspective Transformation</li> -->\n            <li id="wpd-axesmenu-tranformation-equations" onclick="wpd.transformationEquations.show();">Transformation Equations</li>\n        </ul>\n    </div>\n</div>\n<div class="wpd-menu">\n    <div class="wpd-menu-header">Data</div>\n    <div class="wpd-menu-dropdown">\n        <ul>\n            <li id="wpd-datamenu-acquire" onclick="wpd.acquireData.load();">Acquire Data</li>\n            <li id="wpd-datamenu-manage" onclick="wpd.dataSeriesManagement.manage();">Manage Datasets</li>\n        </ul>\n    </div>\n</div>\n<div class="wpd-menu">\n    <div class="wpd-menu-header">Measure</div>\n    <div class="wpd-menu-dropdown">\n        <ul>\n            <li id="wpd-analyzemenu-distance" onclick="wpd.measurement.start(wpd.measurementModes.distance);">Distances</li>\n            <li id="wpd-analyzemenu-angles" onclick="wpd.measurement.start(wpd.measurementModes.angle);">Angles</li>\n            <!-- <li id="wpd-analyzemenu-open-path" onclick="wpd.measurement.start(wpd.measurementModes.openPath);">Path Length</li> -->\n            <!-- <li id="wpd-analyzemenu-closed-path" onclick="wpd.measurement.start(wpd.measurementModes.closedPath);">Area &amp; Circumference</li> -->\n        </ul>\n    </div>\n</div>\n<div class="wpd-menu">\n    <div class="wpd-menu-header">Help</div>\n    <div class="wpd-menu-dropdown">\n        <ul>\n            <li id="wpd-helpmenu-about" onclick="wpd.popup.show(\'helpWindow\');">About WebPlotDigitizer</li>\n            <li id="wpd-helpmenu-tutorial"><a href="http://arohatgi.info/WebPlotDigitizer/tutorial.html" target="_blank">Tutorials</a></li>\n            <li id="wpd-helpmenu-manual"><a href="http://arohatgi.info/WebPlotDigitizer/userManual.pdf" target="_blank">User Manual</a></li>\n            <li id="wpd-helpmenu-github"><a href="https://github.com/ankitrohatgi/WebPlotDigitizer" target="_blank">GitHub Page</a></li>\n            <li id="wpd-helpmenu-issues"><a href="https://github.com/ankitrohatgi/WebPlotDigitizer/issues" target="_blank">Report Issues</a></li>\n            <li id="wpd-helpmenu-donate"><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=CVFJGV5SNEV9J&lc=US&item_name=WebPlotDigitizer&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted" target="_blank">Donate (PayPal)</a></li>\n        </ul>\n    </div>\n</div>\n</div>\n\n           \n            <div id="topToolbarContainer">\n                <!-- controls that show on top -->\n                <div style="position:relative;"> \n                    <!-- Extra toolbars go here -->\n                    <!-- Erase Toolbar -->\n<div id="eraseToolbar" class="toolbar" style="width:350px;">\n<p><input type="button" id="clearMaskBtn" value="Erase All" style="width:80px;" onclick="wpd.dataMask.clearMask();"/>\nStroke Width <input type="range" id="eraseThickness" min="1" max="150" value="20" style="width:100px;"></p>\n</div>\n\n<!-- Paint Toolbar -->\n<div id="paintToolbar" class="toolbar" style="width:350px;">\n<p>Stroke Width <input type="range" id="paintThickness" min="1" max="150" value="20" style="width:100px;"></p>\n</div>\n\n<!-- Adjust Points Toolbar -->\n<div id="adjustDataPointsToolbar" class="toolbar" style="width:350px;">\n<p><input type="button" value="View Keyboard Shortcuts" onclick="wpd.popup.show(\'adjust-data-points-keyboard-shortcuts-window\');"/></p>\n</div> \n                </div>\n            </div>\n\n             <div style="display:inline-block; position: absolute; top: 5px; right: 290px;" >\n                <button type="button" title="Zoom in" onclick="wpd.graphicsWidget.zoomIn();" style="border:none; min-width:20px;">+</button>\n                <button type="button" title="Zoom out" onclick="wpd.graphicsWidget.zoomOut();" style="border:none; min-width:20px;">-</button>\n                <button type="button" title="View actual size" onclick="wpd.graphicsWidget.zoom100perc();" style="border:none;min-width:20px;">100%</button>\n                <button type="button" title="Fit to graphics area" onclick="wpd.graphicsWidget.zoomFit();" style="border:none;min-width:20px;">Fit</button>\n                <button title="Toggle extended crosshair" onclick="wpd.graphicsWidget.toggleExtendedCrosshairBtn();" style="border:none;min-width:20px;background-image: url(\'/viewer/WPD/images/crosshair.png\'); background-repeat: no-repeat; background-position: center;" id="extended-crosshair-btn">&nbsp;</button>\n            </div>\n\n        </div>\n\n        <div id="graphicsContainer">\n            <!-- the main canvas goes here -->\n            <div id="canvasDiv" style="position:relative;">\n                <canvas id="mainCanvas" class="canvasLayers" style="z-index:1;"></canvas>\n                <canvas id="dataCanvas" class="canvasLayers" style="z-index:2;"></canvas>\n                <canvas id="drawCanvas" class="canvasLayers" style="z-index:3;"></canvas>\n                <canvas id="hoverCanvas" class="canvasLayers" style="z-index:4;"></canvas>\n                <canvas id="topCanvas" class="canvasLayers" style="z-index:5;"></canvas>\n            </div>\n        </div>\n    </div>\n\n    <!-- sidebar + zoom -->\n    <div id="sidebarContainer">\n        <!-- zoom window goes here -->\n        <div style="position:relative;" id="zoomDiv">\n            <canvas id="zoomCanvas" class="zoomLayers" width=250 height=250 style="position:relative; top: 0px; left: 0px; z-index:1;"></canvas>\n            <canvas id="zoomCrossHair" class="zoomLayers" width=250 height=250 style="position:absolute; top: 0px; left: 0px; z-index:2; background:transparent;"></canvas>\n            <div id="cursorPosition" style="position:relative;">\n            [<span id="mousePosition"></span>]\n            </div>\n        </div>\n\n        <div id="zoom-settings-container"><input type="button" id="zoom-settings-button" title="Change zoom settings" value="⚙" onclick="wpd.zoomView.showSettingsWindow();"/></div>\n        \n        <div style="position:relative;" id="sidebarControlsContainer">\n            <!-- side bars go here -->\n            <!-- axes calibration -->\n<div id="axes-calibration-sidebar" class="sidebar">\n<p class="sidebar-title">Axes Calibration</p>\n<p>Click points to select and use cursor keys to adjust positions. Use Shift+Arrow for faster movement. Click complete when finished.</p>\n<p align="center"><input type="button" value="Complete!" style="width: 120px;" onclick="wpd.alignAxes.getCornerValues();"/></p>\n</div>\n\n<!-- manual mode -->\n<div id="acquireDataSidebar" class="sidebar">\n<p class="sidebar-title">Manual Mode <input type="button" value="Automatic Mode" style="width: 125px;" onclick="wpd.autoExtraction.start();"></p>\n<hr/>\n<p>Dataset <select id="manual-sidebar-dataset-list" onchange="wpd.acquireData.changeDataset(this);" style="width:160px;"></select></p>\n<hr/>\n<p>\n    <input type="button" value="Add Point (A)" onclick="wpd.acquireData.manualSelection();" style="width:115px;" id="manual-select-button">\n    <input type="button" value="Adjust Point (S)" onClick="wpd.acquireData.adjustPoints();" style="width: 115px;" id="manual-adjust-button">\n</p>\n<div class="vertical-spacer"></div>\n<p>\n    <input type="button" value="Delete Point (D)" onclick="wpd.acquireData.deletePoint();" style="width: 115px;" id="delete-point-button">\n    <input id="clearAllBtn" type="button" value="Clear Points" onCLick="wpd.acquireData.clearAll();" style="width: 115px;">\n</p>\n<div class="vertical-spacer"></div>\n<p>\n    <input type="button" value="Edit Labels (E)" id="edit-data-labels" onclick="wpd.acquireData.editLabels();" style="display: none; width: 115px;">\n    <input type="button" value="View Data" id="saveBtn" onclick="wpd.dataTable.showTable();" style="width:115px;">\n</p>\n<div class="vertical-spacer"></div>\n<p>Data Points: <span class="data-point-counter">0</span></p>\n</div>\n\n<!-- edit image -->\n<div id="editImageToolbar" class="sidebar">\n<p align="center"><b>Edit Image</b></p>\n<p align="center"><input type="button" value="H. Flip" style="width: 75px;" onclick="hflip();"><input type="button" value="V. Flip" style="width: 75px;" onClick="vflip();"></p>\n<p align="center"><input type="button" value="Crop" style="width: 150px;" onclick="cropPlot();"></p>\n<p align="center"><input type="button" value="Restore" style="width: 150px;" onclick="restoreOriginalImage();"></p>\n<p align="center"><input type="button" value="Save .PNG" style="width: 150px;" onclick="savePNG();"></p>\n</div>\n\n<!-- automatic mode -->\n<div id="auto-extraction-sidebar" class="sidebar">\n<p class="sidebar-title">Automatic Mode <input type="button" value="Manual Mode" style="width:110px;" onclick="wpd.acquireData.load();"/></p>\n<hr/>\n<p>Dataset <select id="automatic-sidebar-dataset-list" onchange="wpd.acquireData.changeDataset(this);" style="width:160px;"></select></p>\n<hr/>\n<p>Mask <input type="button" value="Box" style="width:50px;" onclick="wpd.dataMask.markBox();" id="box-mask"><input type="button" value="Pen" style="width:45px;" onClick="wpd.dataMask.markPen();" id="pen-mask"><input type="button" value="Erase" style="width:50px;" onClick="wpd.dataMask.eraseMarks();" id="erase-mask"><input type="button" value="View" style="width:40px;" onclick="wpd.dataMask.viewMask();" id="view-mask"/></p>\n<hr/>\n<p>Color <select id="color-detection-mode-select" onchange="wpd.colorPicker.changeDetectionMode();"><option value="fg">Foreground Color</option><option value="bg">Background Color</option></select><input type="button" id="color-button" value=" " onclick="wpd.colorPicker.startPicker();" style="width: 25px;" title="Click to change color"/></p>\n<p>Distance <td><td><input type="text" size="3" id="color-distance-value" onchange="wpd.colorPicker.changeColorDistance();"/>\n<input type="button" value="Filter Colors" onclick="wpd.colorPicker.testColorDetection();" style="width: 90px;"></p>\n<hr/>\n<p>Algorithm\n<select id="auto-extract-algo-name" onchange="wpd.algoManager.applyAlgoSelection();"></select>\n</p>\n<div id="algo-parameter-container" style="margin-left: 10px; margin-top: 5px;"></div>\n<div class="vertical-spacer"></div>\n<p style="margin-top: 5px;">\n    <input type="button" value="Run" style="width:40px;" onclick="wpd.algoManager.run();"/>\n    <input type="button" value="Clear Points" style="width:95px;" onclick="wpd.acquireData.clearAll();"/>\n    <input type="button" value="View Data" style="width:80px;" onclick="wpd.dataTable.showTable();"/>\n</p>\n<hr/>\n<p>Data Points: <span class="data-point-counter">0</span></p>\n</div>\n\n<!-- distance measurement -->\n<div id="measure-distances-sidebar" class="sidebar">\n<p class="sidebar-title">Measure Distances</p>\n<p>\n    <input type="button" value="Add Pair (A)" style="width: 115px;" id="add-pair-button" onclick="wpd.measurement.addItem();"/>\n    <input type="button" value="Delete Pair (D)" style="width: 115px;" id="delete-pair-button" onclick="wpd.measurement.deleteItem();"/> \n</p>\n<div class="vertical-spacer"></div>\n<p>\n    <input type="button" value="Clear All" style="width: 115px;" id="clear-all-pairs-button" onclick="wpd.measurement.clearAll();"/>\n    <input type="button" value="View Data" style="width: 115px;" id="view-measurement-data-button" onclick="wpd.dataTable.showDistanceData();"/>\n</p>\n</div>\n\n<!-- angle measurement -->\n<div id="measure-angles-sidebar" class="sidebar">\n<p class="sidebar-title">Measure Angles</p>\n<p>\n    <input type="button" value="Add Angle (A)" style="width: 115px;" id="add-angle-button" onclick="wpd.measurement.addItem();"/>\n    <input type="button" value="Delete Angle (D)" style="width: 115px;" id="delete-angle-button" onclick="wpd.measurement.deleteItem();"/>\n</p>\n<div class="vertical-spacer"></div>\n<p>\n    <input type="button" value="Clear All" style="width: 115px;" onclick="wpd.measurement.clearAll();"/>\n    <input type="button" value="View Data" style="width: 115px;" onclick="wpd.dataTable.showAngleData();"/>\n</p>\n</div>\n\n<!-- open path measurement -->\n<div id="measure-open-path-sidebar" class="sidebar">\n<p class="sidebar-title">Measure Path</p>\n<p>\n    <input type="button" value="Add Path (A)" style="width: 115px;" id="add-open-path-button" onclick="wpd.measurement.addItem();"/>\n    <input type="button" value="Delete Path (D)" style="width: 115px;" id="delete-open-path-button" onclick="wpd.measurement.deleteItem();"/>\n</p>\n<div class="vertical-spacer"></div>\n<p>\n    <input type="button" value="Clear All" style="width: 115px;" onclick="wpd.measurement.clearAll();"/>\n    <input type="button" value="View Data" style="width: 115px;" onclick="wpd.dataTable.showOpenPathData();"/>\n</p>\n</div>\n\n<!-- closed path measurement -->\n<div id="measure-closed-path-sidebar" class="sidebar">\n<p class="sidebar-title">Measure Closed Path</p>\n<p>\n    <input type="button" value="Add Path (A)" style="width: 115px;" id="add-closed-path-button" onclick="wpd.measurement.addItem();"/>\n    <input type="button" value="Delete Path (D)" style="width: 115px;" id="delete-closed-path-button" onclick="wpd.measurement.deleteItem();"/>\n</p>\n<div class="vertical-spacer"></div>\n<p>\n    <input type="button" value="Clear All" style="width: 115px;" onclick="wpd.measurement.clearAll();"/>\n    <input type="button" value="View Data" style="width: 115px;" onclick="wpd.dataTable.showClosedPathData();"/>\n</p>\n</div>\n\n<!-- grid detection -->\n<div id="grid-detection-sidebar" class="sidebar">\n<p class="sidebar-title">Detect Grid</p>\n<p>\n    Mask\n    <input type="button" value="Box" style="width: 60px;" id="grid-mask-box" onclick="wpd.gridDetection.markBox();"/>\n    <input type="button" value="Clear" style="width: 60px;" id="grid-mask-clear" onclick="wpd.gridDetection.clearMask();"/>\n    <input type="button" value="View"  style="width: 60px;" id="grid-mask-view" onclick="wpd.gridDetection.viewMask();"/>\n</p>\n<hr/>\n<p>\n    Color\n    <input type="button" value="Pick" style="width: 60px;" id="grid-color-picker-button" onclick="wpd.gridDetection.startColorPicker();"/>\n    <input type="text" value="10" style="width: 60px;" id="grid-color-distance" onchange="wpd.gridDetection.changeColorDistance();"/>\n    <input type="button" value="Test" style="width: 60px;" id="grid-color-test" onclick="wpd.gridDetection.testColor();"/>\n</p>\n<p align="center"><input type="checkbox" id="grid-background-mode" checked onchange="wpd.gridDetection.changeBackgroundMode();"/> Background Mode</p>\n<hr/>\n<table>\n    <tr><td align="right">Horizontal </td><td><input type="checkbox" id="grid-horiz-enable" checked/></td></tr>\n    <tr><td align="right">X% </td><td>&nbsp; <input type="text" value="80" id="grid-horiz-perc" style="width: 40px;"/></td></tr>\n    <tr><td align="right">Vertical </td><td><input type="checkbox" id="grid-vert-enable" checked/></td></tr>\n    <tr><td align="right">Y% </td><td>&nbsp; <input type="text" value="80" id="grid-vert-perc" style="width: 40px;"/></td></tr>\n</table>\n<hr/>\n<p align="center">\n    <input type="button" value="Detect" style="width: 100px;" onclick="wpd.gridDetection.run();"/>\n    &nbsp;\n    <input type="button" value="Reset" style="width: 100px;" onclick="wpd.gridDetection.reset();"/>\n</p>\n</div>\n        </div>\n\n    </div>\n</div>\n\n<!-- popup windows go here -->\n    <!-- Background curtain for popups -->\n	<div id="shadow" style="width:100%; height:100%; background-color: rgba(0,0,0,0.3); position:absolute; top:0px; left:0px; z-index:50; visibility:hidden;">\n	</div>\n\n    <!-- Load Image -->\n	<div id="loadNewImage" class="popup" style="width: 400px;">\n	<div class="popupheading">Load Image File</div>\n	<p>&nbsp;</p>\n	<p align="center"><input type="file" id="fileLoadBox"/></p>\n	<p>&nbsp;</p>\n	<p align="center">\n        <input type="button" value="Load" onclick="wpd.graphicsWidget.load();"/>\n        <input type="button" value="Cancel" onclick="wpd.popup.close(\'loadNewImage\');"/>\n    </p>\n	</div>\n\n    <!-- Zoom Settings -->\n    <div id="zoom-settings-popup" class="popup" style="width: 300px;">\n    <div class="popupheading">Magnified View Settings</div>\n    <p>&nbsp;</p>\n    <center>\n    <table>\n    <tr><td><p>Magnification: </p></td><td><p><input type="text" id="zoom-magnification-value" size="3"/> Times</p></td></tr>\n    <tr>\n        <td><p>Crosshair Color: </p></td>\n        <td><p>\n        <select id="zoom-crosshair-color-value">\n            <option value="black">Black</option>\n            <option value="red">Red</option>\n            <option value="yellow">Yellow</option>\n        </select>\n        </td>\n    </tr>\n    </table>\n    </center>\n    <p>&nbsp;</p>\n    <p align="center"><input type="button" value="Apply" onclick="wpd.zoomView.applySettings();"/> <input type="button" value="Cancel" onclick="wpd.popup.close(\'zoom-settings-popup\');"/></p>\n    </div>\n\n    <!-- Run Script -->\n    <div id="runScriptPopup" class="popup" style="width: 500px;">\n    <div class="popupheading">Run Script</div>\n    <p>&nbsp;</p>\n    <p align="center">Load a Javascript file to further extend the capabilities of WebPlotDigitizer. For examples, visit the <a href="http://github.com/ankitrohatgi/WebPlotDigitizer-Examples" target="_blank">WebPlotDigitizer-Examples repository</a>.</p>\n    <p>&nbsp;</p>\n    <p align="center"><input type="file" id="runScriptFileInput"/></p>\n    <p>&nbsp;</p>\n    <p align="center"><input type="button" value="Run" onclick="wpd.scriptInjector.load();"/> <input type="button" value="Cancel" onclick="wpd.scriptInjector.cancel();"/></p>\n    </div>\n\n    <!-- Webcam Capture -->\n    <div id="webcamCapture" class="popup" style="width: 650px;">\n    <div class="popupheading">Webcam Capture</div>\n    <p>&nbsp;</p>\n    <p align="center"><video id="webcamVideo" autoplay="true" height="350"></video></p>\n    <p align="center"><input type="button" value="Capture" onclick="wpd.webcamCapture.capture();"/> <input type="button" value="Cancel" onclick="wpd.webcamCapture.cancel();"/></p>\n    </div>\n\n    <!-- Generic Message Popup -->\n    <div id="messagePopup" class="popup" style="width: 400px;">\n    <div id="message-popup-heading" class="popupheading"></div>\n    <p>&nbsp;</p>\n    <p align="center" id="message-popup-text"></p>\n    <p>&nbsp;</p>\n    <p align="center"><input type="button" value="OK" onclick="wpd.messagePopup.close()"/></p>\n    </div>\n\n    <!-- Generic Ok/Cancel Popup -->\n    <div id="okCancelPopup" class="popup" style="width: 400px;">\n    <div id="ok-cancel-popup-heading" class="popupheading"></div>\n    <p>&nbsp;</p>\n    <p align="center" id="ok-cancel-popup-text"></p>\n    <p>&nbsp;</p>\n    <p align="center"><input type="button" value="OK" onclick="wpd.okCancelPopup.ok()"/> <input type="button" value="Cancel" onclick="wpd.okCancelPopup.cancel()"/></p>\n    </div>\n\n    <!-- Choose axes type -->\n	<div id="axesList" class="popup" style="width: 400px;">\n	<div class="popupheading">Choose Plot Type</div>\n	<p>&nbsp;</p>\n	<center>\n	<table>\n	<tr><td align="left"><label><input type="radio" name="plotlisting" id="r_xy" checked> 2D (X-Y) Plot</label></td></tr>\n	<tr><td align="left"><label><input type="radio" name="plotlisting" id="r_bar"> 2D Bar Plot</label></td></tr>\n	<tr><td align="left"><label><input type="radio" name="plotlisting" id="r_polar"> Polar Diagram</label></td></tr>\n	<tr><td align="left"><label><input type="radio" name="plotlisting" id="r_ternary"> Ternary Diagram</label></td></tr>\n	<tr><td align="left"><label><input type="radio" name="plotlisting" id="r_map"> Map With Scale Bar</label></td></tr>\n	<tr><td align="left"><label><input type="radio" name="plotlisting" id="r_image"> Image</label></td></tr>\n	</table>\n	</center>\n	<p>&nbsp;</p>\n	<p align="center"><input type="button" value="Align Axes" onclick="wpd.alignAxes.start();">&nbsp;<input type="button" value="Cancel" onClick="wpd.popup.close(\'axesList\');"></p>\n	</div>\n\n    <!-- XY Alignment -->\n	<div id="xyAlignment" class="popup" style="width: 400px;">\n	<div class="popupheading">X and Y Axes Calibration</div>\n	<p>&nbsp;</p>\n	<p align="center">Enter X-values of the two points clicked on X-axis and Y-values of the two points clicked on Y-axes</p>\n	<center>\n	<table padding="10">\n		<tr>\n            <td></td>\n			<td align="center" valign="bottom">Point 1</td>\n			<td align="center" valign="bottom" width="80">Point 2</td>\n			<td align="center" valign="bottom" width="82">Log Scale</td>\n		</tr>\n	    <tr>\n            <td align="center">X-Axis:</td>\n	        <td align="center"><input type="text" size="8" id="xmin" value="0" /></td>\n	        <td align="center"><input type="text" size="8" id="xmax" value="1" /></td>\n	        <td align="center"><input type="checkbox" id="xlog"></td>\n	    </tr>\n	    <tr>\n            <td align="center">Y-Axis:</td>\n	        <td align="center"><input type="text" size="8" id="ymin" value="0" /></td>\n	        <td align="center"><input type="text" size="8" id="ymax" value="1" /></td>\n	        <td align="center"><input type="checkbox" id="ylog" /></td>\n	    </tr>\n	</table>\n	<p align="center" class="footnote">*For dates, use yyyy/mm/dd format (e.g. 2013/10/23 or 2013/10). For exponents, enter values as 1e-3 for 10^-3.</p>\n	<p>&nbsp;</p>\n	<p align="center"><input type="button" id="xybtn" value="OK" onclick="wpd.alignAxes.align();" /></p>\n	</center>\n	</div>\n\n    <!-- Bar Alignment -->\n    <div id="barAlignment" class="popup" style="width: 400px;">\n    <div class="popupheading">Bar Chart Calibration</div>\n    <p align="center">Enter the values at the two points selected on the continuous axes along the bars</p>\n    <center>\n    <table padding="10">\n        <tr>\n            <td align="center" valign="bottom">Point 1</td>\n            <td align="center" valign="bottom" width="80">Point 2</td>\n            <td align="center" valign="Log Scale" width="80">Log Scale</td>\n        </tr>\n        <tr>\n            <td align="center"><input type="text" size="8" id="bar-axes-p1" value="0" /></td>\n            <td align="center"><input type="text" size="8" id="bar-axes-p2" value="1" /></td>\n            <td align="center"><input type="checkbox" id="bar-axes-log-scale"/></td>\n        </tr>\n    </table>\n    </center>\n    <p>&nbsp;</p>\n    <p align="center"><input type="button" value="OK" onclick="wpd.alignAxes.align();"/></p>\n    </div>\n\n    <!-- Map Alignment -->\n	<div id="mapAlignment" class="popup" style="width: 200px;">\n	<div class="popupheading">Scale Size</div>\n	<p>&nbsp;</p>\n	<p align="center"><input type="text" size="6" id="scaleLength" value="1"> <input type="text" size="6" id="scaleUnits" value="Units"/></p>\n	<p>&nbsp;</p>\n	<p align="center"><input type="button" id="xybtn" value="OK" onclick="wpd.alignAxes.align();"></p>\n	</div>\n\n    <!-- Polar Alignment -->\n	<div id="polarAlignment" class="popup" style="width: 400px;">\n    <div class="popupheading">Align Polar Axes</div>\n    <center>\n    <table padding="15">\n        <tr>\n            <td>&nbsp;</td>\n            <td align="center"><b>Point 1</b></td>\n            <td align="center"><b>Point 2</b></td>\n            <td align="center"><b>Log Scale</b></td>\n        </tr>\n        <tr>\n            <td>R: </td>\n            <td align="center"><input type="text" size="6" id="polar-r1" value="1"/></td>\n            <td align="center"><input type="text" size="6" id="polar-r2" value="1"/></td>\n            <td align="center"><input type="checkbox" id="polar-log-scale"/></td>\n        </tr>\n        <tr>\n            <td>Θ: </td>\n            <td align="center"><input type="text" size="6" id="polar-theta1" value="1"/></td>\n            <td align="center"><input type="text" size="6" id="polar-theta2" value="1"/></td>\n            <td align="center">&nbsp;</td>\n        </tr>\n    </table>\n    </center>\n	<p align="center"><label><input type="radio" id="polar-degrees" name="angleUnits" checked> Degrees</label> <label><input type="radio" id="polar-radians" name="angleUnits"> Radians</p></label>\n	<p align="center"><input type="checkbox" id="polar-clockwise"> Clockwise</p>\n    <br/>\n	<p align="center"><input type="button" value="OK" onclick="wpd.alignAxes.align();"></p>\n	</div>\n\n    <!-- Ternary Alignment -->\n	<div id="ternaryAlignment" class="popup">\n	<div class="popupheading">Select Range of Variables</div>\n	<p>&nbsp;</p>\n	<p align="center">Axes Orientation</p>\n	<center>\n	<table>\n	  <tr><td><img src="/viewer/WPD/images/ternarynormal.png" width="200"></td><td><img src="/viewer/WPD/images/ternaryreverse.png" width="200"></td></tr>\n	  <tr><td><p align="center"><input type="radio" name="ternaryOrientation" id="ternarynormal" checked> Normal</p></td><td><p align="center"><input type="radio" name="ternaryOrientation" id="ternaryreverse"> Reverse</p></td></tr>\n	</table>\n	</center>\n	<p align="center">Range of Variables</p>\n	<center>\n	<table><tr><td><p align="center"><input type="radio" id="range0to1" name="ternaryRange" checked> 0 to 1&nbsp;&nbsp;</p></td><td><p align="center">&nbsp;&nbsp;<input type="radio" id="range0to100" name="ternaryRange"> 0 to 100</p></td></tr></table>\n	</center>\n	<p>&nbsp;</p>\n	<p align="center"><input type="button" value="OK" onclick="wpd.alignAxes.align();"></p>\n	</div>\n\n    <!-- View Data -->\n	<div id="csvWindow" class="popup" style="height: 430px;">\n	<div class="popupheading">Acquired Data</div>\n    <table>\n    <tr>\n    <td>\n    <!-- left panel -->\n    <span id="data-table-dataset-control"><p>Dataset: <select id="data-table-dataset-list" onchange="wpd.dataTable.changeDataset();"></select></p></span>\n    <p align="center">Variables: <span id="dataVariables"></span></p>\n	<p align="center"><textarea id="digitizedDataTable" style="width: 460px; height: 250px;"></textarea></p>\n	<p align="center">\n		<input type="button" value="Select All" onclick="wpd.dataTable.selectAll();"/>\n        <input type="button" value="Download .CSV" onclick="wpd.dataTable.generateCSV();"/>\n		<input type="button" value="Graph in Plotly*" onclick="wpd.dataTable.exportToPlotly();"/>\n		<input type="button" value="Close" onclick="wpd.popup.close(\'csvWindow\');"/>\n	</p>\n	<p align="center" class="footnote">*Plotly is a secure data analysis and graphing site with data sharing and access controls.</p>\n	<p align="center" class="footnote">Visit <a href="http://plot.ly" target="plotlyWebsite">http://plot.ly</a> for details.</p>\n    </td>\n    <td valign="top" style="width:180px;">\n    <!-- data side controls -->\n    <p><b>Sort</b></p>\n    <p class="leftIndent">Sort by: <select id="data-sort-variables" onchange="wpd.dataTable.reSort();"></select></p>\n    <p class="leftIndent">Order:\n		<select id="data-sort-order" onchange="wpd.dataTable.reSort();">\n			<option value="ascending">Ascending</option>\n			<option value="descending">Descending</option>\n		</select>\n	</p>\n    <hr/>\n    <p><b>Format</b></p>\n	<p class="leftIndent">\n		<span id="data-date-formatting-container">\n		Date Formatting:\n        <span id="data-date-formatting"></span>\n		</span>\n	</p>\n    <p class="leftIndent">Number Formatting:</p>\n    <p>Digits: <input type="text" value="5" size="2" id="data-number-format-digits"/>\n        <select id="data-number-format-style">\n            <option value="ignore">Ignore</option>\n            <option value="fixed">Fixed</option>\n            <option value="precision">Precision</option>\n            <option value="exponential">Exponential</option>\n        </select>\n    </p>\n    <p>Column Separator: <input type="text" value=", " size="2" id="data-number-format-separator"/></p>\n	<p align="right"><input type="button" value="Format" onclick="wpd.dataTable.reSort();"/></p>\n    </td>\n    </tr>\n    </table>\n	</div>\n\n    <!-- XY Axes Calibration Instructions -->\n	<div id="xyAxesInfo" class="popup" style="width:400px;">\n	<div class="popupheading">Align X-Y Axes</div>\n	<p>&nbsp;</p>\n	<p align="center"><img src="/viewer/WPD/images/xyaxes.png" /></p>\n	<p align="center">Click four known points on the axes in the <font color="red">order shown in red</font>. Two on the X axis (X1, X2) and two on the Y axis (Y1, Y2).</p>\n	<p>&nbsp;</p>\n	<p align="center"><input type="button" value="Proceed" onclick="wpd.xyCalibration.pickCorners();" /></p>\n	</div>\n\n    <!-- Bar Chart Axes Calibration Intructions -->\n    <div id="barAxesInfo" class="popup" style="width:650px;">\n    <div class="popupheading">Align Bar Chart Axes</div>\n    <p>&nbsp;</p>\n    <p align="center"><img src="/viewer/WPD/images/barchart.png" /></p>\n    <p align="center">Click on two known points (P1, P2) on the continuous axes along the bars</p>\n    <p>&nbsp;</p>\n    <p align="center"><input type="button" value="Proceed" onclick="wpd.barCalibration.pickCorners();" /></p>\n    </div>\n\n    <!-- Map Axes Calibration Instructions -->\n	<div id="mapAxesInfo" class="popup" style="width: 350px;">\n	<div class="popupheading">Align Map To Scale Bar</div>\n	<p>&nbsp;</p>\n	<p align="center"><img src="/viewer/WPD/images/map.png" /></p>\n	<p align="center">Click on the two ends of the scale bar on the map.</p>\n	<p>&nbsp;</p>\n	<p align="center"><input type="button" value="Proceed" onclick="wpd.mapCalibration.pickCorners();"></p>\n	</div>\n\n    <!-- Polar Axes Calibration Instructions -->\n	<div id="polarAxesInfo" class="popup" style="width: 350px;">\n	<div class="popupheading">Align Polar Axes</div>\n	<p>&nbsp;</p>\n	<p align="center"><img src="/viewer/WPD/images/polaraxes.png" /></p>\n	<p align="center">Click on the center, followed by two known points.</p>\n	<p>&nbsp;</p>\n	<p align="center"><input type="button" value="Proceed" onclick="wpd.polarCalibration.pickCorners();"></p>\n	</div>\n\n    <!-- Ternary Axes Calibration Instructions -->\n	<div id="ternaryAxesInfo" class="popup" style="width: 350px;">\n	<div class="popupheading">Align Ternary Axes</div>\n	<p>&nbsp;</p>\n	<p align="center"><img src="/viewer/WPD/images/ternaryaxes.png" /></p>\n	<p align="center">Click on the three corners in the order shown above.</p>\n	<p>&nbsp;</p>\n	<p align="center"><input type="button" value="Proceed" onclick="wpd.ternaryCalibration.pickCorners();"></p>\n	</div>\n\n    <!-- About WPD -->\n	<div id="helpWindow" class="popup" style="width: 600px;">\n	<div class="popupheading">WebPlotDigitizer - Web Based Plot Digitizer</div>\n	<p>&nbsp;</p>\n    <p align="center">Version 3.10</p>\n	<p align="center">This program is distributed under the <a href="https://www.gnu.org/licenses/gpl-3.0-standalone.html" target="_blank">GNU General Public License Version 3</a>.</p>\n	<p align="center">Copyright 2010-2016 Ankit Rohatgi &lt;ankitrohatgi@hotmail.com&gt;</p>\n	<p align="center"><a href="http://arohatgi.info/WebPlotDigitizer" target="website">http://arohatgi.info/WebPlotDigitizer</a></p>\n	<p>&nbsp;</p>\n	<p align="center"><input type="button" value="Close" onclick="wpd.popup.close(\'helpWindow\');"></p>\n	</div>\n\n    <!-- Color Selection -->\n    <div id="color-selection-widget" class="popup" style="width:400px;">\n	<div id="color-selection-title" class="popupheading">Specify Color</div>\n	<p align="center">&nbsp;</p>\n    <div style="text-align:center;"><div id="color-selection-selected-color-box" class="largeColorBox"></div></div>\n	<p align="center">&nbsp;</p>\n	<p align="center">R:<input type="text" value="255" id="color-selection-red" size="3">&nbsp;\n	G:<input type="text" id="color-selection-green" value="255" size="3">&nbsp; B:<input type="text" id="color-selection-blue" value="255" size="3">\n	 <input type="button" value="Color Picker" onclick="wpd.colorSelectionWidget.pickColor();"></p>\n	<p align="center">&nbsp;</p>\n    <p>Dominant Colors: <div id="color-selection-options" style="text-align:center;"></div></p>\n    <p>&nbsp;</p>\n	<p align="center"><input type="button" value="Done" onclick="wpd.colorSelectionWidget.setColor();"></p>\n	</div>\n\n\n    <!-- Manage Data Series -->\n    <div id="manage-data-series-window" class="popup" style="width:425px;">\n    <div class="popupheading">Manage Datasets</div>\n    <p>&nbsp;</p>\n    <center>\n    <table name="data_series_info">\n    <!--<tr>\n        <td align="right">Selected Dataset: </td><td> &nbsp;<select id="manage-data-series-list" style="width:200px;" onchange="wpd.dataSeriesManagement.changeSelectedSeries();"><option>Default Dataset</option></select></td>\n    </tr>\n    <tr><td>&nbsp;</td><td>&nbsp;</td></tr>-->\n    <tr>\n        <td align="right">Dataset Name: </td><td> &nbsp;\n        <input type="text" id="manage-data-series-name" onblur="wpd.dataSeriesManagement.editSeriesName();" onchange="wpd.dataSeriesManagement.editSeriesName();"/>\n        <input type="button" value="Change" onclick="wpd.dataSeriesManagement.editSeriesName();"/></td>\n    </tr>\n    <tr>\n        <td align="right">Data Points: </td><td> &nbsp;<span id="manage-data-series-point-count">0</span></td>\n    </tr>\n    <tr><td>&nbsp;</td><td>&nbsp;</td></tr>\n    <tr><td colspan="2"><table name="point_field_table"><tbody></tbody></table></td></tr>\n    </table>\n    <input type="button" value="Add Field" onclick="wpd.dataSeriesManagement.addField(null);"/>\n    </center>\n    <p>&nbsp;</p>\n    <p align="center">\n        <input type="button" value="View Data" onclick="wpd.dataSeriesManagement.viewData();"/>\n        <input type="button" value="Close" onclick="wpd.dataSeriesManagement.validateAndClose();"/>\n    </p>\n    </div>\n\n\n    <!-- Get Extra Variable Data -->\n    <div id="extra-variable-prompt" class="popup" style="width:425px;">\n        <div class="popupheading">Extra Variables</div>\n        <p>&nbsp;</p>\n        <center>\n            <input type="hidden" id="pointData"/>\n            <table name="extra_var_table"><tbody></tbody></table></td>\n        </center>\n        <p>&nbsp;</p>\n        <p align="center">\n            <input type="button" value="Close" onclick="wpd.dataSeriesManagement.activeDataSeries.validateExtraAndClose();"/>\n        </p>\n    </div>\n\n\n    <!-- Axes Transformation Equations -->\n    <div id="axes-transformation-equations-window" class="popup" style="width:600px;">\n    <div class="popupheading">Transformation Equations</div>\n    <p>The following relationships are being used to convert image pixels to data:</p>\n    <div id="axes-transformation-equation-list"></div>\n    <p>&nbsp;</p>\n    <p align="center"><input type="button" value="Close" onclick="wpd.popup.close(\'axes-transformation-equations-window\');"/></p>\n    </div>\n\n    <!-- Export JSON -->\n    <div id="export-json-window" class="popup" style="width:500px;">\n    <div class="popupheading">Export JSON</div>\n    <p>This JSON file contains the axes calibration and the digitized data points from this plot. This file can be imported later to resume work or reuse the calibration in another plot.</p>\n    <p>&nbsp;</p>\n    <p align="center">\n        <input type="button" value="Export to DACTYL" onclick="wpd.saveResume.exportToDACTYL();"/>\n        <input type="button" value="Download" onclick="wpd.saveResume.download();"/>\n        <input type="button" value="Close" onclick="wpd.popup.close(\'export-json-window\');"/>\n    </p>\n    </div>\n\n    <!-- Import JSON -->\n    <div id="import-json-window" class="popup" style="width:500px;">\n    <div class="popupheading">Import JSON</div>\n    <p>Specify a previously exported JSON file to load here. Note that this will clear any unsaved data points in the current plot.</p>\n    <p>&nbsp;</p>\n    <p align="center">JSON File: <input type="file" id="import-json-file"/></p>\n    <p>&nbsp;</p>\n    <p align="center">\n        <input type="button" value="Import" onclick="wpd.saveResume.read();"/>\n        <input type="button" value="Cancel" onclick="wpd.popup.close(\'import-json-window\');"/>\n    </p>\n    </div>\n\n    <!-- Adjust Data Points Keyboard Shortcuts -->\n    <div id="adjust-data-points-keyboard-shortcuts-window" class="popup" style="width:400px;">\n    <div class="popupheading">Keyboard Shortcuts</div>\n    <p>Click to select a data point. The following keys can then be used to the adjust the position:</p>\n    <center>\n    <table cellspacing="5" border="0">\n    <tr><td align="right">Cursor (Arrows) -</td><td>Move up/down/right/left</td></tr>\n    <tr><td align="right">Shift + Cursor -</td><td>Faster rate of movement</td></tr>\n    <tr><td align="right">Q -</td><td>Select next point</td></tr>\n    <tr><td align="right">W -</td><td>Select previous point</td></tr>\n    <tr><td align="right">Del/Backspace -</td><td>Delete point</td></tr>\n    <tr><td align="right">E -</td><td>Edit label (Bar Chart)</td></tr>\n    </table>\n    </center>\n    <p>&nbsp;</p>\n    <p align="center"><input type="button" value="Close" onclick="wpd.popup.close(\'adjust-data-points-keyboard-shortcuts-window\');"/></p>\n    </div>\n\n    <!-- Data point label editor -->\n    <div id="data-point-label-editor" class="popup" style="width:280px;">\n    <div class="popupheading">Edit Label</div>\n    <p>&nbsp;</p>\n    <p align="center">Label: <input type="text" value="Data Point" id="data-point-label-field" onkeydown="wpd.dataPointLabelEditor.keydown(event);"/></p>\n    <p>&nbsp;</p>\n    <p align="center">\n        <input type="button" value="OK" onclick="wpd.dataPointLabelEditor.ok();"/>\n        <input type="button" value="Cancel" onclick="wpd.dataPointLabelEditor.cancel();"/>\n    </p>\n    </div>\n\n    <!-- Perspective Transform Instructions -->\n    <div id="perspective-info" class="popup" style="width:500px;">\n    <div class="popupheading">Perspective Transformation</div>\n    <p align="center"><img src="/viewer/WPD/images/perspective.png" width="350"></p>\n    <br/>\n    <p align="center">Click on four corners of the region to be transformed as shown.</p>\n    <br/>\n    <p align="center">\n        <input type="button" value="OK" onclick="wpd.perspective.pickCorners();"/>\n        <input type="button" value="Cancel" onclick="wpd.popup.close(\'perspective-info\');"/>\n    </p>\n    </div>\n\n    <!-- Edit or Reset Calibration Dialog -->\n    <div id="edit-or-reset-calibration-popup" class="popup" style="width:500px;">\n    <div class="popupheading">Edit Existing Calibration?</div>\n    <br/>\n    <p align="center">Do you wish to tweak existing axes calibration or select a new axes type?</p>\n    <br/>\n    <p align="center">\n        <input type="button" value="Edit Calibration" onclick="wpd.alignAxes.reloadCalibrationForEditing();"/>\n\n        <input type="button" value="Change Axes Type" onclick="wpd.popup.close(\'edit-or-reset-calibration-popup\');wpd.popup.show(\'axesList\');"/>\n\n        <input type="button" value="Cancel" onclick="wpd.popup.close(\'edit-or-reset-calibration-popup\');"/>\n    </p>\n    </div>\n\n<!-- strings for translation -->\n<div class="i18n-string" id="i18n-string-wpd">WebPlotDigitizer</div>\n<div class="i18n-string" id="i18n-string-unstable-version-warning">Unstable version warning!</div>\n<div class="i18n-string" id="i18n-string-unstable-version-warning-text">You are using a beta version of WebPlotDigitizer. There may be some issues with the software that are expected.</div>\n<div class="i18n-string" id="i18n-string-import-json">Import JSON</div>\n<div class="i18n-string" id="i18n-string-json-data-loaded">JSON data has been loaded!</div>\n<div class="i18n-string" id="i18n-string-calibration-invalid-inputs">Invalid Inputs</div>\n<div class="i18n-string" id="i18n-string-calibration-enter-valid">Please enter valid values for calibration.</div>\n<div class="i18n-string" id="i18n-string-acquire-data">Acquire Data</div>\n<div class="i18n-string" id="i18n-string-acquire-data-calibration">Please calibrate the axes before acquiring data.</div>\n<div class="i18n-string" id="i18n-string-clear-data-points">Clear data points?</div>\n<div class="i18n-string" id="i18n-string-clear-data-points-text">This will delete all data points from this dataset</div>\n<div class="i18n-string" id="i18n-string-webcam-capture">Webcam Capture</div>\n<div class="i18n-string" id="i18n-string-webcam-capture-text">Your browser does not support webcam capture using HTML5 APIs. A recent version of Google Chrome is recommended.</div>\n<div class="i18n-string" id="i18n-string-transformation-eqns">Transformation Equations</div>\n<div class="i18n-string" id="i18n-string-transformation-eqns-text">Transformation equations are available only after axes have been calibrated.</div>\n<div class="i18n-string" id="i18n-string-unsupported">Unsupported Feature!</div>\n<div class="i18n-string" id="i18n-string-unsupported-text">This feature has not been implemented in the current version. This may be available in a future release.</div>\n<div class="i18n-string" id="i18n-string-processing">Processing</div>\n<div class="i18n-string" id="i18n-string-invalid-file">ERROR: Invalid File!</div>\n<div class="i18n-string" id="i18n-string-invalid-file-text">Please load a valid image file. Common image formats such as JPG, PNG, BMP, GIF etc. should work. PDF or Word documents are not accepted.</div>\n<div class="i18n-string" id="i18n-string-raw">Raw</div>\n<div class="i18n-string" id="i18n-string-nearest-neighbor">Nearest Neighbor</div>\n<div class="i18n-string" id="i18n-string-manage-datasets">Manage Datasets</div>\n<div class="i18n-string" id="i18n-string-manage-datasets-text">Please calibrate the axes before managing datasets.</div>\n<div class="i18n-string" id="i18n-string-can-not-delete-dataset">Can Not Delete!</div>\n<div class="i18n-string" id="i18n-string-can-not-delete-dataset-text">You can not delete this dataset as at least one dataset is required.</div>\n<div class="i18n-string" id="i18n-string-delete-dataset">Delete Dataset</div>\n<div class="i18n-string" id="i18n-string-delete-dataset-text">You can not delete this dataset as at least one dataset is required.</div>\n<div class="i18n-string" id="i18n-string-averaging-window">Averaging Window</div>\n<div class="i18n-string" id="i18n-string-x-step-with-interpolation">X Step w/ Interpolation</div>\n<div class="i18n-string" id="i18n-string-x-step">X Step</div>\n<div class="i18n-string" id="i18n-string-blob-detector">Blob Detector</div>\n<div class="i18n-string" id="i18n-string-bar-extraction">Bar Extraction</div>\n<div class="i18n-string" id="i18n-string-histogram">Histogram</div>\n<div class="i18n-string" id="i18n-string-specify-foreground-color">Specify Plot (Foreground) Color</div>\n<div class="i18n-string" id="i18n-string-specify-background-color">Specify Background Color</div>\n\n\n\n\n</body>\n</html>');
+window.JST['DV/views/viewerHorizontal'] = DV._.template('<!--[if lte IE 8]><div class="DV-docViewer DV-clearfix DV-viewDocument DV-ie <% if (autoZoom) { %>DV-autoZoom<% } %> <% if (mini) { %>DV-mini<% } %> <% if (!options.sidebar) { %>DV-hideSidebar<% } else { %>DV-hideFooter<% } %>"><![endif]-->\n<!--[if (!IE)|(gte IE 9)]><!--><div class="DV-docViewer DV-clearfix DV-viewDocument <% if (autoZoom) { %>DV-autoZoom<% } %> <% if (mini) { %>DV-mini<% } %> <% if (!options.sidebar) { %>DV-hideSidebar<% } else { %>DV-hideFooter<% } %>"><!-- <![endif]-->\n  \n  <div class="DV-docViewerWrapper">\n  \n    <%= header %>\n    <div class="DV-docViewer-Container">\n    \n      <div class="DV-searchBarWrapper">\n        <div class="DV-searchBar">\n          <span class="DV-trigger DV-closeSearch"><%= DV.t(\'CLOSE\') %></span>\n          <div class="DV-searchPagination DV-foundResult">\n            <div class="DV-searchResults">\n              <span class="DV-resultPrevious DV-trigger"><%= DV.t(\'previous\') %></span>\n              <span class="DV-currentSearchResult"></span>\n              <span class="DV-totalSearchResult"></span>\n              <span><% DV.t(\'for\') %> &ldquo;<span class="DV-searchQuery"></span>&rdquo;</span>\n              <span class="DV-resultNext DV-trigger"><%= DV.t(\'next\') %></span>\n            </div>\n          </div>\n        </div>\n      </div>\n    \n      <div class="DV-pages horizontal <% if (!options.sidebar) { %>DV-hide-sidebar<% } %>">\n        <div class="DV-paper">\n          <div class="DV-zoomControls">\n            <span class="DV-zoomLabel"><%= DV.t(\'zoom\') %></span>\n            <div class="DV-zoomBox"></div>\n          </div>\n          <div class="DV-thumbnails"></div>\n          <div class="DV-pageCollection">\n            <div class="DV-bar" style=""></div>\n            <div class="DV-allHighlights">\n            </div>\n            <div class="DV-text">\n              <div class="DV-textSearch DV-clearfix">\n          \n              </div>\n              <div class="DV-textPage">\n                <span class="DV-textCurrentPage"></span>\n                <pre class="DV-textContents"></pre>\n              </div>\n            </div>\n            <%= pages %>\n          </div>\n        </div>\n      </div>\n    \n      <div width="265px" class="DV-sidebar <% if (!options.sidebar) { %>DV-hide<% } %>" style="display:none;">\n        <div class="DV-well horizontal">\n\n        </div>\n      </div>\n    </div>\n    \n    <%= footer %>\n    \n  </div>\n\n</div>\n');
+window.JST['DV/views/viewerVertical'] = DV._.template('<!--[if lte IE 8]><div class="DV-docViewer DV-clearfix DV-viewDocument DV-ie <% if (autoZoom) { %>DV-autoZoom<% } %> <% if (mini) { %>DV-mini<% } %> <% if (!options.sidebar) { %>DV-hideSidebar<% } else { %>DV-hideFooter<% } %>"><![endif]-->\n<!--[if (!IE)|(gte IE 9)]><!--><div class="DV-docViewer DV-clearfix DV-viewDocument <% if (autoZoom) { %>DV-autoZoom<% } %> <% if (mini) { %>DV-mini<% } %> <% if (!options.sidebar) { %>DV-hideSidebar<% } else { %>DV-hideFooter<% } %>"><!-- <![endif]-->\n  \n  <div class="DV-docViewerWrapper">\n  \n    <%= header %>\n    <div class="DV-docViewer-Container">\n    \n      <div class="DV-searchBarWrapper">\n        <div class="DV-searchBar">\n          <span class="DV-trigger DV-closeSearch"><%= DV.t(\'CLOSE\') %></span>\n          <div class="DV-searchPagination DV-foundResult">\n            <div class="DV-searchResults">\n              <span class="DV-resultPrevious DV-trigger"><%= DV.t(\'previous\') %></span>\n              <span class="DV-currentSearchResult"></span>\n              <span class="DV-totalSearchResult"></span>\n              <span><% DV.t(\'for\') %> &ldquo;<span class="DV-searchQuery"></span>&rdquo;</span>\n              <span class="DV-resultNext DV-trigger"><%= DV.t(\'next\') %></span>\n            </div>\n          </div>\n        </div>\n      </div>\n    \n      <div class="DV-pages vertical <% if (!options.sidebar) { %>DV-hide-sidebar<% } %>">\n        <div class="DV-paper">\n          <div class="DV-zoomControls">\n            <span class="DV-zoomLabel"><%= DV.t(\'zoom\') %></span>\n            <div class="DV-zoomBox"></div>\n          </div>\n          <div class="DV-thumbnails"></div>\n          <div class="DV-pageCollection">\n            <div class="DV-bar" style=""></div>\n            <div class="DV-allHighlights">\n            </div>\n            <div class="DV-text">\n              <div class="DV-textSearch DV-clearfix">\n          \n              </div>\n              <div class="DV-textPage">\n                <span class="DV-textCurrentPage"></span>\n                <pre class="DV-textContents"></pre>\n              </div>\n            </div>\n            <%= pages %>\n          </div>\n        </div>\n      </div>\n    \n      <div class="DV-sidebar <% if (!options.sidebar) { %>DV-hide<% } %>" style="display:none;">\n        <div class="DV-well vertical"></div>\n      </div>\n    </div>\n    \n    <%= footer %>\n    \n  </div>\n\n</div>\n');
+window.JST['WPD/wpd'] = DV._.template('<!DOCTYPE html>\n<html>\n<!-- \n	WebPlotDigitizer - http://arohatgi.info/WebPlotDigitizer\n\n	Copyright 2010-2016 Ankit Rohatgi <ankitrohatgi@hotmail.com>\n\n	This file is part of WebPlotDigitizer.\n\n    WebPlotDigitizer is free software: you can redistribute it and/or modify\n    it under the terms of the GNU General Public License as published by\n    the Free Software Foundation, either version 3 of the License, or\n    (at your option) any later version.\n\n    WebPlotDigitizer is distributed in the hope that it will be useful,\n    but WITHOUT ANY WARRANTY; without even the implied warranty of\n    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n    GNU General Public License for more details.\n\n    You should have received a copy of the GNU General Public License\n    along with WebPlotDigitizer.  If not, see <http://www.gnu.org/licenses/>.\n-->\n\n<head>\n<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/> \n<meta name="Description" content="WebPlotDigitizer v3.10 - Web based tool to extract numerical data from plots and graph images."/>\n<meta name="Keywords" content="Plot, Digitizer, WebPlotDigitizer, Ankit Rohatgi, Extract Data, Convert Plots, XY, Polar, Ternary, Map, HTML5"/>\n<meta name="Author" content="Ankit Rohatgi"/>\n<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>\n<meta http-equiv="Pragma" content="no-cache"/>\n<meta http-equiv="Expires" content="0"/>\n<title>WebPlotDigitizer - Copyright 2010-2016 Ankit Rohatgi</title>\n\n\n\n</head>\n\n<body>\n\n<div id="loadingCurtain" style="position: absolute; top: 0px; left: 0px; z-index: 100; width: 100%; height: 100%; background-color: white;">\nLoading application, please wait...\n<br/>\n<br/>\nProblems loading? Make sure you have a recent version of Google Chrome, Firefox, Safari or Internet Explorer 11 installed.\n</div>\n\n<div id="allContainer">\n    <!-- toolbar + graphics -->\n    <div id="mainContainer">\n        <div id="topContainer">\n            <div id="menuButtonsContainer"><div class="wpd-menu">\n    <div class="wpd-menu-header">File</div>\n    <div class="wpd-menu-dropdown">\n        <ul>\n            <li id="wpd-filemenu-loadimage" onclick="wpd.popup.show(\'loadNewImage\');">Load Image</li>\n            <li id="wpd-filemenu-capture" onclick="wpd.webcamCapture.start();">Webcam Capture</li>\n            <li id="wpd-filemenu-runscript" onclick="wpd.scriptInjector.start();">Run Script</li>\n            <li id="wpd-filemenu-saveimage" onclick="wpd.graphicsWidget.saveImage();">Save Image</li>\n            <li id="wpd-filemenu-exportdata" onclick="wpd.saveResume.save();">Export JSON</li>\n            <li id="wpd-filemenu-import" onclick="wpd.saveResume.load();">Import JSON</li>\n        </ul>\n    </div>\n</div>\n<!--\n<div class="wpd-menu">\n    <div class="wpd-menu-header">Image</div>\n    <div class="wpd-menu-dropdown">\n        <ul>\n            <li>Restore Image</li>\n            <li>Crop</li>\n            <li>Rotate</li>\n            <li>Resize</li>\n            <li>Grayscale</li>\n            <li>Threshold</li>\n        </ul>\n    </div>\n</div>\n-->\n<div class="wpd-menu">\n    <div class="wpd-menu-header">Axes</div>\n    <div class="wpd-menu-dropdown">\n        <ul>\n            <li id="wpd-axesmenu-defineaxes" onclick="wpd.alignAxes.editAlignment();">Calibrate Axes</li>\n            <li id="wpd-axesmenu-grid" onclick="wpd.gridDetection.start();">Remove Grid</li>\n            <!-- <li id="wpd-axesmenu-perspective" onclick="wpd.perspective.start();">Perspective Transformation</li> -->\n            <li id="wpd-axesmenu-tranformation-equations" onclick="wpd.transformationEquations.show();">Transformation Equations</li>\n        </ul>\n    </div>\n</div>\n<div class="wpd-menu">\n    <div class="wpd-menu-header">Data</div>\n    <div class="wpd-menu-dropdown">\n        <ul>\n            <li id="wpd-datamenu-acquire" onclick="wpd.acquireData.load();">Acquire Data</li>\n            <li id="wpd-datamenu-manage" onclick="wpd.dataSeriesManagement.manage();">Manage Datasets</li>\n        </ul>\n    </div>\n</div>\n<div class="wpd-menu">\n    <div class="wpd-menu-header">Measure</div>\n    <div class="wpd-menu-dropdown">\n        <ul>\n            <li id="wpd-analyzemenu-distance" onclick="wpd.measurement.start(wpd.measurementModes.distance);">Distances</li>\n            <li id="wpd-analyzemenu-angles" onclick="wpd.measurement.start(wpd.measurementModes.angle);">Angles</li>\n            <!-- <li id="wpd-analyzemenu-open-path" onclick="wpd.measurement.start(wpd.measurementModes.openPath);">Path Length</li> -->\n            <!-- <li id="wpd-analyzemenu-closed-path" onclick="wpd.measurement.start(wpd.measurementModes.closedPath);">Area &amp; Circumference</li> -->\n        </ul>\n    </div>\n</div>\n<div class="wpd-menu">\n    <div class="wpd-menu-header">Help</div>\n    <div class="wpd-menu-dropdown">\n        <ul>\n            <li id="wpd-helpmenu-about" onclick="wpd.popup.show(\'helpWindow\');">About WebPlotDigitizer</li>\n            <li id="wpd-helpmenu-tutorial"><a href="http://arohatgi.info/WebPlotDigitizer/tutorial.html" target="_blank">Tutorials</a></li>\n            <li id="wpd-helpmenu-manual"><a href="http://arohatgi.info/WebPlotDigitizer/userManual.pdf" target="_blank">User Manual</a></li>\n            <li id="wpd-helpmenu-github"><a href="https://github.com/ankitrohatgi/WebPlotDigitizer" target="_blank">GitHub Page</a></li>\n            <li id="wpd-helpmenu-issues"><a href="https://github.com/ankitrohatgi/WebPlotDigitizer/issues" target="_blank">Report Issues</a></li>\n            <li id="wpd-helpmenu-donate"><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=CVFJGV5SNEV9J&lc=US&item_name=WebPlotDigitizer&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted" target="_blank">Donate (PayPal)</a></li>\n        </ul>\n    </div>\n</div>\n</div>\n\n           \n            <div id="topToolbarContainer">\n                <!-- controls that show on top -->\n                <div style="position:relative;"> \n                    <!-- Extra toolbars go here -->\n                    <!-- Erase Toolbar -->\n<div id="eraseToolbar" class="toolbar" style="width:350px;">\n<p><input type="button" id="clearMaskBtn" value="Erase All" style="width:80px;" onclick="wpd.dataMask.clearMask();"/>\nStroke Width <input type="range" id="eraseThickness" min="1" max="150" value="20" style="width:100px;"></p>\n</div>\n\n<!-- Paint Toolbar -->\n<div id="paintToolbar" class="toolbar" style="width:350px;">\n<p>Stroke Width <input type="range" id="paintThickness" min="1" max="150" value="20" style="width:100px;"></p>\n</div>\n\n<!-- Adjust Points Toolbar -->\n<div id="adjustDataPointsToolbar" class="toolbar" style="width:350px;">\n<p><input type="button" value="View Keyboard Shortcuts" onclick="wpd.popup.show(\'adjust-data-points-keyboard-shortcuts-window\');"/></p>\n</div> \n                </div>\n            </div>\n\n             <div style="display:inline-block; position: absolute; top: 5px; right: 290px;" >\n                <button type="button" title="Zoom in" onclick="wpd.graphicsWidget.zoomIn();" style="border:none; min-width:20px;">+</button>\n                <button type="button" title="Zoom out" onclick="wpd.graphicsWidget.zoomOut();" style="border:none; min-width:20px;">-</button>\n                <button type="button" title="View actual size" onclick="wpd.graphicsWidget.zoom100perc();" style="border:none;min-width:20px;">100%</button>\n                <button type="button" title="Fit to graphics area" onclick="wpd.graphicsWidget.zoomFit();" style="border:none;min-width:20px;">Fit</button>\n                <button title="Toggle extended crosshair" onclick="wpd.graphicsWidget.toggleExtendedCrosshairBtn();" style="border:none;min-width:20px;background-image: url(\'/viewer/WPD/images/crosshair.png\'); background-repeat: no-repeat; background-position: center;" id="extended-crosshair-btn">&nbsp;</button>\n            </div>\n\n        </div>\n\n        <div id="graphicsContainer">\n            <!-- the main canvas goes here -->\n            <div id="canvasDiv" style="position:relative;">\n                <canvas id="mainCanvas" class="canvasLayers" style="z-index:1;"></canvas>\n                <canvas id="dataCanvas" class="canvasLayers" style="z-index:2;"></canvas>\n                <canvas id="drawCanvas" class="canvasLayers" style="z-index:3;"></canvas>\n                <canvas id="hoverCanvas" class="canvasLayers" style="z-index:4;"></canvas>\n                <canvas id="topCanvas" class="canvasLayers" style="z-index:5;"></canvas>\n            </div>\n        </div>\n    </div>\n\n    <!-- sidebar + zoom -->\n    <div id="sidebarContainer">\n        <!-- zoom window goes here -->\n        <div style="position:relative;" id="zoomDiv">\n            <canvas id="zoomCanvas" class="zoomLayers" width=250 height=250 style="position:relative; top: 0px; left: 0px; z-index:1;"></canvas>\n            <canvas id="zoomCrossHair" class="zoomLayers" width=250 height=250 style="position:absolute; top: 0px; left: 0px; z-index:2; background:transparent;"></canvas>\n            <div id="cursorPosition" style="position:relative;">\n            [<span id="mousePosition"></span>]\n            </div>\n        </div>\n\n        <div id="zoom-settings-container"><input type="button" id="zoom-settings-button" title="Change zoom settings" value="⚙" onclick="wpd.zoomView.showSettingsWindow();"/></div>\n        \n        <div style="position:relative;" id="sidebarControlsContainer">\n            <!-- side bars go here -->\n            <!-- axes calibration -->\n<div id="axes-calibration-sidebar" class="sidebar">\n<p class="sidebar-title">Axes Calibration</p>\n<p>Click points to select and use cursor keys to adjust positions. Use Shift+Arrow for faster movement. Click complete when finished.</p>\n<p align="center"><input type="button" value="Complete!" style="width: 120px;" onclick="wpd.alignAxes.getCornerValues();"/></p>\n</div>\n\n<!-- manual mode -->\n<div id="acquireDataSidebar" class="sidebar">\n<p class="sidebar-title">Manual Mode <input type="button" value="Automatic Mode" style="width: 125px;" onclick="wpd.autoExtraction.start();"></p>\n<hr/>\n<p>Dataset <select id="manual-sidebar-dataset-list" onchange="wpd.acquireData.changeDataset(this);" style="width:160px;"></select></p>\n<hr/>\n<p>\n    <input type="button" value="Add Point (A)" onclick="wpd.acquireData.manualSelection();" style="width:115px;" id="manual-select-button">\n    <input type="button" value="Adjust Point (S)" onClick="wpd.acquireData.adjustPoints();" style="width: 115px;" id="manual-adjust-button">\n</p>\n<div class="vertical-spacer"></div>\n<p>\n    <input type="button" value="Delete Point (D)" onclick="wpd.acquireData.deletePoint();" style="width: 115px;" id="delete-point-button">\n    <input id="clearAllBtn" type="button" value="Clear Points" onCLick="wpd.acquireData.clearAll();" style="width: 115px;">\n</p>\n<div class="vertical-spacer"></div>\n<p>\n    <input type="button" value="Edit Labels (E)" id="edit-data-labels" onclick="wpd.acquireData.editLabels();" style="display: none; width: 115px;">\n    <input type="button" value="View Data" id="saveBtn" onclick="wpd.dataTable.showTable();" style="width:115px;">\n</p>\n<div class="vertical-spacer"></div>\n<p>Data Points: <span class="data-point-counter">0</span></p>\n</div>\n\n<!-- edit image -->\n<div id="editImageToolbar" class="sidebar">\n<p align="center"><b>Edit Image</b></p>\n<p align="center"><input type="button" value="H. Flip" style="width: 75px;" onclick="hflip();"><input type="button" value="V. Flip" style="width: 75px;" onClick="vflip();"></p>\n<p align="center"><input type="button" value="Crop" style="width: 150px;" onclick="cropPlot();"></p>\n<p align="center"><input type="button" value="Restore" style="width: 150px;" onclick="restoreOriginalImage();"></p>\n<p align="center"><input type="button" value="Save .PNG" style="width: 150px;" onclick="savePNG();"></p>\n</div>\n\n<!-- automatic mode -->\n<div id="auto-extraction-sidebar" class="sidebar">\n<p class="sidebar-title">Automatic Mode <input type="button" value="Manual Mode" style="width:110px;" onclick="wpd.acquireData.load();"/></p>\n<hr/>\n<p>Dataset <select id="automatic-sidebar-dataset-list" onchange="wpd.acquireData.changeDataset(this);" style="width:160px;"></select></p>\n<hr/>\n<p>Mask <input type="button" value="Box" style="width:50px;" onclick="wpd.dataMask.markBox();" id="box-mask"><input type="button" value="Pen" style="width:45px;" onClick="wpd.dataMask.markPen();" id="pen-mask"><input type="button" value="Erase" style="width:50px;" onClick="wpd.dataMask.eraseMarks();" id="erase-mask"><input type="button" value="View" style="width:40px;" onclick="wpd.dataMask.viewMask();" id="view-mask"/></p>\n<hr/>\n<p>Color <select id="color-detection-mode-select" onchange="wpd.colorPicker.changeDetectionMode();"><option value="fg">Foreground Color</option><option value="bg">Background Color</option></select><input type="button" id="color-button" value=" " onclick="wpd.colorPicker.startPicker();" style="width: 25px;" title="Click to change color"/></p>\n<p>Distance <td><td><input type="text" size="3" id="color-distance-value" onchange="wpd.colorPicker.changeColorDistance();"/>\n<input type="button" value="Filter Colors" onclick="wpd.colorPicker.testColorDetection();" style="width: 90px;"></p>\n<hr/>\n<p>Algorithm\n<select id="auto-extract-algo-name" onchange="wpd.algoManager.applyAlgoSelection();"></select>\n</p>\n<div id="algo-parameter-container" style="margin-left: 10px; margin-top: 5px;"></div>\n<div class="vertical-spacer"></div>\n<p style="margin-top: 5px;">\n    <input type="button" value="Run" style="width:40px;" onclick="wpd.algoManager.run();"/>\n    <input type="button" value="Clear Points" style="width:95px;" onclick="wpd.acquireData.clearAll();"/>\n    <input type="button" value="View Data" style="width:80px;" onclick="wpd.dataTable.showTable();"/>\n</p>\n<hr/>\n<p>Data Points: <span class="data-point-counter">0</span></p>\n</div>\n\n<!-- distance measurement -->\n<div id="measure-distances-sidebar" class="sidebar">\n<p class="sidebar-title">Measure Distances</p>\n<p>\n    <input type="button" value="Add Pair (A)" style="width: 115px;" id="add-pair-button" onclick="wpd.measurement.addItem();"/>\n    <input type="button" value="Delete Pair (D)" style="width: 115px;" id="delete-pair-button" onclick="wpd.measurement.deleteItem();"/> \n</p>\n<div class="vertical-spacer"></div>\n<p>\n    <input type="button" value="Clear All" style="width: 115px;" id="clear-all-pairs-button" onclick="wpd.measurement.clearAll();"/>\n    <input type="button" value="View Data" style="width: 115px;" id="view-measurement-data-button" onclick="wpd.dataTable.showDistanceData();"/>\n</p>\n</div>\n\n<!-- angle measurement -->\n<div id="measure-angles-sidebar" class="sidebar">\n<p class="sidebar-title">Measure Angles</p>\n<p>\n    <input type="button" value="Add Angle (A)" style="width: 115px;" id="add-angle-button" onclick="wpd.measurement.addItem();"/>\n    <input type="button" value="Delete Angle (D)" style="width: 115px;" id="delete-angle-button" onclick="wpd.measurement.deleteItem();"/>\n</p>\n<div class="vertical-spacer"></div>\n<p>\n    <input type="button" value="Clear All" style="width: 115px;" onclick="wpd.measurement.clearAll();"/>\n    <input type="button" value="View Data" style="width: 115px;" onclick="wpd.dataTable.showAngleData();"/>\n</p>\n</div>\n\n<!-- open path measurement -->\n<div id="measure-open-path-sidebar" class="sidebar">\n<p class="sidebar-title">Measure Path</p>\n<p>\n    <input type="button" value="Add Path (A)" style="width: 115px;" id="add-open-path-button" onclick="wpd.measurement.addItem();"/>\n    <input type="button" value="Delete Path (D)" style="width: 115px;" id="delete-open-path-button" onclick="wpd.measurement.deleteItem();"/>\n</p>\n<div class="vertical-spacer"></div>\n<p>\n    <input type="button" value="Clear All" style="width: 115px;" onclick="wpd.measurement.clearAll();"/>\n    <input type="button" value="View Data" style="width: 115px;" onclick="wpd.dataTable.showOpenPathData();"/>\n</p>\n</div>\n\n<!-- closed path measurement -->\n<div id="measure-closed-path-sidebar" class="sidebar">\n<p class="sidebar-title">Measure Closed Path</p>\n<p>\n    <input type="button" value="Add Path (A)" style="width: 115px;" id="add-closed-path-button" onclick="wpd.measurement.addItem();"/>\n    <input type="button" value="Delete Path (D)" style="width: 115px;" id="delete-closed-path-button" onclick="wpd.measurement.deleteItem();"/>\n</p>\n<div class="vertical-spacer"></div>\n<p>\n    <input type="button" value="Clear All" style="width: 115px;" onclick="wpd.measurement.clearAll();"/>\n    <input type="button" value="View Data" style="width: 115px;" onclick="wpd.dataTable.showClosedPathData();"/>\n</p>\n</div>\n\n<!-- grid detection -->\n<div id="grid-detection-sidebar" class="sidebar">\n<p class="sidebar-title">Detect Grid</p>\n<p>\n    Mask\n    <input type="button" value="Box" style="width: 60px;" id="grid-mask-box" onclick="wpd.gridDetection.markBox();"/>\n    <input type="button" value="Clear" style="width: 60px;" id="grid-mask-clear" onclick="wpd.gridDetection.clearMask();"/>\n    <input type="button" value="View"  style="width: 60px;" id="grid-mask-view" onclick="wpd.gridDetection.viewMask();"/>\n</p>\n<hr/>\n<p>\n    Color\n    <input type="button" value="Pick" style="width: 60px;" id="grid-color-picker-button" onclick="wpd.gridDetection.startColorPicker();"/>\n    <input type="text" value="10" style="width: 60px;" id="grid-color-distance" onchange="wpd.gridDetection.changeColorDistance();"/>\n    <input type="button" value="Test" style="width: 60px;" id="grid-color-test" onclick="wpd.gridDetection.testColor();"/>\n</p>\n<p align="center"><input type="checkbox" id="grid-background-mode" checked onchange="wpd.gridDetection.changeBackgroundMode();"/> Background Mode</p>\n<hr/>\n<table>\n    <tr><td align="right">Horizontal </td><td><input type="checkbox" id="grid-horiz-enable" checked/></td></tr>\n    <tr><td align="right">X% </td><td>&nbsp; <input type="text" value="80" id="grid-horiz-perc" style="width: 40px;"/></td></tr>\n    <tr><td align="right">Vertical </td><td><input type="checkbox" id="grid-vert-enable" checked/></td></tr>\n    <tr><td align="right">Y% </td><td>&nbsp; <input type="text" value="80" id="grid-vert-perc" style="width: 40px;"/></td></tr>\n</table>\n<hr/>\n<p align="center">\n    <input type="button" value="Detect" style="width: 100px;" onclick="wpd.gridDetection.run();"/>\n    &nbsp;\n    <input type="button" value="Reset" style="width: 100px;" onclick="wpd.gridDetection.reset();"/>\n</p>\n</div>\n        </div>\n\n    </div>\n</div>\n\n<!-- popup windows go here -->\n    <!-- Background curtain for popups -->\n	<div id="shadow" style="width:100%; height:100%; background-color: rgba(0,0,0,0.3); position:absolute; top:0px; left:0px; z-index:50; visibility:hidden;">\n	</div>\n\n    <!-- Load Image -->\n	<div id="loadNewImage" class="popup" style="width: 400px;">\n	<div class="popupheading">Load Image File</div>\n	<p>&nbsp;</p>\n	<p align="center"><input type="file" id="fileLoadBox"/></p>\n	<p>&nbsp;</p>\n	<p align="center">\n        <input type="button" value="Load" onclick="wpd.graphicsWidget.load();"/>\n        <input type="button" value="Cancel" onclick="wpd.popup.close(\'loadNewImage\');"/>\n    </p>\n	</div>\n\n    <!-- Zoom Settings -->\n    <div id="zoom-settings-popup" class="popup" style="width: 300px;">\n    <div class="popupheading">Magnified View Settings</div>\n    <p>&nbsp;</p>\n    <center>\n    <table>\n    <tr><td><p>Magnification: </p></td><td><p><input type="text" id="zoom-magnification-value" size="3"/> Times</p></td></tr>\n    <tr>\n        <td><p>Crosshair Color: </p></td>\n        <td><p>\n        <select id="zoom-crosshair-color-value">\n            <option value="black">Black</option>\n            <option value="red">Red</option>\n            <option value="yellow">Yellow</option>\n        </select>\n        </td>\n    </tr>\n    </table>\n    </center>\n    <p>&nbsp;</p>\n    <p align="center"><input type="button" value="Apply" onclick="wpd.zoomView.applySettings();"/> <input type="button" value="Cancel" onclick="wpd.popup.close(\'zoom-settings-popup\');"/></p>\n    </div>\n\n    <!-- Run Script -->\n    <div id="runScriptPopup" class="popup" style="width: 500px;">\n    <div class="popupheading">Run Script</div>\n    <p>&nbsp;</p>\n    <p align="center">Load a Javascript file to further extend the capabilities of WebPlotDigitizer. For examples, visit the <a href="http://github.com/ankitrohatgi/WebPlotDigitizer-Examples" target="_blank">WebPlotDigitizer-Examples repository</a>.</p>\n    <p>&nbsp;</p>\n    <p align="center"><input type="file" id="runScriptFileInput"/></p>\n    <p>&nbsp;</p>\n    <p align="center"><input type="button" value="Run" onclick="wpd.scriptInjector.load();"/> <input type="button" value="Cancel" onclick="wpd.scriptInjector.cancel();"/></p>\n    </div>\n\n    <!-- Webcam Capture -->\n    <div id="webcamCapture" class="popup" style="width: 650px;">\n    <div class="popupheading">Webcam Capture</div>\n    <p>&nbsp;</p>\n    <p align="center"><video id="webcamVideo" autoplay="true" height="350"></video></p>\n    <p align="center"><input type="button" value="Capture" onclick="wpd.webcamCapture.capture();"/> <input type="button" value="Cancel" onclick="wpd.webcamCapture.cancel();"/></p>\n    </div>\n\n    <!-- Generic Message Popup -->\n    <div id="messagePopup" class="popup" style="width: 400px;">\n    <div id="message-popup-heading" class="popupheading"></div>\n    <p>&nbsp;</p>\n    <p align="center" id="message-popup-text"></p>\n    <p>&nbsp;</p>\n    <p align="center"><input type="button" value="OK" onclick="wpd.messagePopup.close()"/></p>\n    </div>\n\n    <!-- Generic Ok/Cancel Popup -->\n    <div id="okCancelPopup" class="popup" style="width: 400px;">\n    <div id="ok-cancel-popup-heading" class="popupheading"></div>\n    <p>&nbsp;</p>\n    <p align="center" id="ok-cancel-popup-text"></p>\n    <p>&nbsp;</p>\n    <p align="center"><input type="button" value="OK" onclick="wpd.okCancelPopup.ok()"/> <input type="button" value="Cancel" onclick="wpd.okCancelPopup.cancel()"/></p>\n    </div>\n\n    <!-- Choose axes type -->\n	<div id="axesList" class="popup" style="width: 400px;">\n	<div class="popupheading">Choose Plot Type</div>\n	<p>&nbsp;</p>\n	<center>\n	<table>\n	<tr><td align="left"><label><input type="radio" name="plotlisting" id="r_xy" checked> 2D (X-Y) Plot</label></td></tr>\n	<tr><td align="left"><label><input type="radio" name="plotlisting" id="r_bar"> 2D Bar Plot</label></td></tr>\n	<tr><td align="left"><label><input type="radio" name="plotlisting" id="r_polar"> Polar Diagram</label></td></tr>\n	<tr><td align="left"><label><input type="radio" name="plotlisting" id="r_ternary"> Ternary Diagram</label></td></tr>\n	<tr><td align="left"><label><input type="radio" name="plotlisting" id="r_map"> Map With Scale Bar</label></td></tr>\n	<tr><td align="left"><label><input type="radio" name="plotlisting" id="r_image"> Image</label></td></tr>\n	</table>\n	</center>\n	<p>&nbsp;</p>\n	<p align="center"><input type="button" value="Align Axes" onclick="wpd.alignAxes.start();">&nbsp;<input type="button" value="Cancel" onClick="wpd.popup.close(\'axesList\');"></p>\n	</div>\n\n    <!-- XY Alignment -->\n	<div id="xyAlignment" class="popup" style="width: 400px;">\n	<div class="popupheading">X and Y Axes Calibration</div>\n	<p>&nbsp;</p>\n	<p align="center">Enter X-values of the two points clicked on X-axis and Y-values of the two points clicked on Y-axes</p>\n	<center>\n	<table padding="10">\n		<tr>\n            <td></td>\n			<td align="center" valign="bottom">Point 1</td>\n			<td align="center" valign="bottom" width="80">Point 2</td>\n			<td align="center" valign="bottom" width="82">Log Scale</td>\n		</tr>\n	    <tr>\n            <td align="center">X-Axis:</td>\n	        <td align="center"><input type="text" size="8" id="xmin" value="0" /></td>\n	        <td align="center"><input type="text" size="8" id="xmax" value="1" /></td>\n	        <td align="center"><input type="checkbox" id="xlog"></td>\n	    </tr>\n	    <tr>\n            <td align="center">Y-Axis:</td>\n	        <td align="center"><input type="text" size="8" id="ymin" value="0" /></td>\n	        <td align="center"><input type="text" size="8" id="ymax" value="1" /></td>\n	        <td align="center"><input type="checkbox" id="ylog" /></td>\n	    </tr>\n	</table>\n	<p align="center" class="footnote">*For dates, use yyyy/mm/dd format (e.g. 2013/10/23 or 2013/10). For exponents, enter values as 1e-3 for 10^-3.</p>\n	<p>&nbsp;</p>\n	<p align="center"><input type="button" id="xybtn" value="OK" onclick="wpd.alignAxes.align();" /></p>\n	</center>\n	</div>\n\n    <!-- Bar Alignment -->\n    <div id="barAlignment" class="popup" style="width: 400px;">\n    <div class="popupheading">Bar Chart Calibration</div>\n    <p align="center">Enter the values at the two points selected on the continuous axes along the bars</p>\n    <center>\n    <table padding="10">\n        <tr>\n            <td align="center" valign="bottom">Point 1</td>\n            <td align="center" valign="bottom" width="80">Point 2</td>\n            <td align="center" valign="Log Scale" width="80">Log Scale</td>\n        </tr>\n        <tr>\n            <td align="center"><input type="text" size="8" id="bar-axes-p1" value="0" /></td>\n            <td align="center"><input type="text" size="8" id="bar-axes-p2" value="1" /></td>\n            <td align="center"><input type="checkbox" id="bar-axes-log-scale"/></td>\n        </tr>\n    </table>\n    </center>\n    <p>&nbsp;</p>\n    <p align="center"><input type="button" value="OK" onclick="wpd.alignAxes.align();"/></p>\n    </div>\n\n    <!-- Map Alignment -->\n	<div id="mapAlignment" class="popup" style="width: 200px;">\n	<div class="popupheading">Scale Size</div>\n	<p>&nbsp;</p>\n	<p align="center"><input type="text" size="6" id="scaleLength" value="1"> <input type="text" size="6" id="scaleUnits" value="Units"/></p>\n	<p>&nbsp;</p>\n	<p align="center"><input type="button" id="xybtn" value="OK" onclick="wpd.alignAxes.align();"></p>\n	</div>\n\n    <!-- Polar Alignment -->\n	<div id="polarAlignment" class="popup" style="width: 400px;">\n    <div class="popupheading">Align Polar Axes</div>\n    <center>\n    <table padding="15">\n        <tr>\n            <td>&nbsp;</td>\n            <td align="center"><b>Point 1</b></td>\n            <td align="center"><b>Point 2</b></td>\n            <td align="center"><b>Log Scale</b></td>\n        </tr>\n        <tr>\n            <td>R: </td>\n            <td align="center"><input type="text" size="6" id="polar-r1" value="1"/></td>\n            <td align="center"><input type="text" size="6" id="polar-r2" value="1"/></td>\n            <td align="center"><input type="checkbox" id="polar-log-scale"/></td>\n        </tr>\n        <tr>\n            <td>Θ: </td>\n            <td align="center"><input type="text" size="6" id="polar-theta1" value="1"/></td>\n            <td align="center"><input type="text" size="6" id="polar-theta2" value="1"/></td>\n            <td align="center">&nbsp;</td>\n        </tr>\n    </table>\n    </center>\n	<p align="center"><label><input type="radio" id="polar-degrees" name="angleUnits" checked> Degrees</label> <label><input type="radio" id="polar-radians" name="angleUnits"> Radians</p></label>\n	<p align="center"><input type="checkbox" id="polar-clockwise"> Clockwise</p>\n    <br/>\n	<p align="center"><input type="button" value="OK" onclick="wpd.alignAxes.align();"></p>\n	</div>\n\n    <!-- Ternary Alignment -->\n	<div id="ternaryAlignment" class="popup">\n	<div class="popupheading">Select Range of Variables</div>\n	<p>&nbsp;</p>\n	<p align="center">Axes Orientation</p>\n	<center>\n	<table>\n	  <tr><td><img src="/viewer/WPD/images/ternarynormal.png" width="200"></td><td><img src="/viewer/WPD/images/ternaryreverse.png" width="200"></td></tr>\n	  <tr><td><p align="center"><input type="radio" name="ternaryOrientation" id="ternarynormal" checked> Normal</p></td><td><p align="center"><input type="radio" name="ternaryOrientation" id="ternaryreverse"> Reverse</p></td></tr>\n	</table>\n	</center>\n	<p align="center">Range of Variables</p>\n	<center>\n	<table><tr><td><p align="center"><input type="radio" id="range0to1" name="ternaryRange" checked> 0 to 1&nbsp;&nbsp;</p></td><td><p align="center">&nbsp;&nbsp;<input type="radio" id="range0to100" name="ternaryRange"> 0 to 100</p></td></tr></table>\n	</center>\n	<p>&nbsp;</p>\n	<p align="center"><input type="button" value="OK" onclick="wpd.alignAxes.align();"></p>\n	</div>\n\n    <!-- View Data -->\n	<div id="csvWindow" class="popup" style="height: 430px;">\n	<div class="popupheading">Acquired Data</div>\n    <table>\n    <tr>\n    <td>\n    <!-- left panel -->\n    <span id="data-table-dataset-control"><p>Dataset: <select id="data-table-dataset-list" onchange="wpd.dataTable.changeDataset();"></select></p></span>\n    <p align="center">Variables: <span id="dataVariables"></span></p>\n	<p align="center"><textarea id="digitizedDataTable" style="width: 460px; height: 250px;" readonly></textarea></p>\n	<p align="center">\n		<input type="button" value="Select All" onclick="wpd.dataTable.selectAll();"/>\n        <!--<input type="button" value="Download .CSV" onclick="wpd.dataTable.generateCSV();"/>\n		<input type="button" value="Graph in Plotly*" onclick="wpd.dataTable.exportToPlotly();"/>-->\n		<input type="button" value="Close" onclick="wpd.popup.close(\'csvWindow\');"/>\n	</p>\n    </td>\n    <td valign="top" style="width:180px;">\n    <!-- data side controls -->\n    <p><b>Sort</b></p>\n    <p class="leftIndent">Sort by: <select id="data-sort-variables" onchange="wpd.dataTable.reSort();"></select></p>\n    <p class="leftIndent">Order:\n		<select id="data-sort-order" onchange="wpd.dataTable.reSort();">\n			<option value="ascending">Ascending</option>\n			<option value="descending">Descending</option>\n		</select>\n	</p>\n    <hr/>\n    <p><b>Format</b></p>\n	<p class="leftIndent">\n		<span id="data-date-formatting-container">\n		Date Formatting:\n        <span id="data-date-formatting"></span>\n		</span>\n	</p>\n    <p class="leftIndent">Number Formatting:</p>\n    <p>Digits: <input type="text" value="5" size="2" id="data-number-format-digits"/>\n        <select id="data-number-format-style">\n            <option value="ignore">Ignore</option>\n            <option value="fixed">Fixed</option>\n            <option value="precision">Precision</option>\n            <option value="exponential">Exponential</option>\n        </select>\n    </p>\n    <p>Column Separator: <input type="text" value=", " size="2" id="data-number-format-separator"/></p>\n	<p align="right"><input type="button" value="Format" onclick="wpd.dataTable.reSort();"/></p>\n    </td>\n    </tr>\n    </table>\n	</div>\n\n    <!-- XY Axes Calibration Instructions -->\n	<div id="xyAxesInfo" class="popup" style="width:400px;">\n	<div class="popupheading">Align X-Y Axes</div>\n	<p>&nbsp;</p>\n	<p align="center"><img src="/viewer/WPD/images/xyaxes.png" /></p>\n	<p align="center">Click four known points on the axes in the <font color="red">order shown in red</font>. Two on the X axis (X1, X2) and two on the Y axis (Y1, Y2).</p>\n	<p>&nbsp;</p>\n	<p align="center"><input type="button" value="Proceed" onclick="wpd.xyCalibration.pickCorners();" /></p>\n	</div>\n\n    <!-- Bar Chart Axes Calibration Intructions -->\n    <div id="barAxesInfo" class="popup" style="width:650px;">\n    <div class="popupheading">Align Bar Chart Axes</div>\n    <p>&nbsp;</p>\n    <p align="center"><img src="/viewer/WPD/images/barchart.png" /></p>\n    <p align="center">Click on two known points (P1, P2) on the continuous axes along the bars</p>\n    <p>&nbsp;</p>\n    <p align="center"><input type="button" value="Proceed" onclick="wpd.barCalibration.pickCorners();" /></p>\n    </div>\n\n    <!-- Map Axes Calibration Instructions -->\n	<div id="mapAxesInfo" class="popup" style="width: 350px;">\n	<div class="popupheading">Align Map To Scale Bar</div>\n	<p>&nbsp;</p>\n	<p align="center"><img src="/viewer/WPD/images/map.png" /></p>\n	<p align="center">Click on the two ends of the scale bar on the map.</p>\n	<p>&nbsp;</p>\n	<p align="center"><input type="button" value="Proceed" onclick="wpd.mapCalibration.pickCorners();"></p>\n	</div>\n\n    <!-- Polar Axes Calibration Instructions -->\n	<div id="polarAxesInfo" class="popup" style="width: 350px;">\n	<div class="popupheading">Align Polar Axes</div>\n	<p>&nbsp;</p>\n	<p align="center"><img src="/viewer/WPD/images/polaraxes.png" /></p>\n	<p align="center">Click on the center, followed by two known points.</p>\n	<p>&nbsp;</p>\n	<p align="center"><input type="button" value="Proceed" onclick="wpd.polarCalibration.pickCorners();"></p>\n	</div>\n\n    <!-- Ternary Axes Calibration Instructions -->\n	<div id="ternaryAxesInfo" class="popup" style="width: 350px;">\n	<div class="popupheading">Align Ternary Axes</div>\n	<p>&nbsp;</p>\n	<p align="center"><img src="/viewer/WPD/images/ternaryaxes.png" /></p>\n	<p align="center">Click on the three corners in the order shown above.</p>\n	<p>&nbsp;</p>\n	<p align="center"><input type="button" value="Proceed" onclick="wpd.ternaryCalibration.pickCorners();"></p>\n	</div>\n\n    <!-- About WPD -->\n	<div id="helpWindow" class="popup" style="width: 600px;">\n	<div class="popupheading">WebPlotDigitizer - Web Based Plot Digitizer</div>\n	<p>&nbsp;</p>\n    <p align="center">Version 3.10</p>\n	<p align="center">This program is distributed under the <a href="https://www.gnu.org/licenses/gpl-3.0-standalone.html" target="_blank">GNU General Public License Version 3</a>.</p>\n	<p align="center">Copyright 2010-2016 Ankit Rohatgi &lt;ankitrohatgi@hotmail.com&gt;</p>\n	<p align="center"><a href="http://arohatgi.info/WebPlotDigitizer" target="website">http://arohatgi.info/WebPlotDigitizer</a></p>\n	<p>&nbsp;</p>\n	<p align="center"><input type="button" value="Close" onclick="wpd.popup.close(\'helpWindow\');"></p>\n	</div>\n\n    <!-- Color Selection -->\n    <div id="color-selection-widget" class="popup" style="width:400px;">\n	<div id="color-selection-title" class="popupheading">Specify Color</div>\n	<p align="center">&nbsp;</p>\n    <div style="text-align:center;"><div id="color-selection-selected-color-box" class="largeColorBox"></div></div>\n	<p align="center">&nbsp;</p>\n	<p align="center">R:<input type="text" value="255" id="color-selection-red" size="3">&nbsp;\n	G:<input type="text" id="color-selection-green" value="255" size="3">&nbsp; B:<input type="text" id="color-selection-blue" value="255" size="3">\n	 <input type="button" value="Color Picker" onclick="wpd.colorSelectionWidget.pickColor();"></p>\n	<p align="center">&nbsp;</p>\n    <p>Dominant Colors: <div id="color-selection-options" style="text-align:center;"></div></p>\n    <p>&nbsp;</p>\n	<p align="center"><input type="button" value="Done" onclick="wpd.colorSelectionWidget.setColor();"></p>\n	</div>\n\n\n    <!-- Manage Data Series -->\n    <div id="manage-data-series-window" class="popup" style="width:425px;">\n    <div class="popupheading">Manage Datasets</div>\n    <p>&nbsp;</p>\n    <center>\n    <table name="data_series_info">\n    <!--<tr>\n        <td align="right">Selected Dataset: </td><td> &nbsp;<select id="manage-data-series-list" style="width:200px;" onchange="wpd.dataSeriesManagement.changeSelectedSeries();"><option>Default Dataset</option></select></td>\n    </tr>\n    <tr><td>&nbsp;</td><td>&nbsp;</td></tr>-->\n    <tr>\n        <td align="right">Dataset Name: </td><td> &nbsp;\n        <input type="text" id="manage-data-series-name" onblur="wpd.dataSeriesManagement.editSeriesName();" onchange="wpd.dataSeriesManagement.editSeriesName();"/>\n        <input type="button" value="Change" onclick="wpd.dataSeriesManagement.editSeriesName();"/></td>\n    </tr>\n    <tr>\n        <td align="right">Data Points: </td><td> &nbsp;<span id="manage-data-series-point-count">0</span></td>\n    </tr>\n    <tr><td>&nbsp;</td><td>&nbsp;</td></tr>\n    <tr><td colspan="2"><table name="point_field_table"><tbody></tbody></table></td></tr>\n    </table>\n    <input type="button" value="Add Field" onclick="wpd.dataSeriesManagement.addField(null);"/>\n    </center>\n    <p>&nbsp;</p>\n    <p align="center">\n        <input type="button" value="View Data" onclick="wpd.dataSeriesManagement.viewData();"/>\n        <input type="button" value="Close" onclick="wpd.dataSeriesManagement.validateAndClose();"/>\n    </p>\n    </div>\n\n\n    <!-- Get Extra Variable Data -->\n    <div id="extra-variable-prompt" class="popup" style="width:425px;">\n        <div class="popupheading">Extra Variables</div>\n        <p>&nbsp;</p>\n        <center>\n            <input type="hidden" id="pointData"/>\n            <table name="extra_var_table"><tbody></tbody></table></td>\n        </center>\n        <p>&nbsp;</p>\n        <p align="center">\n            <input type="button" value="Close" onclick="wpd.dataSeriesManagement.activeDataSeries.validateExtraAndClose();"/>\n        </p>\n    </div>\n\n\n    <!-- Axes Transformation Equations -->\n    <div id="axes-transformation-equations-window" class="popup" style="width:600px;">\n    <div class="popupheading">Transformation Equations</div>\n    <p>The following relationships are being used to convert image pixels to data:</p>\n    <div id="axes-transformation-equation-list"></div>\n    <p>&nbsp;</p>\n    <p align="center"><input type="button" value="Close" onclick="wpd.popup.close(\'axes-transformation-equations-window\');"/></p>\n    </div>\n\n    <!-- Export JSON -->\n    <div id="export-json-window" class="popup" style="width:500px;">\n    <div class="popupheading">Export JSON</div>\n    <p>This JSON file contains the axes calibration and the digitized data points from this plot. This file can be imported later to resume work or reuse the calibration in another plot.</p>\n    <p>&nbsp;</p>\n    <p align="center">\n        <input type="button" value="Download" onclick="wpd.saveResume.download();"/>\n        <input type="button" value="Close" onclick="wpd.popup.close(\'export-json-window\');"/>\n    </p>\n    </div>\n\n    <!-- Import JSON -->\n    <div id="import-json-window" class="popup" style="width:500px;">\n    <div class="popupheading">Import JSON</div>\n    <p>Specify a previously exported JSON file to load here. Note that this will clear any unsaved data points in the current plot.</p>\n    <p>&nbsp;</p>\n    <p align="center">JSON File: <input type="file" id="import-json-file"/></p>\n    <p>&nbsp;</p>\n    <p align="center">\n        <input type="button" value="Import" onclick="wpd.saveResume.read();"/>\n        <input type="button" value="Cancel" onclick="wpd.popup.close(\'import-json-window\');"/>\n    </p>\n    </div>\n\n    <!-- Adjust Data Points Keyboard Shortcuts -->\n    <div id="adjust-data-points-keyboard-shortcuts-window" class="popup" style="width:400px;">\n    <div class="popupheading">Keyboard Shortcuts</div>\n    <p>Click to select a data point. The following keys can then be used to the adjust the position:</p>\n    <center>\n    <table cellspacing="5" border="0">\n    <tr><td align="right">Cursor (Arrows) -</td><td>Move up/down/right/left</td></tr>\n    <tr><td align="right">Shift + Cursor -</td><td>Faster rate of movement</td></tr>\n    <tr><td align="right">Q -</td><td>Select next point</td></tr>\n    <tr><td align="right">W -</td><td>Select previous point</td></tr>\n    <tr><td align="right">Del/Backspace -</td><td>Delete point</td></tr>\n    <tr><td align="right">E -</td><td>Edit label (Bar Chart)</td></tr>\n    </table>\n    </center>\n    <p>&nbsp;</p>\n    <p align="center"><input type="button" value="Close" onclick="wpd.popup.close(\'adjust-data-points-keyboard-shortcuts-window\');"/></p>\n    </div>\n\n    <!-- Data point label editor -->\n    <div id="data-point-label-editor" class="popup" style="width:280px;">\n    <div class="popupheading">Edit Label</div>\n    <p>&nbsp;</p>\n    <p align="center">Label: <input type="text" value="Data Point" id="data-point-label-field" onkeydown="wpd.dataPointLabelEditor.keydown(event);"/></p>\n    <p>&nbsp;</p>\n    <p align="center">\n        <input type="button" value="OK" onclick="wpd.dataPointLabelEditor.ok();"/>\n        <input type="button" value="Cancel" onclick="wpd.dataPointLabelEditor.cancel();"/>\n    </p>\n    </div>\n\n    <!-- Perspective Transform Instructions -->\n    <div id="perspective-info" class="popup" style="width:500px;">\n    <div class="popupheading">Perspective Transformation</div>\n    <p align="center"><img src="/viewer/WPD/images/perspective.png" width="350"></p>\n    <br/>\n    <p align="center">Click on four corners of the region to be transformed as shown.</p>\n    <br/>\n    <p align="center">\n        <input type="button" value="OK" onclick="wpd.perspective.pickCorners();"/>\n        <input type="button" value="Cancel" onclick="wpd.popup.close(\'perspective-info\');"/>\n    </p>\n    </div>\n\n    <!-- Edit or Reset Calibration Dialog -->\n    <div id="edit-or-reset-calibration-popup" class="popup" style="width:500px;">\n    <div class="popupheading">Edit Existing Calibration?</div>\n    <br/>\n    <p align="center">Do you wish to tweak existing axes calibration or select a new axes type?</p>\n    <br/>\n    <p align="center">\n        <input type="button" value="Edit Calibration" onclick="wpd.alignAxes.reloadCalibrationForEditing();"/>\n\n        <input type="button" value="Change Axes Type" onclick="wpd.popup.close(\'edit-or-reset-calibration-popup\');wpd.popup.show(\'axesList\');"/>\n\n        <input type="button" value="Cancel" onclick="wpd.popup.close(\'edit-or-reset-calibration-popup\');"/>\n    </p>\n    </div>\n\n<!-- strings for translation -->\n<div class="i18n-string" id="i18n-string-wpd">WebPlotDigitizer</div>\n<div class="i18n-string" id="i18n-string-unstable-version-warning">Unstable version warning!</div>\n<div class="i18n-string" id="i18n-string-unstable-version-warning-text">You are using a beta version of WebPlotDigitizer. There may be some issues with the software that are expected.</div>\n<div class="i18n-string" id="i18n-string-import-json">Import JSON</div>\n<div class="i18n-string" id="i18n-string-json-data-loaded">JSON data has been loaded!</div>\n<div class="i18n-string" id="i18n-string-calibration-invalid-inputs">Invalid Inputs</div>\n<div class="i18n-string" id="i18n-string-calibration-enter-valid">Please enter valid values for calibration.</div>\n<div class="i18n-string" id="i18n-string-acquire-data">Acquire Data</div>\n<div class="i18n-string" id="i18n-string-acquire-data-calibration">Please calibrate the axes before acquiring data.</div>\n<div class="i18n-string" id="i18n-string-clear-data-points">Clear data points?</div>\n<div class="i18n-string" id="i18n-string-clear-data-points-text">This will delete all data points from this dataset</div>\n<div class="i18n-string" id="i18n-string-webcam-capture">Webcam Capture</div>\n<div class="i18n-string" id="i18n-string-webcam-capture-text">Your browser does not support webcam capture using HTML5 APIs. A recent version of Google Chrome is recommended.</div>\n<div class="i18n-string" id="i18n-string-transformation-eqns">Transformation Equations</div>\n<div class="i18n-string" id="i18n-string-transformation-eqns-text">Transformation equations are available only after axes have been calibrated.</div>\n<div class="i18n-string" id="i18n-string-unsupported">Unsupported Feature!</div>\n<div class="i18n-string" id="i18n-string-unsupported-text">This feature has not been implemented in the current version. This may be available in a future release.</div>\n<div class="i18n-string" id="i18n-string-processing">Processing</div>\n<div class="i18n-string" id="i18n-string-invalid-file">ERROR: Invalid File!</div>\n<div class="i18n-string" id="i18n-string-invalid-file-text">Please load a valid image file. Common image formats such as JPG, PNG, BMP, GIF etc. should work. PDF or Word documents are not accepted.</div>\n<div class="i18n-string" id="i18n-string-raw">Raw</div>\n<div class="i18n-string" id="i18n-string-nearest-neighbor">Nearest Neighbor</div>\n<div class="i18n-string" id="i18n-string-manage-datasets">Manage Datasets</div>\n<div class="i18n-string" id="i18n-string-manage-datasets-text">Please calibrate the axes before managing datasets.</div>\n<div class="i18n-string" id="i18n-string-can-not-delete-dataset">Can Not Delete!</div>\n<div class="i18n-string" id="i18n-string-can-not-delete-dataset-text">You can not delete this dataset as at least one dataset is required.</div>\n<div class="i18n-string" id="i18n-string-delete-dataset">Delete Dataset</div>\n<div class="i18n-string" id="i18n-string-delete-dataset-text">You can not delete this dataset as at least one dataset is required.</div>\n<div class="i18n-string" id="i18n-string-averaging-window">Averaging Window</div>\n<div class="i18n-string" id="i18n-string-x-step-with-interpolation">X Step w/ Interpolation</div>\n<div class="i18n-string" id="i18n-string-x-step">X Step</div>\n<div class="i18n-string" id="i18n-string-blob-detector">Blob Detector</div>\n<div class="i18n-string" id="i18n-string-bar-extraction">Bar Extraction</div>\n<div class="i18n-string" id="i18n-string-histogram">Histogram</div>\n<div class="i18n-string" id="i18n-string-specify-foreground-color">Specify Plot (Foreground) Color</div>\n<div class="i18n-string" id="i18n-string-specify-background-color">Specify Background Color</div>\n<div class="i18n-string" id="i18n-string-existing-data">Data Already Exists</div>\n<div class="i18n-string" id="i18n-string-existing-data-text">You have existing points which don\'t contain your new variable. For consistent data, clear the existing points. Would you like to clear your existing points now?</div>\n\n\n\n\n</body>\n</html>');
 })();

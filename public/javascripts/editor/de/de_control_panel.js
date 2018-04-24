@@ -7,6 +7,7 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
   initialize: function(options) {
       //Listen for annotation selects and adjust UI accordingly
       this.listenTo(dc.app.editor.annotationEditor, 'annotationSelected', this.handleAnnotationSelect);
+      this.listenTo(dc.app.editor.annotationEditor, 'graphSelected', this.handleGraphSelect);
       this.listenTo(dc.app.editor.annotationEditor, 'annotationCancelled', this.handleAnnotationCancel);
 
       _.bindAll(this, 'handleMarkCompleteError')
@@ -46,41 +47,18 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
   },
 
 
-  //Save: save all valid data point changes if no errors
+  //Save: clear all unfinished business before reloading the control panel view
   save: function(success) {
     var _deView = this;
 
     //Clear error class from all inputs
     $('input').removeClass('error');
-    var _hasErrors = false;
-
-    //Check for duplicate annotation titles.  If found, throw error and exit
-    var titleList = [];
-    for(var i=0; i < this.pointViewList.length; i++){
-        if( $.inArray(this.pointViewList[i].model.get('title'), titleList) > -1 ){
-            dc.ui.Dialog.alert(_.t('duplicate_titles', this.pointViewList[i].model.get('title')));
-            return false;
-        }else{
-            titleList.push(this.pointViewList[i].model.get('title'));
-        }
-    }
 
     //Remove any blank points
     this.model.annotations.remove(this.model.annotations.where({title: (null || undefined), content: (null || undefined)}));
 
-    //If there are non-blank annotations, attempt to sync them with DB.
-    if( this.model.annotations.length > 0 ) {
-      //Hide annotations/check for unfinished annotations in DV; if successful, save
-      dc.app.editor.annotationEditor.hideActiveAnnotations(function(){
-        _deView.model.annotations.pushAll({success: function(){
-          _deView.syncDV(success)
-        }});
-      });
-    }
-    else {
-        //If not, just double check for unfinished annotations in DV, then pass along to success function
-      dc.app.editor.annotationEditor.hideActiveAnnotations(function(){ success.call(); });
-    }
+    //Double check for unfinished annotations in DV, then pass along to success function
+    dc.app.editor.annotationEditor.hideActiveHighlights(function(){ success.call(); });
   },
 
 
@@ -130,7 +108,7 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
               }
           } else {
               //If the group selected is this group, find and highlight point; otherwise save and reload proper group
-              if (anno.groups[0].group_id == _deView.model.id) {
+              if (anno.group_id == _deView.model.id) {
                   _view = _.find(this.pointViewList, function (view) {
                       return view.model.id == anno.id;
                   });
@@ -139,18 +117,19 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
                   }
               } else {
                   this.save(function () {
-                      _deView.reloadPoints(anno.groups[0].group_id, anno.id);
+                      _deView.reloadPoints(anno.group_id, anno.id);
                   });
               }
           }
-      }else if( anno.graph_json ){
-          //If there is graph JSON, this is a graph.  Reload to graph's base group
-          _deView.reloadPoints(anno.groups[0].group_id);
-      }
-      else{
-          _view = _.find(this.pointViewList, function(view){ return view.model.get('location') == anno.location; });
+      }else{
+          _view = _.find(this.pointViewList, function(view){ return !view.model.get('id'); });
           _view.highlight(anno);
       }
+  },
+
+
+  handleGraphSelect: function(graph){
+     _deView.reloadPoints(graph.group_id);
   },
 
 

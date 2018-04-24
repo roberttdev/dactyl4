@@ -21,10 +21,8 @@ class Group < ActiveRecord::Base
   belongs_to :group_template, :foreign_key => 'template_id'
   belongs_to :document
 
-  has_many :graph_groups, :dependent => :destroy
-  has_many :graphs, :through => :graph_groups
-  has_many :annotation_groups, :dependent => :destroy
-  has_many :annotations, :through => :annotation_groups
+  has_many :graphs
+  has_many :annotations
 
   has_one :annotation_note
   has_one :supp_de_note, -> { where("(annotation_notes.group_id IS NOT NULL)") },
@@ -97,7 +95,7 @@ class Group < ActiveRecord::Base
   end
 
   def is_graph_group
-    return self.graph_groups.count != 0
+    return self.graphs.count != 0
   end
 
   def approved

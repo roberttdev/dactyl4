@@ -43,15 +43,13 @@ class Document < ActiveRecord::Base
   has_many :sections,             :dependent   => :destroy
   has_many :groups,               :dependent   => :destroy
   has_many :graphs,               :dependent   => :destroy
+  has_many :highlights,           :dependent   => :destroy
   has_many :annotations,          :dependent   => :destroy
   has_many :remote_urls,          :dependent   => :destroy
   has_many :project_memberships,  :dependent   => :destroy
   has_many :projects,             :through     => :project_memberships
   has_many :annotation_notes,     :dependent   => :destroy
   has_many :reviews,              :dependent   => :destroy
-
-  has_many :annotation_groups,    through: :annotations
-  has_many :graph_groups,         through: :graphs
 
   has_many :reviewer_projects,     -> { where( :hidden => true) },
                                      :through     => :project_memberships,
@@ -316,18 +314,22 @@ class Document < ActiveRecord::Base
     sections.order('page_number asc')
   end
 
-  def ordered_annotations(account)
-    whereClause = {"annotation_groups.created_by" => account.id} if in_de?
-    whereClause = {"annotation_groups.created_by" => [de_one_id, de_two_id]} if in_qc?
-    whereClause = {"annotation_groups.created_by" => qc_id} if in_qa?
-    whereClause = "(annotation_groups.group_id IN (SELECT id FROM groups WHERE document_id=#{self.id} AND iteration=#{self.iteration}))" if in_supp_de?
-    whereClause = "(annotation_groups.qa_approved_by IS NOT NULL)" if in_extraction?
+  def ordered_highlights(account)
+    joinClause = "LEFT JOIN annotations ON annotations.highlight_id=highlights.id " \
+        "LEFT JOIN graphs ON graphs.highlight_id=highlights.id"
 
-    self.annotations.joins(:annotation_groups).includes(:annotation_groups).where(whereClause).order('page_number asc, location asc nulls first')
+    whereClause = "(annotations.account_id=#{account.id} OR graphs.account_id=#{account.id})" if in_de?
+    whereClause = "(annotations.account_id IN (#{de_one_id},#{de_two_id}) OR graphs.account_id IN (#{de_one_id},#{de_two_id}))" if in_qc?
+    whereClause = "(annotations.account_id=#{qc_id} OR graphs.account_id=#{qc_id})" if in_qa?
+    whereClause = "((annotations.group_id IN (SELECT id FROM groups WHERE document_id=#{self.id} AND iteration=#{self.iteration}))" \
+                    " OR (graphs.group_id IN (SELECT id FROM groups WHERE document_id=#{self.id} AND iteration=#{self.iteration}))"  if in_supp_de?
+    whereClause = "(annotations.qa_approved_by IS NOT NULL OR graphs.qa_approved_by IS NOT NULL)" if in_extraction?
+
+    self.highlights.joins(joinClause).includes(:annotations,:graphs).where(whereClause).order('page_number asc, location asc nulls first')
   end
 
   def annotations_with_authors(account, annotations=nil)
-    annotations ||= ordered_annotations(account)
+    annotations ||= ordered_highlights(account)
     Annotation.populate_author_info(annotations, account)
     annotations
   end
@@ -1353,11 +1355,8 @@ class Document < ActiveRecord::Base
       if options[:view_only_id]
         doc['annotations'] = self.annotations.where(:id => options[:view_only_id])
       else
-        doc['annotations'] = ordered_annotations(options[:account]).map {|a| a.canonical({:account => options[:account]})}
+        doc['highlights'] = ordered_highlights(options[:account]).map {|h| h.canonical({:account => options[:account]})}
       end
-
-      #Render graphs like annotations
-      doc['annotations'] = doc['annotations'].concat( self.graphs.map {|g| g.anno_view_json() } )
     end
     if self.mentions
       doc['mentions']         = self.mentions

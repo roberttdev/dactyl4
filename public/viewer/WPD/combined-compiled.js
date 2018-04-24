@@ -3558,10 +3558,12 @@ wpd.dataSeriesManagement = (function () {
     var activeDataSeries = null;
     var lockedVars = null;
 
-    function manage() {
-        if (lockedVars == null) { lockedVars = ['X Value','Y Value']; }
+    function populate() {
+        if (lockedVars == null) {
+            lockedVars = ['X Value', 'Y Value'];
+        }
 
-        if(!wpd.appData.isAligned()) {
+        if (!wpd.appData.isAligned()) {
             wpd.messagePopup.show(wpd.gettext('manage-datasets'), wpd.gettext('manage-datasets-text'));
         } else {
             var $nameField = document.getElementById('manage-data-series-name'),
@@ -3576,23 +3578,27 @@ wpd.dataSeriesManagement = (function () {
             this.activeDataSeries = plotData.getActiveDataSeries();
 
             //Populate point fields; pull measurement fields first if blank
-            if( wpd.dataSeriesManagement.pointFieldSelect == null ){
+            if (wpd.dataSeriesManagement.pointFieldSelect == null) {
                 pullMeasurementFields(populatePointFields);
-            }else{
+            } else {
                 populatePointFields();
             }
 
             $nameField.value = this.activeDataSeries.name;
             $pointCount.innerHTML = this.activeDataSeries.getCount();
             /*for(i = 0; i < seriesList.length; i++) {
-                listHtml += '<option value="'+ i + '">' + seriesList[i] + '</option>';
-            }
-            $datasetList.innerHTML = listHtml;
-            $datasetList.selectedIndex = activeSeriesIndex; */
-
-            // TODO: disable delete button if only one series is present
-            wpd.popup.show('manage-data-series-window');
+             listHtml += '<option value="'+ i + '">' + seriesList[i] + '</option>';
+             }
+             $datasetList.innerHTML = listHtml;
+             $datasetList.selectedIndex = activeSeriesIndex; */
         }
+    }
+
+    function manage() {
+        populate();
+
+        // TODO: disable delete button if only one series is present
+        wpd.popup.show('manage-data-series-window');
     }
 
     function addSeries() {
@@ -3690,15 +3696,24 @@ wpd.dataSeriesManagement = (function () {
             addPointField();
             addPointField();
         }else{
-            redrawPointFields();
+            redrawFields();
         }
     }
 
     function addPointField(name) {
-        wpd.dataSeriesManagement.activeDataSeries.variableNames.push(null);
-        wpd.dataSeriesManagement.activeDataSeries.variableIds.push(null);
-        if(wpd.dataSeriesManagement.activeDataSeries.getCount() > 0){ alert('You have existing points which don\'t contain your new variable.  For consistent data, clear the existing points.'); }
-        redrawPointFields();
+        if(wpd.dataSeriesManagement.activeDataSeries.getCount() > 0){
+            if( confirm(wpd.gettext('existing-data-text')) ){
+                wpd.acquireData.confirmedClearAll();
+                wpd.dataSeriesManagement.activeDataSeries.variableNames.push(null);
+                wpd.dataSeriesManagement.activeDataSeries.variableIds.push(null);
+                redrawFields();
+            }
+        }else{
+            wpd.dataSeriesManagement.activeDataSeries.variableNames.push(null);
+            wpd.dataSeriesManagement.activeDataSeries.variableIds.push(null);
+            redrawFields();
+        }
+
     }
 
     function updatePointField(fieldDom){
@@ -3718,14 +3733,14 @@ wpd.dataSeriesManagement = (function () {
                 var data = wpd.dataSeriesManagement.activeDataSeries.removeExtraVariableFromData(id - lockedVars.length);
                 wpd.dataSeriesManagement.activeDataSeries.variableNames.splice(id, 1);
                 wpd.dataSeriesManagement.activeDataSeries.variableIds.splice(id, 1);
-                redrawPointFields();
+                redrawFields();
             }
         }else{
             //Remove from variable list and redraw screen
             wpd.dataSeriesManagement.activeDataSeries.removeExtraVariableFromData(id - lockedVars.length);
             wpd.dataSeriesManagement.activeDataSeries.variableNames.splice(id, 1);
             wpd.dataSeriesManagement.activeDataSeries.variableIds.splice(id, 1);
-            redrawPointFields();
+            redrawFields();
         }
     }
 
@@ -3758,6 +3773,11 @@ wpd.dataSeriesManagement = (function () {
         }
     }
 
+    function redrawFields() {
+        redrawPointFields();
+        redrawExtraVariables();
+    }
+
     function validateAndClose() {
         //Check that all defined fields have selected values, and no value is used twice
         var duped = false;
@@ -3788,6 +3808,7 @@ wpd.dataSeriesManagement = (function () {
     }
 
     return {
+        populate: populate,
         manage: manage,
         addField: addPointField,
         updateField: updatePointField,
@@ -7350,8 +7371,8 @@ wpd.iframe_api = (function () {
     }
 
     function sendDataChangeUpdate() {
-        var message = {name: 'dataChange'};
-        this.sendMessage(message);
+        var message = {name: 'exportJSON', data: wpd.saveResume.generateJSON()};
+        wpd.iframe_api.sendMessage(message);
     }
 
     return {
@@ -7665,6 +7686,7 @@ wpd.acquireData = (function () {
         adjustPoints: adjustPoints,
         deletePoint: deletePoint,
         clearAll: clearAll,
+        confirmedClearAll: confirmedClearAll,
         undo: undo,
         showSidebar: showSidebar,
         switchToolOnKeyPress: switchToolOnKeyPress,
@@ -9450,6 +9472,7 @@ wpd.saveResume = (function () {
            }
        }
 
+       wpd.dataSeriesManagement.populate();
 
     }
 
@@ -9592,18 +9615,11 @@ wpd.saveResume = (function () {
         wpd.messagePopup.show(wpd.gettext('import-json'), wpd.gettext("json-data-loaded"));
     }
 
-    function exportToDACTYL() {
-        //Send JSON of data back to DACTYL in parent frame
-        var message = {name: 'exportJSON', data: generateJSON()};
-        wpd.iframe_api.sendMessage(message);
-        wpd.popup.close('export-json-window');
-    }
-
     return {
         save: save,
         load: load,
         download: download,
-        exportToDACTYL: exportToDACTYL,
+        generateJSON: generateJSON,
         importJSON: importJSON,
         importImageAndJSON: importImageAndJSON,
         read: read

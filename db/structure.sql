@@ -96,55 +96,20 @@ ALTER SEQUENCE accounts_id_seq OWNED BY accounts.id;
 
 
 --
--- Name: annotation_groups; Type: TABLE; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE TABLE annotation_groups (
-    id integer NOT NULL,
-    annotation_id integer,
-    group_id integer,
-    created_by integer,
-    qa_approved_by integer,
-    based_on integer,
-    approved_count integer,
-    iteration integer
-);
-
-
---
--- Name: annotation_groups_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE annotation_groups_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: annotation_groups_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE annotation_groups_id_seq OWNED BY annotation_groups.id;
-
-
---
 -- Name: annotation_notes; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE annotation_notes (
     id integer NOT NULL,
     document_id integer,
-    annotation_group_id integer,
     note text,
     addressed boolean,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
     group_id integer,
     iteration integer,
-    de_ref integer
+    de_ref integer,
+    annotation_id integer
 );
 
 
@@ -176,11 +141,9 @@ CREATE TABLE annotations (
     organization_id integer,
     account_id integer NOT NULL,
     document_id integer NOT NULL,
-    page_number integer,
     access integer,
     title text NOT NULL,
     content text,
-    location character varying(40),
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
     moderation_approval boolean,
@@ -188,7 +151,12 @@ CREATE TABLE annotations (
     iteration integer,
     match_id integer,
     match_strength integer,
-    is_graph_data boolean
+    is_graph_data boolean,
+    highlight_id integer,
+    group_id integer,
+    created_by integer,
+    qc_approved_by integer,
+    qa_approved_by integer
 );
 
 
@@ -538,43 +506,18 @@ ALTER SEQUENCE file_status_histories_id_seq OWNED BY file_status_histories.id;
 
 
 --
--- Name: graph_groups; Type: TABLE; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE TABLE graph_groups (
-    id integer NOT NULL,
-    graph_id integer,
-    group_id integer,
-    graph_json text
-);
-
-
---
--- Name: graph_groups_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE graph_groups_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: graph_groups_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE graph_groups_id_seq OWNED BY graph_groups.id;
-
-
---
 -- Name: graphs; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE graphs (
     id integer NOT NULL,
-    location text
+    document_id integer,
+    graph_json text,
+    iteration integer,
+    account_id integer,
+    highlight_id integer,
+    group_id integer,
+    created_by integer
 );
 
 
@@ -668,6 +611,37 @@ CREATE SEQUENCE groups_id_seq
 --
 
 ALTER SEQUENCE groups_id_seq OWNED BY groups.id;
+
+
+--
+-- Name: highlights; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE highlights (
+    id integer NOT NULL,
+    document_id integer,
+    location text,
+    page_number integer
+);
+
+
+--
+-- Name: highlights_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE highlights_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: highlights_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE highlights_id_seq OWNED BY highlights.id;
 
 
 --
@@ -1224,13 +1198,6 @@ ALTER TABLE ONLY accounts ALTER COLUMN id SET DEFAULT nextval('accounts_id_seq':
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY annotation_groups ALTER COLUMN id SET DEFAULT nextval('annotation_groups_id_seq'::regclass);
-
-
---
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
---
-
 ALTER TABLE ONLY annotation_notes ALTER COLUMN id SET DEFAULT nextval('annotation_notes_id_seq'::regclass);
 
 
@@ -1308,13 +1275,6 @@ ALTER TABLE ONLY file_status_histories ALTER COLUMN id SET DEFAULT nextval('file
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY graph_groups ALTER COLUMN id SET DEFAULT nextval('graph_groups_id_seq'::regclass);
-
-
---
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
---
-
 ALTER TABLE ONLY graphs ALTER COLUMN id SET DEFAULT nextval('graphs_id_seq'::regclass);
 
 
@@ -1330,6 +1290,13 @@ ALTER TABLE ONLY group_templates ALTER COLUMN id SET DEFAULT nextval('group_temp
 --
 
 ALTER TABLE ONLY groups ALTER COLUMN id SET DEFAULT nextval('groups_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY highlights ALTER COLUMN id SET DEFAULT nextval('highlights_id_seq'::regclass);
 
 
 --
@@ -1453,14 +1420,6 @@ ALTER TABLE ONLY accounts
 
 
 --
--- Name: annotation_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
---
-
-ALTER TABLE ONLY annotation_groups
-    ADD CONSTRAINT annotation_groups_pkey PRIMARY KEY (id);
-
-
---
 -- Name: annotation_notes_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -1549,14 +1508,6 @@ ALTER TABLE ONLY file_status_histories
 
 
 --
--- Name: graph_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
---
-
-ALTER TABLE ONLY graph_groups
-    ADD CONSTRAINT graph_groups_pkey PRIMARY KEY (id);
-
-
---
 -- Name: graphs_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -1578,6 +1529,14 @@ ALTER TABLE ONLY group_templates
 
 ALTER TABLE ONLY groups
     ADD CONSTRAINT groups_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: highlights_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY highlights
+    ADD CONSTRAINT highlights_pkey PRIMARY KEY (id);
 
 
 --
@@ -1727,13 +1686,6 @@ CREATE UNIQUE INDEX index_accounts_on_email ON accounts USING btree (email);
 --
 
 CREATE INDEX index_accounts_on_identites ON accounts USING gin (identities);
-
-
---
--- Name: index_annotation_group; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_annotation_group ON annotation_groups USING btree (group_id);
 
 
 --
@@ -2131,5 +2083,9 @@ INSERT INTO schema_migrations (version) VALUES ('20160615194758');
 
 INSERT INTO schema_migrations (version) VALUES ('20160624200630');
 
+INSERT INTO schema_migrations (version) VALUES ('20160816190855');
+
 INSERT INTO schema_migrations (version) VALUES ('20161013165748');
+
+INSERT INTO schema_migrations (version) VALUES ('20180209200510');
 

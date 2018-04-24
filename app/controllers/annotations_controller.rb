@@ -46,19 +46,24 @@ class AnnotationsController < ApplicationController
     render :layout => false
   end
 
-  # Any account can create a private note on any document.
-  # Only the owner of the document is allowed to create a public annotation.
+
   def create
-    maybe_set_cors_headers
-    note_attrs = pick(params, :page_number, :title, :content, :location, :access)
-    note_attrs[:access] = ACCESS_MAP[note_attrs[:access].to_sym]
-    doc = current_document
-    return forbidden unless note_attrs[:access] == PRIVATE
-    expire_page doc.canonical_cache_path if doc.cacheable?
-    anno = doc.annotations.create(note_attrs.merge(
-      :account_id      => current_account.id
-    ))
-    json current_document.annotations_with_authors(current_account, [anno]).first
+    doc = Document.find(params[:document_id])
+
+    submitHash = pick(params, :document_id, :title, :content, :templated, :group_id)
+    submitHash[:access] = DC::Access::PUBLIC
+    submitHash[:location] = params[:highlight][:location][:image]
+    submitHash[:highlight_id] = params[:highlight][:id]
+    submitHash[:page_number] = params[:highlight][:page_number]
+
+    #In DE or Extract mode, create the base annotation
+    if doc.in_de? || doc.in_supp_de? || doc.in_extraction?
+        submitHash[:account_id] = current_account.id
+        submitHash[:iteration] = doc.iteration
+        anno = Annotation.create(submitHash)
+    end
+
+    json({:highlight_id => anno.highlight_id, :id => anno.id})
   end
 
   # You can only alter annotations that you've made yourself.
@@ -82,9 +87,7 @@ class AnnotationsController < ApplicationController
     maybe_set_cors_headers
     return not_found unless anno = current_annotation
 
-    group_id = params[:group_id] == "" ? nil : params[:group_id]
-    ag = AnnotationGroup.where({group_id: group_id, annotation_id: params[:id]})
-    ag.destroy_all
+    Annotation.destroy(params[:id])
     expire_page current_document.canonical_cache_path if current_document.cacheable?
     json nil
   end
@@ -95,6 +98,7 @@ class AnnotationsController < ApplicationController
     render :nothing => true
   end
 
+  #Updates many annotations at once
   def bulk_update
     doc = Document.find(params[:document_id])
     group_id = params[:group_id]
@@ -103,9 +107,11 @@ class AnnotationsController < ApplicationController
     group_id = Group.base(doc, current_account.id, nil, nil).id if group_id.nil?
 
     params[:bulkData].each do |field|
-      submitHash = pick(field, :document_id, :page_number, :title, :content, :location, :templated)
+      submitHash = pick(field, :document_id, :title, :content, :templated, :group_id)
       submitHash[:access] = DC::Access::PUBLIC
-      submitHash[:location] = submitHash[:location] ? submitHash[:location][:image] : nil
+      submitHash[:location] = field[:highlight][:location][:image]
+      submitHash[:highlight_id] = field[:highlight][:id]
+      submitHash[:page_number] = field[:highlight][:page_number]
 
       #In DE or Extract mode, create/update the base annotation
       if doc.in_de? || doc.in_supp_de? || doc.in_extraction?
@@ -119,33 +125,14 @@ class AnnotationsController < ApplicationController
         end
       end
 
-      anno_group = AnnotationGroup.includes(:annotation_note).where({:annotation_id => field[:id], :group_id => group_id}).first if !field[:id].nil? #If not new anno, check for anno-group relationship
-      if field[:id].nil? || anno_group.nil?
-        #If anno not in group yet, add relationship
-        AnnotationGroup.create({
-            :group_id           => group_id,
-            :annotation_id      => !field[:id].nil? ? field[:id] : anno.id,
-            :created_by         => current_account.id,
-            :based_on           => field[:based_on] ? field[:based_on] : nil,
-            :approved_count     => 0,
-            :iteration          => doc.iteration
-        })
-
-        #If based on a non-null AG relationship, update the count on that relationship
-        if field[:based_on]
-          ag = AnnotationGroup.find(field[:based_on])
-          ag.update_attributes({:approved_count => ag.approved_count + 1})
-        end
-      else
-        #Update with new data if in QA
-        if doc.in_qa? || doc.in_supp_qa?
-          anno_group.update_qa_status(field[:approved], field[:qa_reject_note], current_account.id, doc.id)
-        elsif doc.in_extraction?
-          anno_group.update_attributes({:qa_approved_by => current_account.id})
-        end
+      #Update with new data if in QA
+      if doc.in_qa? || doc.in_supp_qa?
+        anno.update_qa_status(field[:approved], field[:qa_reject_note], current_account.id, doc.id)
+      elsif doc.in_extraction?
+        anno.update_attributes({:qa_approved_by => current_account.id})
       end
     end
-    json Annotation.includes(:groups).where({:document_id => params[:document_id], 'groups.id' => group_id})
+    json Annotation.where({:document_id => params[:document_id], :group_id => group_id})
   end
 
   #Remove approval for anno+group; if last group, removal approval for anno. Supported approval "type" parameter values: "qc","qa"

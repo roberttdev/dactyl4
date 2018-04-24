@@ -30,7 +30,7 @@ class GroupsController < ApplicationController
       responseJSON[:template_fields] = TemplateField.where({template_id: grp.template_id}).pluck(:field_name)
     end
 
-    responseJSON[:annotations] = Annotation.by_doc_status(doc, params[:de]).flattened_by_group(grp.id, doc.in_supp_de?).as_json()
+    responseJSON[:annotations] = Annotation.by_doc_status(doc, params[:de]).where(:group_id => grp.id).as_json()
     responseJSON
   end
 
@@ -121,6 +121,10 @@ class GroupsController < ApplicationController
   def import_graph_data
     doc = Document.find(params[:document_id])
     parent_group = Group.find(params[:group_id])
+
+    #If graph data already exists, wipe it and replace
+    Group.destroy_all({:parent_id => parent_group.id, :is_graph_data => true})
+    GraphGroup.destroy_all({:group_id => parent_group.id})
 
     graph = Graph.create({
         :page_number => params[:page_number],

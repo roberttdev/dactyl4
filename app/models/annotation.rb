@@ -4,6 +4,8 @@ class Annotation < ActiveRecord::Base
   include DC::DocumentStatus
   include DC::Access
 
+  belongs_to :group
+  belongs_to :highlight
   belongs_to :document
   belongs_to :account # NB: This account is not the owner of the document.
                       #     Rather, it is the author of the annotation.
@@ -11,8 +13,9 @@ class Annotation < ActiveRecord::Base
   belongs_to :organization
   has_many :project_memberships, :through => :document
 
-  has_many :annotation_groups, :dependent => :destroy
-  has_many :groups, :through => :annotation_groups
+  has_one :annotation_note, :foreign_key => 'annotation_group_id'
+  has_one :supp_de_note, -> { where("(annotation_notes.annotation_id IS NOT NULL)") },
+          :class_name => "AnnotationNote", :foreign_key => :de_ref
 
   attr_accessor :author
 
@@ -23,9 +26,7 @@ class Annotation < ActiveRecord::Base
   after_create  :reset_public_note_count
   after_destroy :reset_public_note_count
 
-  # Sanitizations:
-  #text_attr :title
-  #html_attr :content, :level=>:super_relaxed
+  before_destroy :clear_highlights
 
   scope :accessible, lambda { |doc_status, account|
     access = []
@@ -45,9 +46,9 @@ class Annotation < ActiveRecord::Base
     if doc.in_supp_qc?
       #The three Supp QC options
       if de_num == "1"
-        return joins(:annotation_groups).where("annotation_groups.iteration <> #{doc.iteration}")
+        return self.where("iteration <> #{doc.iteration}")
       elsif de_num == "2"
-        return joins(:annotation_groups).where("annotation_groups.iteration = #{doc.iteration}")
+        return self.where("iteration = #{doc.iteration}")
       end
     end
   }
@@ -57,14 +58,6 @@ class Annotation < ActiveRecord::Base
   }
 
   scope :unrestricted, lambda{ where( :access => PUBLIC_LEVELS ) }
-
-  #Gets annos flattened with anno-group and/or note info, flattened to a particular group
-  #De_ref: Whether to join on de_ref or standard annotation_group_id
-  scope :flattened_by_group, ->(group_id, de_ref) {
-    includes = [:document]
-    includes << (de_ref ? { :annotation_groups => :supp_de_note } : { :annotation_groups => :annotation_note })
-    eager_load(includes).where(["annotation_groups.group_id=?", group_id])
-  }
 
   # Annotations are not indexed for the time being.
 
@@ -78,6 +71,26 @@ class Annotation < ActiveRecord::Base
   #   integer :access
   #   time    :created_at
   # end
+
+  def self.create(params)
+    if params[:highlight_id].nil? then
+      highlight = Highlight.create({
+          :document_id => params[:document_id],
+          :location => params[:location],
+          :page_number => params[:page_number]
+      })
+      params[:highlight_id] = highlight.id
+    end
+    params = params.except(:location,:page_number)
+    super(params)
+  end
+
+  def clear_highlights
+    #If this is the last object attached to a highlight, delete it
+    if self.highlight.annotations.length == 1 and self.highlight.graphs.length == 0 then
+      self.highlight.destroy
+    end
+  end
 
   def self.counts_for_documents(account, docs)
     doc_ids = docs.map {|doc| doc.id }
@@ -140,23 +153,16 @@ class Annotation < ActiveRecord::Base
 
   #Canonical view of annotation is used by Document-Viewer side (use as_json for DocumentCloud)
   def canonical(opts={})
-    data = {'id' => id, 'page' => page_number, 'title' => title, 'content' => content, 'access' => access_name.to_s }
-    data['location'] = {'image' => location} if location
-    data['image_url'] = document.page_image_url_template if opts[:include_image_url]
-    data['published_url'] = document.published_url || document.document_viewer_url(:allow_ssl => true) if opts[:include_document_url]
+    data = {'id' => id, 'title' => title, 'content' => content, 'access' => access_name.to_s }
     data['account_id'] = account_id
     data['iteration'] = iteration
     data['match_id'] = match_id
     data['is_graph_data'] = is_graph_data
     data['anno_type'] = 'annotation'
+    data['group_id'] = group_id
 
     #If account ID passed in, determine whether it 'owns' this note currently (can edit, generally)
     data['owns_note'] = opts[:account] && (opts[:account].id == account_id) && (iteration == document.iteration)
-
-    #If requested, pass anno+group relationship info
-    if !opts[:skip_groups]
-      data['groups'] = annotation_groups.map {|ag| ag.approval_json(document.in_qa?)}
-    end
 
     data
   end
@@ -169,24 +175,21 @@ class Annotation < ActiveRecord::Base
   #This view flattens an annotation with a specific AnnotationGroup relationship.  The query that uses this JSON format will need to isolate
   #a single AG reference for each annotation.
   def as_json(opts={})
-    anno_group = annotation_groups[0]
     opts.merge({:skip_groups => true})
 
     canonical(opts).merge({
-      'document_id'         => document_id,
-      'account_id'          => account_id,
-      'ag_account_id'       => anno_group.created_by,
-      'organization_id'     => organization_id,
-      'iteration'           => iteration,
-      'ag_iteration'        => anno_group.iteration,
-      'annotation_group_id' => anno_group.id,
-      'approved_count'      => anno_group.approved_count,
-      'approved'            => anno_group.qa_approved_by ? true : false,
-      'qa_reject_note'      => (anno_group.association_cache.keys.include?(:annotation_note) || anno_group.association_cache.keys.include?(:supp_de_note)) ? anno_group.qa_reject_note : nil,
-      'templated'           => templated,
-      'match_id'            => match_id,
-      'match_strength'      => match_strength,
-      'is_graph_data'       => is_graph_data
+      'document_id'       => document_id,
+      'account_id'        => account_id,
+      'organization_id'   => organization_id,
+      'iteration'         => iteration,
+      'group_id'          => group_id,
+      'highlight_id'      => highlight_id,
+      'approved'          => qa_approved_by ? true : false,
+      'qa_reject_note'    => (self.association_cache.keys.include?(:annotation_note) || self.association_cache.keys.include?(:supp_de_note)) ? self.qa_reject_note : nil,
+      'templated'         => templated,
+      'match_id'          => match_id,
+      'match_strength'    => match_strength,
+      'is_graph_data'     => is_graph_data
     })
   end
 
@@ -195,6 +198,46 @@ class Annotation < ActiveRecord::Base
     self.update({:deleted_in_supp => true})
   end
 
+
+  #Take in addressing marker and qa rejection note and set proper status
+  #Not addressed + No note = Not addressed by QA
+  #Addressed + No note = Approved
+  #Addressed + Note = Rejected
+  def update_qa_status(addressed, note, account_id, doc_id)
+    if addressed && !qa_approved_by
+      #If approved and we haven't stored approved by, store it
+      self.update_attributes({:qa_approved_by => account_id})
+    elsif !addressed && qa_approved_by
+      #If for some reason approval is revoked, remove id ref
+      self.update_attributes({:qa_approved_by => nil})
+    end
+
+    #Add/update note if passed
+    if note
+      if !annotation_note.nil?
+        #If exists and text has changed, update
+        annotation_note.update_attributes({:note => note}) if annotation_note.note != note
+      else
+        #If not, add
+        AnnotationNote.create({
+                                  :document_id         => doc_id,
+                                  :annotation_id => self.id,
+                                  :note                => note,
+                                  :addressed           => false,
+                                  :iteration           => self.iteration
+                              })
+      end
+    else
+      #If note exists, destroy it
+      annotation_note.destroy if !annotation_note.nil?
+    end
+
+  end
+
+  def qa_reject_note()
+    return annotation_note.note if !annotation_note.nil?
+    return supp_de_note.note if !supp_de_note.nil?
+  end
 
   private
 

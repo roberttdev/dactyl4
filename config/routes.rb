@@ -79,8 +79,8 @@ DC::Application.routes.draw do
   put '/documents/:id/reject_de' => 'documents#reject_de'
 
   #Bulk Annotation Submit
-  put '/documents/:document_id/annotations' => 'annotations#bulk_update'
-  put '/documents/:document_id/groups/:group_id/annotations' => 'annotations#bulk_update'
+  #put '/documents/:document_id/annotations' => 'annotations#bulk_update'
+  #put '/documents/:document_id/groups/:group_id/annotations' => 'annotations#bulk_update'
 
   #Graph Data Submit
   post '/documents/:document_id/groups/:group_id/graph_data' => 'groups#import_graph_data'

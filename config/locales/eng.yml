@@ -313,6 +313,7 @@
   - entities_unavailable: Entities are temporarily unavailable.
   - error: Error
   - existing_supp_de_claim:  You already have a claim on a document in Data Entry.  Please complete that document or remove your request to auto-assign this one.
+  - existing_unsaved_point:  An unsaved point already exists.  Please assign or clear this point before creating another.
   - explain_disable_account: "%1$s will not be able to log in to DocumentCloud. Public
       documents and annotations provided by %1$s will remain available. %2$sContact
       support%3$s to completely purge %1$s's account."

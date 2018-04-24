@@ -557,15 +557,13 @@ Stroke Width <input type="range" id="eraseThickness" min="1" max="150" value="20
     <!-- left panel -->
     <span id="data-table-dataset-control"><p>Dataset: <select id="data-table-dataset-list" onchange="wpd.dataTable.changeDataset();"></select></p></span>
     <p align="center">Variables: <span id="dataVariables"></span></p>
-	<p align="center"><textarea id="digitizedDataTable" style="width: 460px; height: 250px;"></textarea></p>
+	<p align="center"><textarea id="digitizedDataTable" style="width: 460px; height: 250px;" readonly></textarea></p>
 	<p align="center">
 		<input type="button" value="Select All" onclick="wpd.dataTable.selectAll();"/>
-        <input type="button" value="Download .CSV" onclick="wpd.dataTable.generateCSV();"/>
-		<input type="button" value="Graph in Plotly*" onclick="wpd.dataTable.exportToPlotly();"/>
+        <!--<input type="button" value="Download .CSV" onclick="wpd.dataTable.generateCSV();"/>
+		<input type="button" value="Graph in Plotly*" onclick="wpd.dataTable.exportToPlotly();"/>-->
 		<input type="button" value="Close" onclick="wpd.popup.close('csvWindow');"/>
 	</p>
-	<p align="center" class="footnote">*Plotly is a secure data analysis and graphing site with data sharing and access controls.</p>
-	<p align="center" class="footnote">Visit <a href="http://plot.ly" target="plotlyWebsite">http://plot.ly</a> for details.</p>
     </td>
     <td valign="top" style="width:180px;">
     <!-- data side controls -->
@@ -740,7 +738,6 @@ Stroke Width <input type="range" id="eraseThickness" min="1" max="150" value="20
     <p>This JSON file contains the axes calibration and the digitized data points from this plot. This file can be imported later to resume work or reuse the calibration in another plot.</p>
     <p>&nbsp;</p>
     <p align="center">
-        <input type="button" value="Export to DACTYL" onclick="wpd.saveResume.exportToDACTYL();"/>
         <input type="button" value="Download" onclick="wpd.saveResume.download();"/>
         <input type="button" value="Close" onclick="wpd.popup.close('export-json-window');"/>
     </p>
@@ -854,6 +851,8 @@ Stroke Width <input type="range" id="eraseThickness" min="1" max="150" value="20
 <div class="i18n-string" id="i18n-string-histogram">Histogram</div>
 <div class="i18n-string" id="i18n-string-specify-foreground-color">Specify Plot (Foreground) Color</div>
 <div class="i18n-string" id="i18n-string-specify-background-color">Specify Background Color</div>
+<div class="i18n-string" id="i18n-string-existing-data">Data Already Exists</div>
+<div class="i18n-string" id="i18n-string-existing-data-text">You have existing points which don't contain your new variable. For consistent data, clear the existing points. Would you like to clear your existing points now?</div>
 
 
 

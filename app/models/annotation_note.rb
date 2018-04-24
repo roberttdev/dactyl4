@@ -1,5 +1,5 @@
 class AnnotationNote < ActiveRecord::Base
-  belongs_to :annotation_group
+  belongs_to :annotation
   belongs_to :supp_de_ag, :class_name => "AnnotationGroup", :foreign_key => :de_ref
   
   belongs_to :document

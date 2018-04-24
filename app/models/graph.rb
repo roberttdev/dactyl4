@@ -2,6 +2,7 @@ class Graph < ActiveRecord::Base
   belongs_to :document
 
   has_many :graph_groups, :dependent => :destroy
+  has_many :groups, through: :graph_groups
 
   #Represent graph in annotation view (DV)
   def anno_view_json

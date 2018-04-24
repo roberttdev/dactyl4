@@ -72,7 +72,7 @@
   vertical-align:top;
 }
 
-.DV-allAnnotations {
+.DV-allHighlights {
   padding: 0 32px;
 }
 
@@ -180,14 +180,14 @@
   cursor: hand;
 }
 
- .DV-annotations{
+ .DV-highlights{
     position:relative;
     left:1px;
     top:1px;
     z-index:10001;
   }
 
-  .DV-annotation{
+  .DV-highlight{
     position:absolute;
     left:0;
     right:0;
@@ -195,7 +195,7 @@
     -moz-border-radius:  3px;
     border-radius:  3px;
   }
-  .DV-annotationRegion {
+  .DV-highlightRegion {
     background: rgb(255, 227, 37);
     background: rgba(255, 227, 37, 0.2);
 
@@ -214,14 +214,14 @@
 
     cursor:pointer;
   }
-  .DV-annotationRegion.DV-approved {
+  .DV-highlightRegion.DV-approved {
       background: rgb(46, 227, 37);
       background: rgba(46, 227, 37, 0.2);
 
       border:3px solid rgb(46, 200, 0);
       border:3px solid rgba(46, 227, 37, 0.5);
   }
- .DV-annotationRegion.DV-semi-approved {
+ .DV-highlightRegion.DV-semi-approved {
      background: rgb(252, 162, 3);
      background: rgba(252, 162, 3, 0.2);
 
@@ -229,48 +229,48 @@
      border:3px solid rgba(250, 152, 5, 0.5);
  }
 
-  .DV-coverVisible .DV-annotationRegion {
+  .DV-coverVisible .DV-highlightRegion {
     background: rgb(255, 227, 37);
     background: rgba(255, 227, 37, 0.1);
     border:3px solid rgb(255, 227, 37);
     border:3px solid rgba(255, 227, 37, 0.2);
   }
-  .DV-coverVisible .DV-annotationTab {
+  .DV-coverVisible .DV-highlightTab {
     opacity: 0.3;
   }
-  .DV-coverVisible .DV-activeAnnotation .DV-annotationTab,
-  .DV-coverVisible .DV-annotation:hover .DV-annotationTab {
+  .DV-coverVisible .DV-activeHighlight .DV-highlightTab,
+  .DV-coverVisible .DV-highlight:hover .DV-highlightTab {
     opacity: 1;
   }
-  .DV-ie .DV-annotationRegion{
+  .DV-ie .DV-highlightRegion{
     -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=30)";
     filter: alpha(opacity=30);
   }
-  .DV-accessPrivate .DV-annotationRegion, .DV-accessPrivate.DV-annotationRegion {
+  .DV-accessPrivate .DV-highlightRegion, .DV-accessPrivate.DV-highlightRegion {
     background: rgb(107, 194, 248);
     background: rgba(107, 194, 248, 0.2);
     border:3px solid rgb(95, 175, 235);
     border:3px solid rgba(107, 194, 248, 0.5);
   }
-  .DV-accessRedact .DV-annotationRegion, 
-  .DV-accessRedact.DV-annotationRegion {
+  .DV-accessRedact .DV-highlightRegion,
+  .DV-accessRedact.DV-highlightRegion {
     background: #000;
     border: 0;
     border-radius: 0; -moz-border-radius: 0; -webkit-border-radius: 0;
     filter: none;
     -ms-filter: none;
   }
-    .DV-redRedactions .DV-accessRedact .DV-annotationRegion, 
-    .DV-redRedactions .DV-accessRedact.DV-annotationRegion {
+    .DV-redRedactions .DV-accessRedact .DV-highlightRegion,
+    .DV-redRedactions .DV-accessRedact.DV-highlightRegion {
       background: #800;
     }
-  .DV-coverVisible .DV-accessPrivate .DV-annotationRegion {
+  .DV-coverVisible .DV-accessPrivate .DV-highlightRegion {
     background: rgb(107, 194, 248);
     background: rgba(107, 194, 248, 0.1);
     border:3px solid rgb(107, 194, 248);
     border:3px solid rgba(107, 194, 248, 0.2);
   }
-  .DV-annotationRegion:hover{
+  .DV-highlightRegion:hover{
     border: 3px solid rgb(255, 227, 37);
     -webkit-box-shadow: 1px 2px 7px rgb(0,0,0);
     -webkit-box-shadow: 1px 2px 7px rgba(0,0,0,.2);
@@ -281,11 +281,11 @@
     box-shadow: 1px 2px 7px rgb(0,0,0);
     box-shadow: 1px 2px 7px rgba(0,0,0,.2);
   }
-  .DV-accessPrivate .DV-annotationRegion:hover,
-  .DV-accessPrivate.DV-annotationRegion:hover {
+  .DV-accessPrivate .DV-highlightRegion:hover,
+  .DV-accessPrivate.DV-highlightRegion:hover {
     border: 3px solid rgb(107, 194, 248);
   }
-  .DV-annotationContent{
+  .DV-highlightContent{
     display:none;
     background-color:#fff;
     border:1px solid #fff;
@@ -298,7 +298,7 @@
     position: relative;
     z-index: 1;
   }
-  .DV-annotationClose{
+  .DV-highlightClose{
     padding:7px 9px 0 10px;
     color:#000;
     text-transform:lowercase;
@@ -309,19 +309,19 @@
     height:19px;
     text-indent:-1000em;
   }
-  /* ---------------------------------------------------- annotations - active */
-  .DV-activeAnnotation .DV-annotationRegion{
+  /* ---------------------------------------------------- highlights - active */
+  .DV-activeHighlight .DV-highlightRegion{
     display:none;
   }
-  .DV-activeAnnotation .DV-annotationContent{
+  .DV-activeHighlight .DV-highlightContent{
     display:block;
   }
-  .DV-activeAnnotation .DV-annotationClose{
+  .DV-activeHighlight .DV-highlightClose{
     display:block;
     background: transparent url("data:image/png;charset=utf-8;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAALCAYAAACprHcmAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAALdJREFUeNpi/P//PwMILFmyxAZIBQGxExBrAvF1IN4HxOtiYmKOgNQwghQDFcYA2dVArMGACW4AcStQwxJmFRUVkIndOBSCgAgQa126dOkiE9RqsEIvLy8GoGawChAN4kMBSD6IBepGMLh16xaDmpoamA2iQXwk4MQC9QwY3LlzB0UhjA8FmkxQX8OthikE0TAnQcF1JmjwYJiI7CQo2Me4ePFiUGjMxhMasOBLJSmcGUmJQYAAAwC9z1GeQEJsIQAAAABJRU5ErkJggg==") no-repeat 6px 7px;
   }
 
-  .DV-activeAnnotation.DV-annotation{
+  .DV-activeHighlight.DV-highlight{
     background: rgb(255, 227, 37);
     padding:3px;
     -webkit-border-radius: 3px;
@@ -340,17 +340,17 @@
     box-shadow: 1px 1px 3px rgb(0,0,0);
     box-shadow: 1px 1px 3px rgba(0,0,0,.2);
   }
-  .DV-activeAnnotation.DV-annotation.DV-accessPrivate {
+  .DV-activeHighlight.DV-highlight.DV-accessPrivate {
     background: rgb(107, 194, 248);
   }
-  .DV-activeAnnotation.DV-annotation.DV-accessRedact {
+  .DV-activeHighlight.DV-highlight.DV-accessRedact {
     background: #000;
   }
-    .DV-redRedactions .DV-activeAnnotation.DV-annotation.DV-accessRedact {
+    .DV-redRedactions .DV-activeHighlight.DV-highlight.DV-accessRedact {
       background: #800;
     }
 
-  /* ---------------------------------------------------- annotations - decoration */
+  /* ---------------------------------------------------- highlights - decoration */
   .DV-annotationGoto{
     float:right;
     display:none;
@@ -389,7 +389,7 @@
     visibility: hidden;
     left: 7px; top: -2px;
   }
-    .DV-annotation:hover .DV-permalink {
+    .DV-highlight:hover .DV-permalink {
       visibility: visible;
     }
     .DV-permalink:hover {
@@ -397,7 +397,7 @@
     }
 
   /* ---------------------------------------------------- excerpt */
-  .DV-annotationExcerpt{
+  .DV-highlightExcerpt{
     -moz-box-shadow: inset 0 0 5px rgb(0,0,0);
     -moz-box-shadow: inset 0 0 5px rgba(0,0,0,.3);
 
@@ -417,7 +417,7 @@
     z-index:10000;
     overflow:hidden;
   }
-  .DV-annotationExcerptImage{
+  .DV-highlightExcerptImage{
     opacity:.2;
 
     -moz-box-shadow: inset 0 0 5px rgb(0,0,0);
@@ -431,12 +431,12 @@
     z-index:10000;
     overflow:hidden;
   }
-  .DV-ie .DV-annotationExcerptImage img{
+  .DV-ie .DV-highlightExcerptImage img{
     -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=20)";
     filter: alpha(opacity=20);
   }
 
-  .DV-annotationExcerptImageTop{
+  .DV-highlightExcerptImageTop{
     position:absolute;
     top:0;
     z-index:15000;
@@ -456,19 +456,19 @@
   -webkit-box-shadow: inset 0 0 5px #000;
 
   }
-  .DV-annotationExcerptImageTop img{
+  .DV-highlightExcerptImageTop img{
 /*    margin-left:-16px;*/
   }
-  .DV-annotationExcerptImage img{
+  .DV-highlightExcerptImage img{
 /*    left:-25px;*/
       left: -1px;
   }
 
-  .DV-annotationExcerptImage{
+  .DV-highlightExcerptImage{
     left:0;
   }
-  .DV-annotationExcerptImage img,
-  .DV-annotationExcerptImageTop img{
+  .DV-highlightExcerptImage img,
+  .DV-highlightExcerptImageTop img{
     -moz-box-shadow: inset 0 0 5px rgb(0,0,0);
     -moz-box-shadow: inset 0 0 5px rgba(0,0,0,.3);
 
@@ -495,7 +495,7 @@
     font-size: 10px;
   }
 
-  .DV-annotationWarning {
+  .DV-highlightWarning {
     color: #999;
     font-size: 10px;
     padding: 10px 0 0;
@@ -507,7 +507,7 @@
     height: 24px;
   }
 
-  .DV-annotationDraftLabel {
+  .DV-highlightDraftLabel {
     text-transform: uppercase;
     font-weight: bold;
     font-size: 9px;
@@ -519,42 +519,42 @@
     float: left;
   }
   /* ---------------------------------------------------- tabs */
-  .DV-annotationTab{
+  .DV-highlightTab{
     background: url("data:image/png;charset=utf-8;base64,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") no-repeat 0 0;
     height:26px;
     position:absolute;
     left: -35px;
     width: 50px;
   }
-    .DV-accessPrivate .DV-annotationTab {
+    .DV-accessPrivate .DV-highlightTab {
       background-position: 0 -26px;
     }
-  .DV-activeAnnotation .DV-annotationTab{
+  .DV-activeHighlight .DV-highlightTab{
     background-position: 0 -52px;
     margin-top: 37px;
     left: -30px;
   }
-  .DV-activeAnnotation.DV-accessPrivate .DV-annotationTab {
+  .DV-activeHighlight.DV-accessPrivate .DV-highlightTab {
     background-position: 0 -78px;
   }
-  .DV-annotationTab .DV-annotationDraftDot {
+  .DV-highlightTab .DV-highlightDraftDot {
     width: 11px;
     height: 11px;
     background: transparent url("data:image/png;charset=utf-8;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAALCAYAAACprHcmAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAQ9JREFUeNpi/P//PwMaYAFiNiD+C8S/gfgfsgQMgBRwn6qr03537Zo2Gx/fWwUfnytKQUHPgOKfQAoYoSazPTt0SA6osOr3ly8eMN2MTExf+FVUml2XLdsE5H6EKRbc4ODQBVToje4mBkbGPzJOTnGWnZ0nmIBc5kuTJiliVQgC//+zvDh+PAvI4gIpZnlz4YISAx7w79cvWZA6kOL/bLy8H/EpZmRmfgPSA1L8y7im5gYTG9t1XIq5paVBHvwKUszAKSr6VtbFpR5owmt0haw8PFvdV61aA2R+Z0SKFN6HW7dKXp4yJfL316+aTCws77llZA66LFq0E2QqyAWMaDEIsokbZCA05n5AMRgABBgALYBkFzQ/5BAAAAAASUVORK5CYII=") no-repeat 0 0;
     margin: 0 0 0 -3px;
   }
-    .DV-activeAnnotation .DV-annotationTab .DV-annotationDraftDot {
+    .DV-activeHighlight .DV-highlightTab .DV-highlightDraftDot {
       display: none;
     }
 
-  /* ---------------------------------------------------- active annotation */
-  .DV-activeAnnotation .DV-page{
+  /* ---------------------------------------------------- active highlight */
+  .DV-activeHighlight .DV-page{
     background-color:#555;
   }
-  .DV-activeAnnotation .DV-pageImage{
+  .DV-activeHighlight .DV-pageImage{
     opacity:.5;
   }
-  .DV-ie .DV-activeAnnotation .DV-pageImage{
+  .DV-ie .DV-activeHighlight .DV-pageImage{
     -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
     filter: alpha(opacity=50);
   }
@@ -582,35 +582,35 @@
   top: -3px;
 }
 
-.DV-annotation .DV-trigger:hover{
+.DV-highlight .DV-trigger:hover{
   text-decoration:underline;
 }
 
 .DV-resultPrevious,
-.DV-annotationPrevious {
+.DV-highlightPrevious {
   background: url("data:image/png;charset=utf-8;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAKCAYAAABi8KSDAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAANhJREFUeNpiZHAqY8AHXI1Vz+w+ccn4/6FJjEy4FDkbqZxhePfg/+7du40ZPr8Ei2EodjdVO8Pw/uH/vXv2GENE/kMxkmKQdQzv7v/fuXOXMcP/f3AFDAyMUAxUDLHuPtC6XcYI84GSWFzI5GWuwcDAK34Wphtu7X8gZmREcQbj//8QRt+aw2eKJ61iYPj8CmEDSDFU/v/5lYxwxciA0S73DDAEjBG2QRQzMTqXM4AwMvh/aLLJ//OrGBl4RM8ii7PATUPS8H9vJ4Q+PMUERMtFtJ8B0QABBgAEHFWZSE5IMgAAAABJRU5ErkJggg==") no-repeat left 1px;
 }
 
-.DV-annotationPrevious{
+.DV-highlightPrevious{
   padding-left:16px;
   padding-right:4px;
 }
 
-.DV-annotationPrevious:hover{
+.DV-highlightPrevious:hover{
   text-decoration:underline;
 }
 
 .DV-resultNext,
-.DV-annotationNext {
+.DV-highlightNext {
   background:transparent url("data:image/png;charset=utf-8;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAKCAYAAABi8KSDAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAALtJREFUeNpi/P//PwOjRfL/1DCvs7O3njJhwAOYwOTPzwyzF68yZvj65n+yp+kZ/IoZGCHUzy8Mc5etMWb48vp/qrfZGRyKkQDQWQy/vkBsQtPECHazYfh/qEqoLVCakRGimY2bITXc+ywLqiKocxiBFv7/BxEGAllF1bOzioJNWJDsRzUNyJZW0z/7ZGUVPIRYUDwIdbOsusHZRysqMYKRBZkjr2l49sGyCgxFjM7lCMXo1qErggGAAAMA8HZKIxujjE4AAAAASUVORK5CYII=") no-repeat right 1px;
 }
 
-.DV-annotationNext{
+.DV-highlightNext{
   padding-right:16px;
   padding-left:8px;
 }
 
-.DV-annotationNext:hover{
+.DV-highlightNext:hover{
   text-decoration:underline;
 }
 
@@ -650,18 +650,18 @@
 .DV-coverVisible .DV-pageNote {
   opacity: 0.25;
 }
-.DV-activeAnnotation.DV-pageNote{
+.DV-activeHighlight.DV-pageNote{
   opacity: 1;
   margin: 0 10px 20px;
 }
-.DV-pageNote .DV-annotationContent{
+.DV-pageNote .DV-highlightContent{
   display:block;
 }
 .DV-pageNote .DV-annotationTitle{
   margin-bottom:10px;
 }
 
-.DV-pageNote .DV-annotationTab{
+.DV-pageNote .DV-highlightTab{
  display:none;
 }
 .DV-layer-page .DV-pageNumber{
@@ -677,61 +677,61 @@
   display:block !important;
 }
 
-/*-------------------------- Annotation Borders ------------------------------*/
-.DV-annotationEdge, .DV-annotationCorner {
+/*-------------------------- Highlight Borders ------------------------------*/
+.DV-highlightEdge, .DV-highlightCorner {
   position: absolute;
   width: 10px; height: 10px;
   z-index: 10;
 }
-  .DV-annotationCorner {
+  .DV-highlightCorner {
     z-index: 20;
   }
-  .DV-annotationEdgeTop {
+  .DV-highlightEdgeTop {
     top: -7px;
     width: 100%;
     cursor: n-resize;
   }
-  .DV-annotationEdgeRight {
+  .DV-highlightEdgeRight {
     right: -7px;
     height: 100%;
     cursor: e-resize;
   }
-  .DV-annotationEdgeBottom {
+  .DV-highlightEdgeBottom {
     bottom: -7px;
     width: 100%;
     cursor: s-resize;
   }
-  .DV-annotationEdgeLeft {
+  .DV-highlightEdgeLeft {
     left: -7px;
     height: 100%;
     cursor: w-resize;
   }
-  .DV-annotationCornerTopLeft {
+  .DV-highlightCornerTopLeft {
     top: -7px; left: -7px;
     cursor: nw-resize;
   }
-  .DV-annotationCornerTopRight {
+  .DV-highlightCornerTopRight {
     top: -7px; right: -7px;
     cursor: ne-resize;
   }
-  .DV-annotationCornerBottomLeft {
+  .DV-highlightCornerBottomLeft {
     bottom: -7px; left: -7px;
     cursor: sw-resize;
   }
-  .DV-annotationCornerBottomRight {
+  .DV-highlightCornerBottomRight {
     bottom: -7px; right: -7px;
     cursor: se-resize;
   }
 
-/*------------------------ annotation controls ---------------------------------*/
+/*------------------------ highlight controls ---------------------------------*/
 
-.DV-annotation .DV-annotationEditControls .DV-saveAnnotationDraft {
+.DV-highlight .DV-annotationEditControls .DV-saveAnnotationDraft {
   margin-right: 10px;
   width: 135px;
 }
 
 /*------------------------ show/hide the edit UI ---------------------------------*/
-.DV-annotation .DV-editVisible {
+.DV-highlight .DV-editVisible {
   display: none;
 }
 
@@ -744,35 +744,35 @@
   display: none !important;
 }
 
-.DV-annotation .DV-saveAnnotationDraft {
+.DV-highlight .DV-saveAnnotationDraft {
   display: none;
 }
 
-.DV-annotation .DV-accessExclusive,
-.DV-annotation .DV-accessPrivate,
-.DV-annotation .DV-accessPublic {
+.DV-highlight .DV-accessExclusive,
+.DV-highlight .DV-accessPrivate,
+.DV-highlight .DV-accessPublic {
   display: none;
 }
 
-.DV-isContributor .DV-annotation .DV-accessPrivate,
-.DV-isOwner .DV-annotation .DV-accessPrivate,
-.DV-isOwner .DV-annotation .DV-accessExclusive,
-.DV-isOwner .DV-annotation .DV-accessPublic,
-.DV-annotation.DV-ownsAnnotation .DV-accessPrivate,
-.DV-annotation.DV-ownsAnnotation .DV-accessExclusive,
-.DV-annotation.DV-ownsAnnotation .DV-accessPublic {
+.DV-isContributor .DV-highlight .DV-accessPrivate,
+.DV-isOwner .DV-highlight .DV-accessPrivate,
+.DV-isOwner .DV-highlight .DV-accessExclusive,
+.DV-isOwner .DV-highlight .DV-accessPublic,
+.DV-highlight.DV-ownsHighlight .DV-accessPrivate,
+.DV-highlight.DV-ownsHighlight .DV-accessExclusive,
+.DV-highlight.DV-ownsHighlight .DV-accessPublic {
   display: block;
 }
 
-.DV-isContributor .DV-annotation .DV-annotationMeta,
-.DV-isOwner .DV-annotation .DV-annotationMeta,
-.DV-isReviewer .DV-annotation .DV-annotationMeta {
+.DV-isContributor .DV-highlight .DV-annotationMeta,
+.DV-isOwner .DV-highlight .DV-annotationMeta,
+.DV-isReviewer .DV-highlight .DV-annotationMeta {
   display: block;
 }
 
-.DV-isContributor .DV-annotation .DV-saveAnnotationDraft,
-.DV-isOwner .DV-annotation .DV-saveAnnotationDraft,
-.DV-isReviewer .DV-annotation .DV-saveAnnotationDraft {
+.DV-isContributor .DV-highlight .DV-saveAnnotationDraft,
+.DV-isOwner .DV-highlight .DV-saveAnnotationDraft,
+.DV-isReviewer .DV-highlight .DV-saveAnnotationDraft {
   display: block;
 }
 
@@ -890,18 +890,18 @@
   padding-left: 0px;
 }
 
-/* Annotations ---------------------------------------*/
+/* Highlights ---------------------------------------*/
 
-.DV-mini .DV-annotationTab {
+.DV-mini .DV-highlightTab {
   background-image: url("data:image/png;charset=utf-8;base64,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");
   width: 29px;
   left: -13px;
   height: 15px;
 }
-  .DV-mini .DV-activeAnnotation .DV-annotationTab {
+  .DV-mini .DV-activeHighlight .DV-highlightTab {
     background-position: 0 -30px;
   }
-  .DV-mini .DV-activeAnnotation .DV-annotationClose {
+  .DV-mini .DV-activeHighlight .DV-highlightClose {
     background-position: 4px 2px;
   }
 .DV-cover{
@@ -941,7 +941,7 @@
     text-decoration: underline;
   }
 
-.DV-annotation .DV-pageNumber{
+.DV-highlight .DV-pageNumber{
   display:none;
 }
 
@@ -954,7 +954,7 @@
   position:absolute;
 }
 
-.DV-viewAnnotations .DV-pageNumber{
+.DV-ViewHighlights .DV-pageNumber{
   display:inline;
   float:left;
   font-family:Arial,Helvetica,sans-serif;
@@ -997,7 +997,7 @@
 }
 
 .DV-pageImage,
-.DV-annotationExcerptImage,
+.DV-highlightExcerptImage,
 .DV-excerptHighLevel img{
   -ms-interpolation-mode: bicubic;
 }
@@ -1214,7 +1214,7 @@
 
 .DV-viewDocument .DV-views .DV-documentView span,
 .DV-viewThumbnails .DV-views .DV-thumbnailsView span,
-.DV-viewAnnotations .DV-views .DV-annotationView span,
+.DV-ViewHighlights .DV-views .DV-highlightView span,
 .DV-viewText .DV-views .DV-textView span,
 .DV-viewSearch .DV-views .DV-textView span{
   background-position: 0 -40px;
@@ -1333,7 +1333,7 @@
 
 .DV-currentPagePrefix,
 .DV-currentPageSuffix,
-.DV-currentAnnotationPrefix{
+.DV-currentHighlightPrefix{
   font-family:Arial,Helvetica,sans-serif;
   font-size:12px;
   color:#333;
@@ -1341,7 +1341,7 @@
 
 .DV-ie .DV-currentPagePrefix,
 .DV-ie .DV-currentPageSuffix,
-.DV-ie .DV-currentAnnotationPrefix{
+.DV-ie .DV-currentHighlightPrefix{
   vertical-align:top;
 }
 
@@ -1391,34 +1391,34 @@
 }
 
 .DV-chapter,
-.DV-annotationMarker {
+.DV-highlightMarker {
   margin: 0 0 12px 0;
   padding: 0;
   font-family: Arial,Helvetica,sans-serif;
   font-size: 12px;
   font-weight: bold;
 }
-  .DV-collapsed .DV-annotationMarker {
+  .DV-collapsed .DV-highlightMarker {
     display: none;
   }
 
-.DV-annotationMarker{
+.DV-highlightMarker{
   margin-left: 14px;
 }
 
-.DV-annotationMarker .DV-navPageNumber {
+.DV-highlightMarker .DV-navPageNumber {
   visibility: hidden;
 }
 
-.DV-annotationMarker .DV-trigger:hover .DV-navPageNumber {
+.DV-highlightMarker .DV-trigger:hover .DV-navPageNumber {
   visibility:visible;
 }
 
-.DV-chapter .DV-annotationMarker{
+.DV-chapter .DV-highlightMarker{
   margin-left: 14px;
 }
 
-.DV-hasChildren .DV-annotationMarker{
+.DV-hasChildren .DV-highlightMarker{
   margin:0 0 4px;
   padding:0 0 0 8px;
   background: transparent url("data:image/gif;charset=utf-8;base64,R0lGODlhBAAEAKIAAHBwcGdnZ3Fxcd/f34WFheDg4Ovr6////yH5BAAAAAAALAAAAAAEAAQAAAMJeFZ3EOMQYVpLADs=") no-repeat 0 4px;
@@ -1428,7 +1428,7 @@
   margin-left:12px;
 }
 
-.DV-ie .DV-annotationMarker{
+.DV-ie .DV-highlightMarker{
   margin-bottom:3px;
 }
 
@@ -1495,7 +1495,7 @@
   outline:0;
 }
 
-.DV-navigation .DV-trigger:hover .DV-navAnnotationTitle {
+.DV-navigation .DV-trigger:hover .DV-navHighlightTitle {
   text-decoration:underline;
 }
 
@@ -1961,51 +1961,51 @@ span.DV-highlighted{
 .DV-unsupported .DV-after {
   margin-top: 20px;
 }
-.DV-viewAnnotations .DV-set,
-.DV-viewAnnotations .DV-text,
-.DV-viewAnnotations .DV-search,
-.DV-viewAnnotations .DV-bar{
+.DV-ViewHighlights .DV-set,
+.DV-ViewHighlights .DV-text,
+.DV-ViewHighlights .DV-search,
+.DV-ViewHighlights .DV-bar{
   display:none;
 }
 
-.DV-viewAnnotations .DV-allAnnotations,
-.DV-viewAnnotations .DV-annotationContent{
+.DV-ViewHighlights .DV-allHighlights,
+.DV-ViewHighlights .DV-highlightContent{
   display:block;
 }
 
-.DV-viewAnnotations .DV-annotationRegion{
+.DV-ViewHighlights .DV-highlightRegion{
   position: absolute;
   left: -10000px;
   width: 0; height: 0;
 }
 
-.DV-viewAnnotations .DV-annotationTab{
+.DV-ViewHighlights .DV-highlightTab{
 
   filter:none;
   display:none !important;
 }
 
-.DV-viewAnnotations .DV-annotationGoto{
+.DV-ViewHighlights .DV-annotationGoto{
   display:inline;
 }
 
-.DV-viewAnnotations .DV-pageNoteAnnotationTab{
+.DV-ViewHighlights .DV-pageNoteHighlightTab{
   display:none;
 }
 
-.DV-viewAnnotations .DV-annotationNext,
-.DV-viewAnnotations .DV-annotationPrevious{
+.DV-ViewHighlights .DV-highlightNext,
+.DV-ViewHighlights .DV-highlightPrevious{
   display:none !important;
 }
 
-.DV-viewAnnotations .DV-annotationBG{
+.DV-ViewHighlights .DV-highlightBG{
   margin-top:0;
   position:relative;
   clear:left;
 }
 
-.DV-viewAnnotations .DV-annotation,
-.DV-getHeights .DV-annotation {
+.DV-ViewHighlights .DV-highlight,
+.DV-getHeights .DV-highlight {
   position:relative;
   top:0 !important;
   display: inline-block;
@@ -2026,13 +2026,13 @@ span.DV-highlighted{
   box-shadow: 1px 1px 3px rgb(0,0,0);
   box-shadow: 1px 1px 3px rgba(0,0,0,.2);
 }
-.DV-viewAnnotations .DV-annotation.DV-accessPrivate {
+.DV-ViewHighlights .DV-highlight.DV-accessPrivate {
   background: rgb(107, 194, 248);
   background: rgba(107, 194, 248, .9);
 }
 
 /*hack to control scrollbar width in webkit*/
-.DV-viewAnnotations .DV-annotation:after {
+.DV-ViewHighlights .DV-highlight:after {
     content: ".";
     display: block;
     height: 0;
@@ -2041,37 +2041,37 @@ span.DV-highlighted{
 }
 
 /* Hides from IE-mac \*/
-* html .DV-viewAnnotations .DV-annotation {height: 1%;}
-.DV-viewAnnotations .DV-annotation {display: block;}
+* html .DV-ViewHighlights .DV-highlight {height: 1%;}
+.DV-ViewHighlights .DV-highlight {display: block;}
 /* End hide from IE-mac */
 
-.DV-viewAnnotations .DV-currentPagePrefix,
-.DV-viewAnnotations .DV-totalPages{
+.DV-ViewHighlights .DV-currentPagePrefix,
+.DV-ViewHighlights .DV-totalPages{
   display:none;
 }
 
-.DV-viewAnnotations .DV-currentAnnotationPrefix,
-.DV-viewAnnotations .DV-totalAnnotations{
+.DV-ViewHighlights .DV-currentHighlightPrefix,
+.DV-ViewHighlights .DV-totalHighlights{
   display:inline;
 }
 
 
-.DV-ie .DV-viewAnnotations .DV-annotationLabel {
+.DV-ie .DV-ViewHighlights .DV-highlightLabel {
   float:none;
   left:0;
   position:absolute;
   top:7px;
 }
 
-.DV-viewAnnotations .DV-noChildren{
+.DV-ViewHighlights .DV-noChildren{
   display:none !important;
 }
 
-.DV-viewAnnotations .DV-hasChildren{
+.DV-ViewHighlights .DV-hasChildren{
   display:block !important;
 }
 
-.DV-viewDocument .DV-allAnnotations,
+.DV-viewDocument .DV-allHighlights,
 .DV-viewDocument .DV-text,
 .DV-viewDocument .DV-search,
 .DV-viewDocument .DV-thumbnails,
@@ -2093,18 +2093,18 @@ span.DV-highlighted{
   background:none;
 }
 
-.DV-viewDocument .DV-annotation {
+.DV-viewDocument .DV-highlight {
   height: 0;
 }
 .DV-viewDocument .DV-pageNote {
   height: auto;
 }
-.DV-viewDocument .DV-activeAnnotation {
+.DV-viewDocument .DV-activeHighlight {
   height: auto;
 }
 
-.DV-viewDocument .DV-currentAnnotationPrefix,
-.DV-viewDocument .DV-totalAnnotations{
+.DV-viewDocument .DV-currentHighlightPrefix,
+.DV-viewDocument .DV-totalHighlights{
   display:none;
 }
 
@@ -2117,14 +2117,14 @@ span.DV-highlighted{
   cursor:pointer !important;
 }
 
-.DV-viewDocument .DV-annotationRegionBorder {
+.DV-viewDocument .DV-highlightRegionBorder {
   display: block;
 }
 .DV-viewSearch .DV-pageCollection{
   cursor: text;
 }
 
-.DV-viewSearch .DV-allAnnotations,
+.DV-viewSearch .DV-allHighlights,
 .DV-viewSearch .DV-bar{
   display:none;
 }
@@ -2134,8 +2134,8 @@ span.DV-highlighted{
   display:block;
 }
 
-.DV-viewSearch .DV-totalAnnotations,
-.DV-viewSearch .DV-currentAnnotationPrefix{
+.DV-viewSearch .DV-totalHighlights,
+.DV-viewSearch .DV-currentHighlightPrefix{
   display:none;
 }
 
@@ -2149,7 +2149,7 @@ span.DV-highlighted{
 
 .DV-viewSearch .DV-sidebar .DV-well .DV-chaptersContainer div.DV-hasChildren div,
 .DV-viewSearch .DV-sidebar .DV-well .DV-chaptersContainer span.DV-expander,
-.DV-viewSearch .DV-annotationMarker{
+.DV-viewSearch .DV-highlightMarker{
   display:none !important;
 }
 
@@ -2161,7 +2161,7 @@ span.DV-highlighted{
   margin-left:-1px;
 }
 
-.DV-viewSearch .DV-annotationMarker,
+.DV-viewSearch .DV-highlightMarker,
 .DV-viewSearch .DV-chapter{
   margin-left:14px;
 }
@@ -2171,7 +2171,7 @@ span.DV-highlighted{
 
 .DV-viewText .DV-set,
 .DV-viewText .DV-bar,
-.DV-viewText .DV-allAnnotations{
+.DV-viewText .DV-allHighlights{
   display:none;
 }
 
@@ -2179,8 +2179,8 @@ span.DV-highlighted{
   display:block;
 }
 
-.DV-viewText .DV-currentAnnotationPrefix,
-.DV-viewText .DV-totalAnnotations{
+.DV-viewText .DV-currentHighlightPrefix,
+.DV-viewText .DV-totalHighlights{
   display:none;
 }
 
@@ -2197,7 +2197,7 @@ span.DV-highlighted{
   margin-left:-1px;
 }
 
-.DV-viewText .DV-annotationMarker,
+.DV-viewText .DV-highlightMarker,
 .DV-viewText .DV-chapter{
   margin-left:14px;
 }
@@ -2212,7 +2212,7 @@ span.DV-highlighted{
 .DV-docViewer.DV-searchable .DV-textView.DV-hide{
   display:none;
 }
-.DV-viewThumbnails .DV-allAnnotations,
+.DV-viewThumbnails .DV-allHighlights,
 .DV-viewThumbnails .DV-text,
 .DV-viewThumbnails .DV-search,
 .DV-viewThumbnails .DV-pageCollection,
@@ -2222,8 +2222,8 @@ span.DV-highlighted{
   display:none;
 }
 
-.DV-viewThumbnails .DV-currentAnnotationPrefix,
-.DV-viewThumbnails .DV-totalAnnotations{
+.DV-viewThumbnails .DV-currentHighlightPrefix,
+.DV-viewThumbnails .DV-totalHighlights{
   display:none;
 }
 
@@ -2434,7 +2434,7 @@ span.DV-highlighted{
 
 .DV-annotationTitleInput,
 .DV-annotationTextArea,
-.DV-annotationExtension {
+.DV-highlightExtension {
   border: 1px solid #D0D0D0;
   -webkit-border-radius: 3px; -moz-border-radius: 3px; border-radius: 3px;
   font: 12px/15px Arial;
@@ -2448,7 +2448,7 @@ span.DV-highlighted{
     resize: none;
   }
   .DV-annotationTitleInput,
-  .DV-annotationExtension {
+  .DV-highlightExtension {
     padding: 4px;
     width: 300px;
   }
