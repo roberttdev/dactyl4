@@ -21,8 +21,8 @@ class Group < ActiveRecord::Base
   belongs_to :group_template, :foreign_key => 'template_id'
   belongs_to :document
 
-  has_many :graphs
-  has_many :annotations
+  has_many :graphs, :dependent => :destroy
+  has_many :annotations, :dependent => :destroy
 
   has_one :annotation_note
   has_one :supp_de_note, -> { where("(annotation_notes.group_id IS NOT NULL)") },
@@ -191,35 +191,35 @@ class Group < ActiveRecord::Base
 
     if related
       if keep_values
-        annotation_groups.each do |ag|
-          cloned_ag = AnnotationGroup.create({
-             :annotation_id => ag.annotation_id,
-             :group_id => cloned.id,
-             :iteration => ag.iteration,
-             :created_by => ag.created_by,
-             :qa_approved_by => ag.qa_approved_by,
-             :approved_count => keep_values ? ag.approved_count : 0
+        annotations.each do |a|
+          cloned_a = Annotation.create({
+              :account_id => anno.account_id,
+              :content => a.content,
+              :created_by => a.created_by,
+              :document_id => a.document_id,
+              :group_id => cloned.id,
+              :highlight_id => a.highlight_id,
+              :iteration => iteration,
+              :qa_approved_by => a.qa_approved_by,
+              :templated => a.templated,
+              :title => a.title
            })
 
-          if ag.annotation_note
-            ag.annotation_note.update({ :de_ref => cloned_ag.id })
+          if a.annotation_note
+            a.annotation_note.update({ :de_ref => cloned_a.id })
           end
         end
       else
         annotations.each do |anno|
           newAnno = Annotation.create({
             :account_id => anno.account_id,
+            :created_by => anno.created_by,
             :document_id => anno.document_id,
-            :title => anno.title,
-            :templated => anno.templated
-          })
-
-          AnnotationGroup.create({
-             :annotation_id => newAnno.id,
-             :group_id => cloned.id,
-             :iteration => iteration,
-             :created_by => account_id,
-             :approved_count => 0
+            :group_id => cloned.id,
+            :iteration => iteration,
+            :qa_approved_by => anno.qa_approved_by,
+            :templated => anno.templated,
+            :title => anno.title
           })
         end
       end

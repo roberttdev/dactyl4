@@ -94,7 +94,7 @@ dc.ui.ViewerQcSubpanel = dc.ui.ViewerBaseControlPanel.extend({
 
   //Pass group delete notification up
   handleGroupDelete: function(group) {
-      this.reloadAnnotations();
+      this.reloadHighlights();
       this.trigger('groupDeleted', group);
   },
 

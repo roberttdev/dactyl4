@@ -1,26 +1,45 @@
 class Graph < ActiveRecord::Base
   belongs_to :document
+  belongs_to :groups
+  belongs_to :highlight
 
-  has_many :graph_groups, :dependent => :destroy
-  has_many :groups, through: :graph_groups
+  before_destroy :clear_highlights
 
-  #Represent graph in annotation view (DV)
-  def anno_view_json
-    graph_group = graph_groups[0]
 
-    {
-        'document_id'         => document_id,
-        'account_id'          => account_id,
-        'page'                => page_number,
-        'location'            => {'image' => location},
-        'ag_account_id'       => graph_group.created_by,
-        'iteration'           => iteration,
-        'ag_iteration'        => graph_group.iteration,
-        'annotation_group_id' => graph_group.id,
-        'is_graph_data'       => true,
-        'graph_json'          => graph_json,
-        'anno_type'           => 'graph',
-        'groups'              => [{:group_id => graph_group.group_id}]
-    }
+  def self.create(params)
+      if params[:highlight_id].nil? && !params[:location].nil? then
+          highlight = Highlight.create({
+                                           :document_id => params[:document_id],
+                                           :image_link => params[:image_link],
+                                           :location => params[:location],
+                                           :page_number => params[:page_number]
+                                       })
+          params[:highlight_id] = highlight.id
+      end
+      params = params.except(:image_link,:location,:page_number)
+      super(params)
   end
+
+
+  def clear_highlights
+      #If this is the last object attached to a highlight, delete it
+      if self.highlight and self.highlight.annotations.length == 0 and self.highlight.graphs.length == 1 then
+          self.highlight.destroy
+      end
+  end
+
+
+  def as_json(opts={})
+    {
+        'account_id'          => account_id,
+        'document_id'         => document_id,
+        'graph_json'          => graph_json,
+        'group_id'            => group_id,
+        'highlight_id'        => highlight_id,
+        'id'                  => id,
+        'image_link'          => self.highlight ? self.highlight.image_link : nil,
+        'iteration'           => iteration,
+        'location'            => self.highlight ? self.highlight.location : nil
+    }
+ end
 end

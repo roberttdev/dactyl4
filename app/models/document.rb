@@ -315,7 +315,7 @@ class Document < ActiveRecord::Base
   end
 
   def ordered_highlights(account)
-    joinClause = "LEFT JOIN annotations ON annotations.highlight_id=highlights.id " \
+    joinClause = "LEFT JOIN annotations ON annotations.highlight_id=highlights.id AND (annotations.is_graph_data IS NULL OR annotations.is_graph_data=FALSE) " \
         "LEFT JOIN graphs ON graphs.highlight_id=highlights.id"
 
     whereClause = "(annotations.account_id=#{account.id} OR graphs.account_id=#{account.id})" if in_de?
@@ -325,7 +325,7 @@ class Document < ActiveRecord::Base
                     " OR (graphs.group_id IN (SELECT id FROM groups WHERE document_id=#{self.id} AND iteration=#{self.iteration}))"  if in_supp_de?
     whereClause = "(annotations.qa_approved_by IS NOT NULL OR graphs.qa_approved_by IS NOT NULL)" if in_extraction?
 
-    self.highlights.joins(joinClause).includes(:annotations,:graphs).where(whereClause).order('page_number asc, location asc nulls first')
+    self.highlights.joins(joinClause).includes(:annotations,:graphs).where(whereClause).order('page_number asc, location asc nulls first').distinct
   end
 
   def annotations_with_authors(account, annotations=nil)

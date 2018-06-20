@@ -71,17 +71,10 @@ class GroupsController < ApplicationController
         anno = Annotation.create({
           :account_id   => current_account.id,
           :document_id  => params[:document_id],
-          :title        => field.field_name,
+          :group_id     => group.id,
+          :iteration    => doc.iteration,
           :templated    => true,
-          :iteration    => doc.iteration
-        })
-
-        ag = AnnotationGroup.create({
-          :annotation_id  => anno.id,
-          :group_id       => group.id,
-          :created_by     => current_account.id,
-          :approved_count => 0,
-          :iteration      => doc.iteration
+          :title        => field.field_name
         })
       end
     end
@@ -124,22 +117,18 @@ class GroupsController < ApplicationController
 
     #If graph data already exists, wipe it and replace
     Group.destroy_all({:parent_id => parent_group.id, :is_graph_data => true})
-    GraphGroup.destroy_all({:group_id => parent_group.id})
 
     graph = Graph.create({
-        :page_number => params[:page_number],
-        :location => params[:location][:image],
-        :iteration => doc.iteration,
-        :graph_json => params[:graph_json],
         :account_id => current_account.id,
-        :document_id => doc.id
-    })
-
-    GraphGroup.create({
-        :graph_id => graph.id,
-        :group_id => parent_group.id,
+        :created_by => current_account.id,
+        :document_id => doc.id,
+        :graph_json => params[:graph_json],
+        :group_id => params[:group_id],
+        :highlight_id => params[:highlight_id],
+        :image_link => params[:image_link],
         :iteration => doc.iteration,
-        :created_by => current_account.id
+        :location => params[:location],
+        :page_number => params[:page_number]
     })
 
     graph_data = JSON.parse(params[:graph_json])
@@ -164,25 +153,21 @@ class GroupsController < ApplicationController
 
        for i in 0..(point['value'].length-1)
          anno = Annotation.create({
-            :iteration => doc.iteration,
             :account_id => current_account.id,
+            :content => point['value'][i],
             :document_id => doc.id,
-            :templated => true,
+            :group_id => group.id,
+            :highlight_id => graph.highlight_id,
             :is_graph_data => true,
-            :title => variableNames[i],
-            :content => point['value'][i]
+            :iteration => doc.iteration,
+            :templated => true,
+            :title => variableNames[i]
          })
 
-         AnnotationGroup.create({
-             :annotation_id => anno.id,
-             :group_id => group.id,
-             :created_by => current_account.id,
-             :iteration => doc.iteration
-         })
        end
     end
 
-    json({'temp' => true})
+    json(graph)
   end
 
   def update_approval

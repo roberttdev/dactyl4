@@ -560,11 +560,13 @@
   }
 
 /* ---------------------------------------------------- pagination */
+.DV-hideNav {
+  display: none;
+}
 
 .DV-pagination{
   height: 18px;
-  text-align:center;
-  float:right;
+  text-align:left;
   color:#666;
   text-decoration:uppercase;
   background-color:#fff;
@@ -2442,7 +2444,7 @@ span.DV-highlighted{
 }
   .DV-annotationTextArea {
     padding: 7px;
-    margin: 10px 0;
+    margin: 15px 0;
     height: 110px;
     outline: 0;
     resize: none;

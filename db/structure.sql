@@ -621,7 +621,8 @@ CREATE TABLE highlights (
     id integer NOT NULL,
     document_id integer,
     location text,
-    page_number integer
+    page_number integer,
+    image_link text
 );
 
 
@@ -2088,4 +2089,6 @@ INSERT INTO schema_migrations (version) VALUES ('20160816190855');
 INSERT INTO schema_migrations (version) VALUES ('20161013165748');
 
 INSERT INTO schema_migrations (version) VALUES ('20180209200510');
+
+INSERT INTO schema_migrations (version) VALUES ('20180607144042');
 

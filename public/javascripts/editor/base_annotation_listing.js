@@ -75,8 +75,11 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
   deletePoint: function() {
     var _thisView = this;
     dc.app.editor.annotationEditor.close(function() {
-      //If close succeeds, continue
-      dc.app.editor.annotationEditor.deleteHighlight(_thisView.model.get('id'), _thisView.model.get('highlight_id'));
+      //If close succeeds..
+      //Wipe DV side if there is data saved there
+      if(_thisView.model.get('highlight_id')){
+          dc.app.editor.annotationEditor.deleteHighlight(_thisView.model.get('id'), _thisView.model.get('highlight_id'));
+      }
       _thisView.model.destroy({data: {group_id: _thisView.group_id}, processData: true});
 
       _thisView.trigger('pointDeleted', _thisView, _thisView.model.id);
@@ -127,29 +130,30 @@ dc.ui.BaseAnnotationListing = Backbone.View.extend({
     this.waitingForClone = turnOn;
   },
 
-  //Pass annotation data to DV, to sync
-  syncDV: function(success) {
-    dc.app.editor.annotationEditor.syncDV({
-        highlight_id: this.model.get('highlight_id'),
-        annotation_id: this.model.get('id'),
-        location: this.model.get('highlight').location
-    });
-  },
 
   //updateAnnotation: take results from Document Viewer and update annotation
-  updateAnnotation: function(annoData) {
+  updateAnnotation: function(annoData, success) {
     var _thisView = this;
 
     if( this.control_panel.isTitleDuplicated(annoData.title, this.model.get('id')) ){
         dc.ui.Dialog.alert(_.t('duplicate_titles', annoData.title));
+        return false;
     }else{
-        //If title is not duplicate of existing title, save
+        //If title is not duplicate of existing title, update for cloning and save
         this.model.set(annoData);
-        this.model.save({},{success: function(){
-            _thisView.clearAnnotation();
+        this.model.save({},{success: function(model, response){
+            _thisView.highlight();
             _thisView.render();
-            _thisView.syncDV();
+
+            //Pass along updateAll status with response
+            returnData = {
+                content     : response,
+                type        : 'annotation',
+                updateAll   : annoData.updateAll
+            };
+            if(success){ success.call(_thisView, returnData); }
         }});
+        return true;
     }
   },
 

@@ -145,11 +145,11 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
     },
 
 
-    //Pull all annotations for the document and reload the DV with them
-    reloadAnnotations: function(){
-        var _annos = new dc.model.Annotations({document_id: this.model.get('document_id')});
-        _annos.getAll({success: function(response){
-            dc.app.editor.annotationEditor.reloadAnnotations(response);
+    //Pull all highlights for the document and reload the DV with them
+    reloadHighlights: function(){
+        var _highls = new dc.model.Highlights({document_id: this.model.get('document_id')});
+        _highls.getAll({success: function(response){
+            dc.app.editor.annotationEditor.reloadHighlights(response);
         }});
     },
 
@@ -168,7 +168,10 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
         this.pointViewList.push(_view);
         _view.render();
 
-        if(highlight){ _view.highlight(); }
+        if(highlight){
+            _view.highlight();
+            dc.app.editor.annotationEditor.showHighlight(model, 'annotation', false);
+        }
 
         this.listenTo(_view, 'requestAnnotationClear', this.clearAnnotations);
 
@@ -187,22 +190,12 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
             group_id: this.model.id,
             document_id: this.model.get('document_id'),
             templated: false,
-            is_graph_data: this.model.get('is_graph_data') || this.model.get('is_graph_group')
+            is_graph_data: false
         });
         this.model.annotations.add(_point);
         var _view = this.addDataPoint(_point);
         _view.prepareForAnnotation();
         $('#annotation_section').append(_view.$el);
-    },
-
-
-    createDataPointCopy: function(anno) {
-        var _point = new dc.model.Annotation(anno);
-        _point.set({group_id: this.model.id}); //Update group id, and in process mark as changed
-        this.model.annotations.add(_point);
-        var _view = this.addDataPoint(_point);
-        this.$('#annotation_section').append(_view.$el);
-        return _view;
     },
 
 
@@ -233,20 +226,25 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
 
     //Save graph data
     saveGraph: function(anno_data) {
-      this.model.save_graph(anno_data, this.reloadCurrent);
-    },
+      var _this = this;
+      this.model.save_graph(anno_data, function(response){
+          _this.reloadCurrent();
 
-    //Clone 'anno', replacing AnnotationView 'replace'
-    replacePoint: function(anno, replace) {
-        replace.deletePoint();
-        this.createDataPointCopy(anno);
+          returnData = {
+              content     : response,
+              type        : 'graph'
+          };
+          dc.app.editor.annotationEditor.syncDV(returnData);
+      });
     },
 
 
     //delegateUpdate: When request to update received, find proper view and instruct it to update
     delegateUpdate: function(anno){
         _view = _.find(this.pointViewList, function(view){ return view.$el.hasClass('highlighting'); });
-        _view.updateAnnotation(anno);
+        _view.updateAnnotation(anno, function(response){
+            dc.app.editor.annotationEditor.syncDV(response);
+        });
     },
 
 

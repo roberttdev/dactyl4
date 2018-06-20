@@ -100,6 +100,9 @@ DC::Application.routes.draw do
       post :update_approval
     end
 
+    resources :highlights do
+        member {  match '(*all)', action: :cors_options, via: :options, allowed_methods: [:get] }
+    end
     resources :annotations do
       member {  match '(*all)', action: :cors_options, via: :options, allowed_methods: [:delete,:post] }
     end

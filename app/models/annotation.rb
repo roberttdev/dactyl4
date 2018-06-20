@@ -73,7 +73,7 @@ class Annotation < ActiveRecord::Base
   # end
 
   def self.create(params)
-    if params[:highlight_id].nil? then
+    if params[:highlight_id].nil? && !params[:location].nil? then
       highlight = Highlight.create({
           :document_id => params[:document_id],
           :location => params[:location],
@@ -87,7 +87,7 @@ class Annotation < ActiveRecord::Base
 
   def clear_highlights
     #If this is the last object attached to a highlight, delete it
-    if self.highlight.annotations.length == 1 and self.highlight.graphs.length == 0 then
+    if self.highlight and self.highlight.annotations.length == 1 and self.highlight.graphs.length == 0 then
       self.highlight.destroy
     end
   end
@@ -172,7 +172,7 @@ class Annotation < ActiveRecord::Base
   end
 
   #As_json view of annotation is used by DocumentCloud side (use canonical for Document-Viewer)
-  #This view flattens an annotation with a specific AnnotationGroup relationship.  The query that uses this JSON format will need to isolate
+  #This view flattens an annotation with a highlight relationship.  The query that uses this JSON format will need to isolate
   #a single AG reference for each annotation.
   def as_json(opts={})
     opts.merge({:skip_groups => true})
@@ -189,7 +189,8 @@ class Annotation < ActiveRecord::Base
       'templated'         => templated,
       'match_id'          => match_id,
       'match_strength'    => match_strength,
-      'is_graph_data'     => is_graph_data
+      'is_graph_data'     => is_graph_data,
+      'location'          => self.highlight ? self.highlight.location : nil
     })
   end
 

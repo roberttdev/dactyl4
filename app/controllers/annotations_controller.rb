@@ -18,7 +18,7 @@ class AnnotationsController < ApplicationController
       #For QC, this is used for DV -- return only DE anno-groups
       searchParams = {:document_id => params[:document_id], "annotation_groups.based_on" => nil}
     end
-    annotations = Annotation.includes(:annotation_groups, :document).where(searchParams)
+    annotations = Annotation.includes(:document).where(searchParams)
     json annotations.map {|a| a.canonical }
   end
 
@@ -50,11 +50,8 @@ class AnnotationsController < ApplicationController
   def create
     doc = Document.find(params[:document_id])
 
-    submitHash = pick(params, :document_id, :title, :content, :templated, :group_id)
+    submitHash = pick(params, :content, :document_id, :highlight_id, :location, :page_number, :templated, :title, :group_id)
     submitHash[:access] = DC::Access::PUBLIC
-    submitHash[:location] = params[:highlight][:location][:image]
-    submitHash[:highlight_id] = params[:highlight][:id]
-    submitHash[:page_number] = params[:highlight][:page_number]
 
     #In DE or Extract mode, create the base annotation
     if doc.in_de? || doc.in_supp_de? || doc.in_extraction?
@@ -63,24 +60,34 @@ class AnnotationsController < ApplicationController
         anno = Annotation.create(submitHash)
     end
 
-    json({:highlight_id => anno.highlight_id, :id => anno.id})
+    json(anno)
   end
 
   # You can only alter annotations that you've made yourself.
   def update
     maybe_set_cors_headers
     return not_found unless anno = current_annotation
-    if !current_account.allowed_to_edit?(anno)
-      anno.errors.add(:base, "You don't have permission to update the note.")
-      return json(anno, 403)
-    end
-    attrs = pick(params, :title, :content, :access)
+
+    attrs = pick(params, :title, :content, :access, :highlight_id)
     attrs[:access] = DC::Access::ACCESS_MAP[attrs[:access].to_sym]
-    anno.update_attributes(attrs)
+
     expire_page current_document.canonical_cache_path if current_document.cacheable?
     expire_page current_annotation.canonical_cache_path if current_annotation.cacheable?
-    anno.reset_public_note_count
-    json anno
+
+    if params[:updateAll] == true
+        #If update all, update other annos on this highlight that match
+        annos = Highlight.find(params[:highlight_id]).annotations.where({title: anno.title, content: anno.content})
+        annos.each do |eachAnno|
+            eachAnno.update_attributes(attrs)
+            eachAnno.reset_public_note_count
+        end
+        anno = Annotation.find(anno.id)
+    else
+        #Otherwise just update the one
+        anno.update_attributes(attrs)
+        anno.reset_public_note_count
+    end
+    json(anno)
   end
 
   def destroy
@@ -98,7 +105,7 @@ class AnnotationsController < ApplicationController
     render :nothing => true
   end
 
-  #Updates many annotations at once
+  #Updates many annotations at once.. needs update to new models (if still used)
   def bulk_update
     doc = Document.find(params[:document_id])
     group_id = params[:group_id]
