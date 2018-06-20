@@ -740,7 +740,7 @@ class Document < ActiveRecord::Base
         if anno
           return {
               'errorText' => 'Completion failed because a data point is incomplete.  Please populate or delete the incomplete point.',
-              'data' => {id: anno.id, group_id: anno.annotation_groups[0].group_id}
+              'data' => {id: anno.id, group_id: anno.group_id}
           }
         end
 

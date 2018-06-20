@@ -12606,6 +12606,7 @@ DV.Schema.prototype.importCanonicalDocument = function(json, view_only) {
 DV.Schema.prototype.loadHighlight = function(highl) {
     //Only load highlights with locations already set
     if(highl.location) {
+        if(!highl.id){ highl.id = this.getUniqueID(); }
         var hiModel = new DV.HighlightModel(highl);
         var idx = hiModel.get('page') - 1;
         this.data.highlightsById[hiModel.id] = hiModel;
@@ -12894,6 +12895,16 @@ DV.Schema.prototype.getPreviousHighlight = function(currentId) {
 DV.Schema.prototype.setRecommendations = function(recArray){
     this.recommendations = recArray;
 };
+
+
+DV.Schema.prototype.getUniqueID = function(){
+    var id = parseInt(DV._.uniqueId());
+    while(this.data.highlightsById[id]){
+        id = parseInt(DV._.uniqueId());
+    }
+
+    return id;
+}
 // We cache DOM references to improve speed and reduce DOM queries
 DV.Schema.elements =
 [
@@ -13196,7 +13207,7 @@ DV.HighlightModel = function(argHash){
 
     this.displayIndex = 0;
     this.document_id = null;
-    this.id = parseInt(DV._.uniqueId());
+    this.id = null;
     this.image_link = null;
     this.location = null;
     this.page = 0;
