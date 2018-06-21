@@ -195,7 +195,8 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
                     title: _highlight.get('title'),
                     content: _highlight.get('content'),
                     document_id: _highlight.get('document_id'),
-                    group_id: _highlight.get('group_id')
+                    group_id: _highlight.get('group_id'),
+                    id: _highlight.id
                 }];
             }
 
