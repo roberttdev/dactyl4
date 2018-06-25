@@ -74,6 +74,16 @@ class AnnotationsController < ApplicationController
     expire_page current_document.canonical_cache_path if current_document.cacheable?
     expire_page current_annotation.canonical_cache_path if current_annotation.cacheable?
 
+    #Annos can exist without highlights.  If there is no highlight assigned but a location is passed, create one
+    if( attrs[:highlight_id].nil? && params[:location] ) then
+        highl = Highlight.create({
+                                     document_id: params[:document_id],
+                                     location: params[:location],
+                                     page_number: params[:page_number]
+                                 })
+        attrs[:highlight_id] = highl.id
+    end
+
     if params[:updateAll] == true
         #If update all, update other annos on this highlight that match
         annos = Highlight.find(params[:highlight_id]).annotations.where({title: anno.title, content: anno.content})

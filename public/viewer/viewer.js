@@ -12606,7 +12606,7 @@ DV.Schema.prototype.importCanonicalDocument = function(json, view_only) {
 DV.Schema.prototype.loadHighlight = function(highl) {
     //Only load highlights with locations already set
     if(highl.location) {
-        if(!highl.id){ highl.id = this.getUniqueID(); }
+        (!highl.id) ? highl.id = this.getUniqueID() : highl.server_id = highl.id;
         var hiModel = new DV.HighlightModel(highl);
         var idx = hiModel.get('page') - 1;
         this.data.highlightsById[hiModel.id] = hiModel;
@@ -13239,7 +13239,6 @@ DV.HighlightModel.prototype.set = function(argHash){
         }
 
         //Special case logic
-        if(index == 'id') this.server_id = element;
         if(index == 'location'){
             var loc = DV.jQuery.map(element.split(','), function (n, i) {
                 return parseInt(n, 10);

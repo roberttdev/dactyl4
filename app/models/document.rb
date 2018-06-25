@@ -953,7 +953,7 @@ class Document < ActiveRecord::Base
       value_sorted_annos[anno.content] << {
         id:       anno.id,
         title:    anno.title.downcase,
-        location: anno.location.split(',') #y1, x2, y2, x1
+        location: anno.highlight.location.split(',') #y1, x2, y2, x1
       }
     end
     de_one_annos = nil
@@ -964,7 +964,7 @@ class Document < ActiveRecord::Base
       anno.content = anno.content.downcase
       anno.title = anno.title.downcase
       if !value_sorted_annos[anno.content].nil?
-        anno.location = anno.location.split(',') #y1, x2, y2, x1
+        anno.location = anno.highlight.location.split(',') #y1, x2, y2, x1
         value_sorted_annos[anno.content].each do |potential_match|
           if( potential_match[:location][3] < anno.location[1] && potential_match[:location][1] >  anno.location[3] &&
               potential_match[:location][0] < anno.location[2] && potential_match[:location][2] > anno.location[0] )
