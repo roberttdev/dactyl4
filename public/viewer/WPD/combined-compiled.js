@@ -23,12 +23,13 @@
 
 var wpd = wpd || {};
 
-wpd.initApp = function(isWindowed, image_ref, initial_graph_json, parent_ref) {// This is run when the page loads.
+wpd.initApp = function(isWindowed, image_ref, initial_graph_json, parent_ref, read_only) {// This is run when the page loads.
 
     wpd.isWindowed = isWindowed;
     wpd.image_ref = image_ref == null ? 'start.png' : image_ref;
     wpd.initial_graph_json = initial_graph_json;
     wpd.parent_ref = parent_ref ? parent_ref : document;
+    wpd.read_only = read_only;
 
     //Load CSS if it's not loaded.  If it is, skip to display
     if( !$("link[href='/viewer/WPD/css/styles.css']").length ){
@@ -59,6 +60,9 @@ wpd.initIfAllCSSLoaded = function(){
 wpd.initDisplay = function(){
     wpd.browserInfo.checkBrowser();
     wpd.layoutManager.initialLayout();
+
+    //Hide toolbar if read only
+    if(wpd.read_only){ $(this.findElement('menuButtonsContainer')).hide(); }
 
     var curtain = this.findElement('loadingCurtain');
 
@@ -7593,12 +7597,13 @@ wpd.acquireData = (function () {
         if(!wpd.appData.isAligned()) {
             wpd.messagePopup.show(wpd.gettext('acquire-data'), wpd.gettext('acquire-data-calibration'));
         } else {
-            showSidebar();
+            if(!wpd.read_only){ showSidebar(); }
+
             wpd.dataPointCounter.setCount();
             wpd.graphicsWidget.removeTool();
             wpd.graphicsWidget.setRepainter(new wpd.DataPointsRepainter());
 
-            manualSelection();
+            if(!wpd.read_only){ manualSelection(); }
         }
     }
 
@@ -9641,7 +9646,7 @@ wpd.saveResume = (function () {
         if(wpd.appData.isAligned()) {
             wpd.acquireData.load();
         }
-        wpd.messagePopup.show(wpd.gettext('import-json'), wpd.gettext("json-data-loaded"));
+        //wpd.messagePopup.show(wpd.gettext('import-json'), wpd.gettext("json-data-loaded"));
     }
 
     return {

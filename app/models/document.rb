@@ -964,10 +964,10 @@ class Document < ActiveRecord::Base
       anno.content = anno.content.downcase
       anno.title = anno.title.downcase
       if !value_sorted_annos[anno.content].nil?
-        anno.location = anno.highlight.location.split(',') #y1, x2, y2, x1
+        highl_location = anno.highlight.location.split(',') #y1, x2, y2, x1
         value_sorted_annos[anno.content].each do |potential_match|
-          if( potential_match[:location][3] < anno.location[1] && potential_match[:location][1] >  anno.location[3] &&
-              potential_match[:location][0] < anno.location[2] && potential_match[:location][2] > anno.location[0] )
+          if( potential_match[:location][3] < highl_location[1] && potential_match[:location][1] >  highl_location[3] &&
+              potential_match[:location][0] < highl_location[2] && potential_match[:location][2] > highl_location[0] )
             if anno.title == potential_match[:title]
               matches[anno.id] = {match_id: potential_match[:id], match_strength: 2}
               matches[potential_match[:id]] = {match_id: anno.id, match_strength: 2}

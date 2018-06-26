@@ -10808,6 +10808,7 @@ DV.AnnotationView.prototype.render = function(argHash){
     argHash.author_organization = this.model.get('author_organization') || "";
     argHash.image               = pageModel.imageURL(this.highlight.page.pageNumber - 1);
     argHash.imageTop            = argHash.top + 6;
+    argHash.owns_note           = this.model.get('owns_note');
     argHash.title               = this.model.get('title');
     argHash.text                = this.model.get('text');
 
@@ -10941,6 +10942,8 @@ DV.GraphView = function(highlViewRef, graphModel){
 // Receives an argHash with external data about the highlight container/context
 DV.GraphView.prototype.render = function(argHash){
     argHash.graph_json = _.escape(JSON.stringify(this.model.get('graph_json')));
+    argHash.owns_note = this.model.get('owns_note');
+
     var returnHTML = JST['DV/views/graph'](argHash);
     return returnHTML;
 },
@@ -10955,7 +10958,7 @@ DV.GraphView.prototype.initWPD = function(){
     //If wpd loaded, run init -- if not, it's already loading, so wait and try again
     if(typeof(wpd) != 'undefined'){
         wpd.iframe_api.setParentMsgFunction(this.highlight.viewer.wpd_api.receiveMessage.bind(this.highlight.viewer.wpd_api));
-        wpd.initApp(true, this.highlight.model.get('image_link'), this.model.get('graph_json'), $(this.highlight.highlightEl).find('#graph_frame'));
+        wpd.initApp(true, this.highlight.model.get('image_link'), this.model.get('graph_json'), $(this.highlight.highlightEl).find('#graph_frame'), !this.model.get('owns_note'));
     }else{
         //If not loaded, try again in 1 second
         setTimeout(this.initWPD.bind(this), 1000);
@@ -12931,10 +12934,11 @@ DV.Schema.elements =
 DV.AnnotationModel = function(argHash){
     //Set defaults
     this.access = 'public';
-    this.author = null;
-    this.author_organizaton = null;
+    this.account_id = null;
     this.group_id = null;
     this.id = null;
+    this.match_id = null;
+    this.owns_note = true;
     this.server_id = null;
     this.text = '';
     this.title = '';
@@ -12954,7 +12958,7 @@ DV.AnnotationModel.prototype.get = function(property){
 DV.AnnotationModel.prototype.set = function(argHash){
     DV._.each(argHash, DV.jQuery.proxy(function(element, index){
         //Whitelist parameters
-        if(['access','author','author_organization','group_id','id','server_id','text','title','unsaved'].indexOf(index) >= 0){
+        if(['access','account_id','group_id','id','match_id','owns_note','server_id','text','title','unsaved'].indexOf(index) >= 0){
             this[index] = element;
         }
 
@@ -12970,9 +12974,11 @@ DV.AnnotationModel.prototype.set = function(argHash){
 DV.AnnotationModel.prototype.assembleContentForDC = function(){
     return {
         access: this.access,
+        account_id: this.account_id,
         content: this.text,
         group_id: this.group_id,
         id: this.id,
+        match_id: this.match_id,
         title: this.title,
         server_id: this.server_id,
         unsaved: this.unsaved
@@ -13160,6 +13166,7 @@ DV.GraphModel = function(argHash){
     this.graph_json = null;
     this.group_id = null;
     this.id = null;
+    this.owns_note = true;
     this.server_id = null;
     this.unsaved = argHash.id ? false : true;
 
@@ -13177,7 +13184,7 @@ DV.GraphModel.prototype.get = function(property){
 DV.GraphModel.prototype.set = function(argHash){
     DV._.each(argHash, DV.jQuery.proxy(function(element, index){
         //Whitelist parameters
-        if(['access','graph_json','group_id','id','server_id','unsaved'].indexOf(index) >= 0){
+        if(['access','graph_json','group_id','id','owns_note','server_id','unsaved'].indexOf(index) >= 0){
             this[index] = element;
         }
 
@@ -15809,13 +15816,13 @@ if (DV.onload) DV._.defer(DV.onload);
 (function(){
 window.JST = window.JST || {};
 
-window.JST['DV/views/annotation'] = DV._.template('  <div class="DV-highlightExcerpt" style="height:<%= excerptHeight %>px;">\n    <div class="DV-highlightExcerptImageTop" style="height:<%= excerptHeight %>px; width:<%= excerptWidth %>px;left:<%= excerptTopMarginLeft %>px;">\n\n      <img class="DV-img" src="<%= image %>" style="left:<%= -(excerptMarginLeft + 1) %>px; top:-<%= imageTop %>px;" width="<%= imageWidth %>" />\n\n    </div>\n    <div class="DV-highlightExcerptImage" style="height:<%= excerptHeight %>px;">\n      <img class="DV-img" src="<%= image %>" style="left:<%= -(showWindowMarginLeft) %>px; top:-<%= imageTop %>px;" width="<%= imageWidth %>" />\n    </div>\n  </div>\n\n  <div class="DV-annotationHeader DV-clearfix">\n        <div class="DV-annotationTitle DV-editHidden"><%- title %></div>\n        <input class="DV-annotationTitleInput DV-editVisible" type="text" placeholder="<%= DV.t(\'annotation_title\') %>" value="<%- title.replace(/"/g, \'&quot;\') %>" />\n        <div class="DV-errorMsg"></div>\n        <div class="DV-showEdit DV-editHidden <%= accessClass %>"></div>\n  </div>\n\n  <div class="DV-annotationBody DV-editHidden">\n    <%- text %>\n  </div>\n  <textarea class="DV-annotationTextArea DV-editVisible"><%- text %></textarea>\n\n  <div class="DV-annotationMeta <%= accessClass %>">\n    <% if (author) { %>\n      <div class="DV-annotationAuthor DV-interface DV-editHidden">\n        <%= DV.t(\'note_by\', author ) %><% if (author_organization) { %>, <i><%= author_organization %></i><% } %>\n      </div>\n    <% } %>\n    <div class="minibutton DV-cloneConfirm float_right" style="visibility:<%if(showConfirm){%>visible<%}else{%>hidden<%}%>"><%= DV.t(\'clone\') %></div>\n\n    <div class="DV-annotationEditControls DV-editVisible">\n      <div class="DV-clearfix">\n        <div class="minibutton default DV-saveAnnotation float_right"><%= DV.t(\'save\') %></div>\n        <div class="minibutton DV-cancelEdit float_right"><%= DV.t(\'cancel\') %></div>\n      </div>\n    </div>\n  </div>');
+window.JST['DV/views/annotation'] = DV._.template('  <div class="DV-highlightExcerpt" style="height:<%= excerptHeight %>px;">\n    <div class="DV-highlightExcerptImageTop" style="height:<%= excerptHeight %>px; width:<%= excerptWidth %>px;left:<%= excerptTopMarginLeft %>px;">\n\n      <img class="DV-img" src="<%= image %>" style="left:<%= -(excerptMarginLeft + 1) %>px; top:-<%= imageTop %>px;" width="<%= imageWidth %>" />\n\n    </div>\n    <div class="DV-highlightExcerptImage" style="height:<%= excerptHeight %>px;">\n      <img class="DV-img" src="<%= image %>" style="left:<%= -(showWindowMarginLeft) %>px; top:-<%= imageTop %>px;" width="<%= imageWidth %>" />\n    </div>\n  </div>\n\n  <div class="DV-annotationHeader DV-clearfix">\n        <div class="DV-annotationTitle DV-editHidden"><%- title %></div>\n        <input class="DV-annotationTitleInput DV-editVisible" type="text" placeholder="<%= DV.t(\'annotation_title\') %>" value="<%- title.replace(/"/g, \'&quot;\') %>" />\n        <div class="DV-errorMsg"></div>\n        <div class="<%if(owns_note){%>DV-showEdit<%}%> DV-editHidden <%= accessClass %>"></div>\n  </div>\n\n  <div class="DV-annotationBody DV-editHidden">\n    <%- text %>\n  </div>\n  <textarea class="DV-annotationTextArea DV-editVisible"><%- text %></textarea>\n\n  <div class="DV-annotationMeta <%= accessClass %>">\n    <% if (author) { %>\n      <div class="DV-annotationAuthor DV-interface DV-editHidden">\n        <%= DV.t(\'note_by\', author ) %><% if (author_organization) { %>, <i><%= author_organization %></i><% } %>\n      </div>\n    <% } %>\n    <div class="minibutton DV-cloneConfirm float_right" style="visibility:<%if(showConfirm){%>visible<%}else{%>hidden<%}%>"><%= DV.t(\'clone\') %></div>\n\n    <div class="DV-annotationEditControls DV-editVisible">\n      <div class="DV-clearfix">\n        <div class="minibutton default DV-saveAnnotation float_right"><%= DV.t(\'save\') %></div>\n        <div class="minibutton DV-cancelEdit float_right"><%= DV.t(\'cancel\') %></div>\n      </div>\n    </div>\n  </div>');
 window.JST['DV/views/chapterNav'] = DV._.template('<div id="DV-chapter-<%= id %>" class="DV-chapter <%= navigationExpanderClass %>">\n  <div class="DV-first">\n    <%= navigationExpander %>\n    <span class="DV-trigger">\n      <span class="DV-navChapterTitle"><%= title %></span>&nbsp;<span class="DV-navPageNumber"><%= DV.t(\'pg\') %>&nbsp;<%= pageNumber %></span>\n    </span>\n  </div>\n  <%= noteViews %>\n</div>');
 window.JST['DV/views/descriptionContainer'] = DV._.template('<% if (description) { %>\n  <div class="DV-description">\n    <div class="DV-descriptionHead">\n      <span class="DV-descriptionToggle DV-showDescription DV-trigger"><%= DV.t(\'toggle_description\') %></span>\n      <%= DV.t(\'description\') %>\n    </div>\n    <div class="DV-descriptionText"><%= description %></div>\n  </div>\n<% } %>\n');
 window.JST['DV/views/footer'] = DV._.template('<% if (!options.sidebar) { %>\n  <div class="DV-footer">\n    <div class="DV-fullscreenContainer"></div>\n    <div class="DV-navControlsContainer"></div>\n  </div>\n<% } %>');
 window.JST['DV/views/fullscreenControl'] = DV._.template('<div class="DV-fullscreen" title="<%= DV.t(\'view_fullscreen\') %>"></div>\n');
 window.JST['DV/views/generatingImage'] = DV._.template('<div id="generating_img_notice">Generating Image...</div>');
-window.JST['DV/views/graph'] = DV._.template('  <div>\n    <input class="DV-graphData" type="hidden" value="<%=graph_json%>"/>\n    <div id="graph_frame"></div>\n  </div>\n  <div class="DV-annotationMeta <%= accessClass %>">\n    <div class="DV-annotationEditControls DV-editVisible">\n      <div class="DV-clearfix">\n        <div class="DV-errorMsg float_left"></div>\n        <div class="minibutton default DV-saveAnnotation float_right"><%= DV.t(\'save\') %></div>\n        <div class="minibutton DV-cancelEdit float_right"><%= DV.t(\'cancel\') %></div>\n        <div class="float_right DV-data_error"></div>\n      </div>\n    </div>\n  </div>\n');
+window.JST['DV/views/graph'] = DV._.template('  <div>\n    <input class="DV-graphData" type="hidden" value="<%=graph_json%>"/>\n    <div id="graph_frame"></div>\n  </div>\n  <div class="DV-annotationMeta <%= accessClass %>">\n    <div class="DV-annotationEditControls DV-editVisible">\n      <%if(owns_note){%>\n      <div class="DV-clearfix">\n        <div class="DV-errorMsg float_left"></div>\n        <div class="minibutton default DV-saveAnnotation float_right"><%= DV.t(\'save\') %></div>\n        <div class="minibutton DV-cancelEdit float_right"><%= DV.t(\'cancel\') %></div>\n        <div class="float_right DV-data_error"></div>\n      </div>\n      <%}%>\n    </div>\n  </div>\n');
 window.JST['DV/views/header'] = DV._.template('<div class="DV-header">\n  <div class="DV-headerHat" class="DV-clearfix">\n    <div class="DV-branding">\n      <% if (story_url) { %>\n        <span class="DV-storyLink"><%= story_url %></span>\n      <% } %>\n    </div>\n    <div class="DV-title">\n      <%= title %>\n    </div>\n  </div>\n</div>\n\n<div id="noSaveDialog">You will lose your changes.  Continue?</div>\n\n<div id="dupeAlert">This annotation has duplicates.  Update all with your changes?</div>\n');
 window.JST['DV/views/highlight'] = DV._.template('<div class="DV-highlight <%= accessClass %> DV-ownsHighlight" style="top:<%= top %>px; width:<%= width %>px; margin-left: <%=leftMargin%>px;" id="DV-highlight-<%= id %>" data-id="<%= id %>">\n\n  <div class="DV-highlightTab" style="top:<%= tabTop %>px;">\n    <div class="DV-highlightClose DV-trigger">\n    </div>\n  </div>\n\n  <div class="DV-highlightRegion <%= approvedClass %>" style="margin-left:<%= excerptMarginLeft - 4 %>px; height:<%= excerptHeight %>px; width:<%= excerptWidth - 1 %>px;">\n    <div class="<%= accessClass %>">\n      <div class="DV-highlightEdge DV-highlightEdgeTop"></div>\n      <div class="DV-highlightEdge DV-highlightEdgeRight"></div>\n      <div class="DV-highlightEdge DV-highlightEdgeBottom"></div>\n      <div class="DV-highlightEdge DV-highlightEdgeLeft"></div>\n      <div class="DV-highlightCorner DV-highlightCornerTopLeft"></div>\n      <div class="DV-highlightCorner DV-highlightCornerTopRight"></div>\n      <div class="DV-highlightCorner DV-highlightCornerBottomLeft"></div>\n      <div class="DV-highlightCorner DV-highlightCornerBottomRight"></div>\n    </div>\n    <!--<div class="DV-highlightRegionExclusive"></div>-->\n  </div>\n\n  <div class="DV-highlightContent" style="margin-left: <%= showWindowMarginLeft %>px;">\n    <div class="DV-pagination DV-hideNav">\n      <% if( contentCount > 1 ){ %>\n          <% if( currentContent != 1 ) { %><span class="DV-trigger DV-highlightPrevious" title="<%= DV.t(\'previous_note\') %>"><%= DV.t(\'previous\') %></span><% } %>\n          <span class="DV-groupCount">(<%=currentContent%> of <%=contentCount%>)</span>\n          <% if( currentContent != contentCount ){ %><span class="DV-trigger DV-highlightNext" title="<%= DV.t(\'next_note\') %>"><%= DV.t(\'next\') %></span><% } %>\n      <% } %>\n    </div>\n    <%= innerHTML %>\n  </div>\n</div>\n');
 window.JST['DV/views/highlightNav'] = DV._.template('<div class="DV-highlightMarker" id="DV-highlightMarker-<%= id %>">\n  <span class="DV-trigger">\n    <span class="DV-navHighlightTitle">Highlight <%= id %></span>&nbsp;<span class="DV-navPageNumber"><%= DV.t(\'pg\') %> <%= page %></span>\n  </span>\n</div>');

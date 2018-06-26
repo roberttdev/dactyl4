@@ -39,7 +39,8 @@ class Graph < ActiveRecord::Base
         'id'                  => id,
         'image_link'          => self.highlight ? self.highlight.image_link : nil,
         'iteration'           => iteration,
-        'location'            => self.highlight ? self.highlight.location : nil
+        'location'            => self.highlight ? self.highlight.location : nil,
+        'owns_note'           => opts[:account] && (opts[:account].id == account_id) && (iteration == document.iteration)
     }
  end
 end

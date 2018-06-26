@@ -111,18 +111,18 @@ class Group < ActiveRecord::Base
   def unapproved_count
     if document.in_qc? || document.in_supp_qc?
       sqlID = ActiveRecord::Base.connection.quote(id)
-      sql = "SELECT ag.id
+      sql = "SELECT a.id
             FROM get_descendants(#{sqlID}) grps
-            INNER JOIN annotation_groups ag ON grps.group_id=ag.group_id
-            WHERE ag.approved_count=0 AND ag.qa_approved_by IS NULL"
+            INNER JOIN annotations a ON grps.group_id=a.group_id
+            WHERE a.qc_approved_by IS NULL AND a.qa_approved_by IS NULL"
       annos = ActiveRecord::Base.connection.exec_query(sql)
       unapproved = annos.count
     elsif document.in_qa? || document.in_supp_qa?
       sqlID = ActiveRecord::Base.connection.quote(id)
       sql = "SELECT ag.id
             FROM get_descendants(#{sqlID}) grps
-            INNER JOIN annotation_groups ag ON grps.group_id=ag.group_id
-            WHERE ag.qa_approved_by IS NULL"
+            INNER JOIN annotations a ON grps.group_id=a.group_id
+            WHERE a.qa_approved_by IS NULL"
       annos = ActiveRecord::Base.connection.exec_query(sql)
       unapproved = annos.count
     else
