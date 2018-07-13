@@ -900,7 +900,7 @@ wpd.DataSeries = (function () {
             //Need to prompt for extra variable values if extra variables (and not repopulating from json load)
             if( !extraVars && this.variableIds.length > 2 ){
                 wpd.popup.show('extra-variable-prompt');
-                wpd.findElement('pointData').val(JSON.stringify(pointData));
+                $(wpd.findElement('pointData')).val(JSON.stringify(pointData));
             }else{
                 this.addPointData(pointData);
             }
@@ -1041,7 +1041,7 @@ wpd.DataSeries = (function () {
             //Check that all defined fields have values, if so, save, clear form, and close
             var empty = false;
             for(var i=2; i < wpd.dataSeriesManagement.activeDataSeries.variableIds.length; i++){
-                var val = wpd.findElement('extra_var_' + wpd.dataSeriesManagement.activeDataSeries.variableIds[i]).val();
+                var val = $(wpd.findElement('extra_var_' + wpd.dataSeriesManagement.activeDataSeries.variableIds[i])).val();
                 if( val == "" ){
                     empty = true;
                     break;
@@ -1051,13 +1051,13 @@ wpd.DataSeries = (function () {
             if( empty ){
                 alert('Please enter a value for each variable.');
             }else{
-                var pointData = JSON.parse(wpd.findElement('pointData').val());
+                var pointData = JSON.parse($(wpd.findElement('pointData')).val());
                 if(pointData.extraVars === undefined){ pointData.extraVars = []; }
-                wpd.findElement('pointData').val('');
+                $(wpd.findElement('pointData')).val('');
 
                 for(var i=2; i < wpd.dataSeriesManagement.activeDataSeries.variableIds.length; i++){
-                    pointData.extraVars.push($wpd.findElement('extra_var_' + wpd.dataSeriesManagement.activeDataSeries.variableIds[i]).val());
-                    wpd.findElement('extra_var_' + wpd.dataSeriesManagement.activeDataSeries.variableIds[i]).val('');
+                    pointData.extraVars.push($(wpd.findElement('extra_var_' + wpd.dataSeriesManagement.activeDataSeries.variableIds[i])).val());
+                    $(wpd.findElement('extra_var_' + wpd.dataSeriesManagement.activeDataSeries.variableIds[i])).val('');
                 }
                 wpd.popup.close('extra-variable-prompt');
                 this.addPointData(pointData);

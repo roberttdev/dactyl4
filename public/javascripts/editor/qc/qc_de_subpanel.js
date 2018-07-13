@@ -49,9 +49,9 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
   },
 
 
-  //When annotation selected in DV, find a data point that's waiting for DV input or matches the annotation and pass response to it.  If neither,
+  //When annotation selected elsewhere, find a data point that's waiting for DV input or matches the annotation and pass response to it.  If neither,
   //reload to a group that contains a point that matches it
-  handleAnnotationSelect: function(anno){
+  handleAnnotationSelect: function(anno, showInDV){
     var _deView = this;
 
     //If the anno has a match, trigger match logic
@@ -64,6 +64,11 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
     }else {
       _deView.reloadPoints(anno.group_id, anno.id);
     }
+  },
+
+    
+  handleGraphSelect: function(graph){
+      this.reloadPoints(graph.group_id);
   },
 
 

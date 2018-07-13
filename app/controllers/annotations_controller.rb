@@ -50,11 +50,11 @@ class AnnotationsController < ApplicationController
   def create
     doc = Document.find(params[:document_id])
 
-    submitHash = pick(params, :content, :document_id, :highlight_id, :location, :page_number, :templated, :title, :group_id)
+    submitHash = pick(params, :based_on, :content, :document_id, :group_id, :highlight_id, :location, :page_number, :templated, :title)
     submitHash[:access] = DC::Access::PUBLIC
 
-    #In DE or Extract mode, create the base annotation
-    if doc.in_de? || doc.in_supp_de? || doc.in_extraction?
+    #In certain modes, update creator and iteration
+    if doc.in_de? || doc.in_qc? || doc.in_supp_de? || doc.in_extraction?
         submitHash[:account_id] = current_account.id
         submitHash[:iteration] = doc.iteration
         anno = Annotation.create(submitHash)
@@ -151,16 +151,7 @@ class AnnotationsController < ApplicationController
     end
     json Annotation.where({:document_id => params[:document_id], :group_id => group_id})
   end
-
-  #Remove approval for anno+group; if last group, removal approval for anno. Supported approval "type" parameter values: "qc","qa"
-  def unapprove
-    ag = AnnotationGroup.where({group_id: params[:group_id], annotation_id: params[:id]}).first
-    ag.destroy
-
-    #Return data for the original relationship that the unapproved relationship was based on
-    based = AnnotationGroup.find(ag.based_on)
-    json based
-  end
+  
 
   #Return top 10 unique annotation names that match search term
   def search

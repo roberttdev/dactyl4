@@ -344,6 +344,7 @@
   - freelancer: Freelancer
   - full_page: Full Page
   - future_documents_w_appear: Future documents %s will appear in your embed.
+  - graph_subgroup_clone_error: Graph data subgroups must be cloned into an existing graph parent group.
   - group: Group
   - groups: Groups
   - group_name: Group Name

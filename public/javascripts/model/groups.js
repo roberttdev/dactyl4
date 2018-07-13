@@ -30,9 +30,10 @@ dc.model.Group = Backbone.Model.extend({
 
 
     //Clone: create a value-less copy of this group and all subgroups/data points, with passed ID as new parent.
-    clone: function(newParentID, success, error) {
+    clone: function(newParentID, success, error, is_graph) {
+        var _url = this.urlRoot + '/' + this.id + ((is_graph) ? '/graph_clone' : '/clone');
         $.ajax({
-            url         : this.urlRoot + '/' + this.id + '/clone',
+            url         :  _url,
             contentType : 'application/json; charset=utf-8',
             type        : 'post',
             data        : JSON.stringify({'parent_id': newParentID}),

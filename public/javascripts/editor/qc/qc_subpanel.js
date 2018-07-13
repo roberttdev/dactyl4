@@ -47,24 +47,13 @@ dc.ui.ViewerQcSubpanel = dc.ui.ViewerBaseControlPanel.extend({
   },
 
 
-  //Save: save all valid data point changes if no errors
-  save: function(success) {
-    var _deView = this;
-
-    this.model.annotations.pushAll({success: function(){
-      _deView.syncDV(success)
-    }});
-  },
-
-
   //Take in DE point, and make an approved copy if it doesn't already exist
   approveDEPoint: function(anno, group_id){
-    if( this.hasTitle(anno.get('title')) ){ return false; }
+    if( this.isTitleDuplicated(anno.get('title')) ){ return false; }
     else {
         anno.set({
-          based_on: anno.get('annotation_group_id'),
-          based_on_group_id: group_id,
-          iteration: currentDocumentModel.iteration
+            approved: true,
+            based_on: anno.get('id')
         });
         var _view = this.createDataPointCopy(anno.attributes);
         this.listenTo(_view, 'removeFromQC', this.passRemoveFromQC);

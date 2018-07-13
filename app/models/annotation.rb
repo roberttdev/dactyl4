@@ -4,6 +4,8 @@ class Annotation < ActiveRecord::Base
   include DC::DocumentStatus
   include DC::Access
 
+  has_one :qc_clone, :class_name => "Annotation", :foreign_key => 'based_on'
+
   belongs_to :group
   belongs_to :highlight
   belongs_to :document
@@ -13,7 +15,8 @@ class Annotation < ActiveRecord::Base
   belongs_to :organization
   has_many :project_memberships, :through => :document
 
-  has_one :annotation_note, :foreign_key => 'annotation_group_id'
+  has_one :qc_clone, :class_name => "Annotation", :foreign_key => 'based_on'
+  has_one :annotation_note
   has_one :supp_de_note, -> { where("(annotation_notes.annotation_id IS NOT NULL)") },
           :class_name => "AnnotationNote", :foreign_key => :de_ref
 
@@ -155,11 +158,12 @@ class Annotation < ActiveRecord::Base
   def canonical(opts={})
     data = {'id' => id, 'title' => title, 'content' => content, 'access' => access_name.to_s }
     data['account_id'] = account_id
+    data['anno_type'] = 'annotation'
+    data['approved'] = !qc_clone.nil?
+    data['group_id'] = group_id
+    data['is_graph_data'] = is_graph_data
     data['iteration'] = iteration
     data['match_id'] = match_id
-    data['is_graph_data'] = is_graph_data
-    data['anno_type'] = 'annotation'
-    data['group_id'] = group_id
 
     #If account ID passed in, determine whether it 'owns' this note currently (can edit, generally)
     data['owns_note'] = opts[:account] && (opts[:account].id == account_id) && (iteration == document.iteration)
@@ -178,21 +182,33 @@ class Annotation < ActiveRecord::Base
     opts.merge({:skip_groups => true})
 
     canonical(opts).merge({
-      'document_id'       => document_id,
       'account_id'        => account_id,
-      'organization_id'   => organization_id,
+      'approved'          => get_approval_status,
+      'based_on'          => based_on,
+      'document_id'       => document_id,
       'iteration'         => iteration,
       'group_id'          => group_id,
       'highlight_id'      => highlight_id,
-      'approved'          => qa_approved_by ? true : false,
-      'qa_reject_note'    => (self.association_cache.keys.include?(:annotation_note) || self.association_cache.keys.include?(:supp_de_note)) ? self.qa_reject_note : nil,
-      'templated'         => templated,
+      'is_graph_data'     => is_graph_data,
+      'location'          => self.highlight ? self.highlight.location : nil,
       'match_id'          => match_id,
       'match_strength'    => match_strength,
-      'is_graph_data'     => is_graph_data,
-      'location'          => self.highlight ? self.highlight.location : nil
+      'organization_id'   => organization_id,
+      'qa_reject_note'    => (self.association_cache.keys.include?(:annotation_note) || self.association_cache.keys.include?(:supp_de_note)) ? self.qa_reject_note : nil,
+      'templated'         => templated
     })
   end
+
+
+  def get_approval_status
+      approved = false
+      if document.in_qc?
+          approved = qc_clone ? true : false
+      elsif document.in_qa?
+          approved = qa_approved_by ? true : false
+      end
+  end
+
 
   #Instead of deleting in supp DE, mark
   def mark_deleted_in_supp

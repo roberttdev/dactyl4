@@ -11070,7 +11070,7 @@ DV.HighlightView = function(highl, page, active, edit){
         this.viewer.helpers.setActiveHighlightLimits(this);
         this.viewer.events.resetTracker();
         this.active = null;
-        this.show();
+        this.show({active: true, edit: edit});
         if (edit) this.showEdit();
     }
 };
@@ -11165,11 +11165,11 @@ DV.HighlightView.prototype.remove = function(){
 
 // Redraw the HTML for this highlight
 //active: Whether to make the refreshed highlight active (optional)
-DV.HighlightView.prototype.refresh = function(active, edit) {
+DV.HighlightView.prototype.refresh = function(active, edit, callbacks) {
     this.renderedHTML = DV.jQuery(this.render());
     this.remove();
     this.add();
-    if(active != false){ this.show({callbacks: false, edit: edit}); }else{ this.hide(true); }
+    if(active != false){ this.show({callbacks: callbacks ? callbacks : false, edit: edit}); }else{ this.hide(true); }
 };
 
 
@@ -11228,6 +11228,9 @@ DV.HighlightView.prototype.show = function(argHash) {
 
     //Scroll into view (horizontally)
     $('.DV-pages').scrollLeft(this.showWindowX);
+
+    //Fire callbacks if requested
+    if(argHash && argHash.callbacks){ this.viewer.fireSelectCallbacks(this.model.assembleContentForDC()); }
 };
 
 
@@ -12084,13 +12087,16 @@ DV.PageSet.prototype.draw = function(pageCollection){
 };
 
 DV.PageSet.prototype.redraw = function(stopResetOfPosition, redrawHighlights) {
-    if (this.pages['p0']) this.pages['p0'].draw({ force: true, forceHighlightRedraw : redrawHighlights });
-    if (this.pages['p1']) this.pages['p1'].draw({ force: true, forceHighlightRedraw : redrawHighlights });
-    if (this.pages['p2']) this.pages['p2'].draw({ force: true, forceHighlightRedraw : redrawHighlights });
+    var _this = this;
+    this.cleanUp(function(){
+        if (_this.pages['p0']) _this.pages['p0'].draw({ force: true, forceHighlightRedraw : redrawHighlights });
+        if (_this.pages['p1']) _this.pages['p1'].draw({ force: true, forceHighlightRedraw : redrawHighlights });
+        if (_this.pages['p2']) _this.pages['p2'].draw({ force: true, forceHighlightRedraw : redrawHighlights });
 
-    if(redrawHighlights && this.viewer.activeHighlight){
-        this.viewer.helpers.jump(this.viewer.activeHighlight.page.index,this.viewer.activeHighlight.position.top - 37);
-    }
+        if(redrawHighlights && this.viewer.activeHighlight){
+            _this.viewer.helpers.jump(_this.viewer.activeHighlight.page.index,_this.viewer.activeHighlight.position.top - 37);
+        }
+    });
 };
 
 //Add highlight to its page. Takes in standard (schema) hash
@@ -12148,8 +12154,8 @@ DV.PageSet.prototype.showHighlight = function(argHash, showHash){
             if (this.pages['p' + i]) {
                 for(var n = 0; n < this.pages['p'+i].highlights.length; n++){
                     if(this.pages['p'+i].highlights[n].model.id === argHash.highlight_id){
-                        this.viewer.helpers.jump(argHash.index, offset);
-                        this.pages['p'+i].highlights[n].refresh(showHash.active, showHash.edit);
+                        this.viewer.helpers.jump(this.pages['p'+i].highlights[n].model.page - 1, offset);
+                        this.pages['p'+i].highlights[n].refresh(showHash.active, showHash.edit, showHash.callbacks);
                         return;
                     }
                 }
@@ -12637,18 +12643,16 @@ DV.Schema.prototype.setActiveContent = function(highlightInfo) {
 
 
 //Update an highlight-group's approval status and return it
-DV.Schema.prototype.markApproval = function(anno_id, group_id, approval){
-    var matchedAnno = this.getHighlight(anno_id);
+DV.Schema.prototype.markApproval = function(highl_id, content_id, content_type, approval){
+    var matchedHighl = this.getHighlight(highl_id);
 
-    //Update anno approved count
-    for(var i=0; i < matchedAnno.groups.length; i++){
-        if( matchedAnno.groups[i].group_id == group_id ){
-            if(approval){ matchedAnno.groups[i].approved_count++; }
-            else{ matchedAnno.groups[i].approved_count--; }
-        }
+    //Update content approval
+    var content = ( content_type == 'annotation' ) ? matchedHighl.annotations : matchedHighl.graphs;
+    for(var i=0; i < content.length; i++){
+        if( content[i].get('id') == content_id ){ content[i].set({'approved': approval}) ; }
     }
 
-    return matchedAnno;
+    return matchedHighl;
 };
 
 
@@ -12690,23 +12694,27 @@ DV.Schema.prototype.removeHighlightContent = function(highl, highlightInfo){
     }else if( "graph_id" in highlightInfo ){
         highl.removeGraph(highlightInfo.graph_id);
     }
-    return ( (!highl.annotations || highl.annotations.length < 1) && (!highl.graphs || highl.graphs.length < 1) ) ? true : false;
+
+    var noContent = (!highl.annotations || highl.annotations.length < 1) && (!highl.graphs || highl.graphs.length < 1);
+    if(noContent) this.removeHighlight(highl);
+
+    return noContent;
 };
 
 //Remove graph highlight
-DV.Schema.prototype.removeHighlight = function(anno){
-    var i = anno.page - 1;
-    this.data.highlightsByPage[i] = DV._.without(this.data.highlightsByPage[i], anno);
-    delete this.data.highlightsById[anno.id];
+DV.Schema.prototype.removeHighlight = function(highl){
+    var i = highl.page - 1;
+    this.data.highlightsByPage[i] = DV._.without(this.data.highlightsByPage[i], highl);
+    delete this.data.highlightsById[highl.id];
     return true;
 };
 
 
 //Reload highlight schema
-DV.Schema.prototype.reloadHighlights = function(annos) {
+DV.Schema.prototype.reloadHighlights = function(highls) {
     this.data.highlightsById = {};
     this.data.highlightsByPage = {};
-    DV._.each(annos, DV.jQuery.proxy(this.loadHighlight, this));
+    DV._.each(highls, DV.jQuery.proxy(this.loadHighlight, this));
 };
 
 
@@ -12935,6 +12943,7 @@ DV.AnnotationModel = function(argHash){
     //Set defaults
     this.access = 'public';
     this.account_id = null;
+    this.approved = false;
     this.group_id = null;
     this.id = null;
     this.match_id = null;
@@ -12958,7 +12967,7 @@ DV.AnnotationModel.prototype.get = function(property){
 DV.AnnotationModel.prototype.set = function(argHash){
     DV._.each(argHash, DV.jQuery.proxy(function(element, index){
         //Whitelist parameters
-        if(['access','account_id','group_id','id','match_id','owns_note','server_id','text','title','unsaved'].indexOf(index) >= 0){
+        if(['access','account_id','approved','group_id','id','match_id','owns_note','server_id','text','title','unsaved'].indexOf(index) >= 0){
             this[index] = element;
         }
 
@@ -13163,6 +13172,8 @@ DV.model.Document.prototype = {
 DV.GraphModel = function(argHash){
     //Set defaults
     this.access = 'public';
+    this.account_id = null;
+    this.approved = false;
     this.graph_json = null;
     this.group_id = null;
     this.id = null;
@@ -13184,7 +13195,7 @@ DV.GraphModel.prototype.get = function(property){
 DV.GraphModel.prototype.set = function(argHash){
     DV._.each(argHash, DV.jQuery.proxy(function(element, index){
         //Whitelist parameters
-        if(['access','graph_json','group_id','id','owns_note','server_id','unsaved'].indexOf(index) >= 0){
+        if(['access','account_id','approved','graph_json','group_id','id','owns_note','server_id','unsaved'].indexOf(index) >= 0){
             this[index] = element;
         }
 
@@ -13199,6 +13210,7 @@ DV.GraphModel.prototype.set = function(argHash){
 DV.GraphModel.prototype.assembleContentForDC = function(){
     return {
         access: this.access,
+        account_id: this.account_id,
         graph_json: this.graph_json,
         group_id: this.group_id,
         id: this.id,
@@ -13342,8 +13354,8 @@ DV.HighlightModel.prototype.getApprovalState = function(){
     var approval_state = 0;
     var all_approved = true;
 
-    DV._.each(this.annotations, function(anno){ (anno.qc_approved_by != null)? approval_state = 1 : all_approved = false; });
-    DV._.each(this.graphs, function(graph){ (graph.qc_approved_by != null)? approval_state = 1 : all_approved = false; });
+    DV._.each(this.annotations, function(anno){ (anno.approved)? approval_state = 1 : all_approved = false; });
+    DV._.each(this.graphs, function(graph){ (graph.approved)? approval_state = 1 : all_approved = false; });
 
     return (all_approved) ? 2: approval_state;
 };
@@ -15416,9 +15428,9 @@ DV.Api.prototype = {
   },
 
   // Find highlight and make it the active one
-  selectHighlight: function(highlightInfo, showEdit) {
+  selectHighlight: function(highlightInfo, showEdit, callbacks) {
       this.viewer.schema.setActiveContent(highlightInfo);
-      this.viewer.pageSet.showHighlight(highlightInfo, {active: true, edit : showEdit, callbacks: false});
+      this.viewer.pageSet.showHighlight(highlightInfo, {active: true, edit : showEdit, callbacks: callbacks});
   },
 
   // Remove highlight/group relationship (and highlight if no relationships left)
@@ -15557,9 +15569,9 @@ DV.Api.prototype = {
 
 
   //Activate/deactivate 'approved' view for anno (temporary, data does not update)
-  markApproval: function(anno_id, group_id, approval) {
-      var anno = this.viewer.schema.markApproval(anno_id, group_id, approval);
-      this.viewer.pageSet.refreshHighlight(anno, group_id, false);
+  markApproval: function(highl_id, content_id, content_type, approval) {
+      var anno = this.viewer.schema.markApproval(highl_id, content_id, content_type, approval);
+      this.viewer.pageSet.refreshHighlight(anno, false);
   },
 
   // ---------------------- Enter/Leave Edit Modes -----------------------------

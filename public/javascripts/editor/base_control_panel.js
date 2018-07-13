@@ -132,8 +132,13 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
         this.model.fetch({
             data:    $.param(requestParams),
             success: function(){
-              dc.app.editor.annotationEditor.setRecommendations(_thisView.model.get('template_fields'));
-              _thisView.render(annotationId);
+                //If graph, highlight graph in DV
+                if( _thisView.model.get('is_graph_group') ){
+                    dc.app.editor.annotationEditor.showHighlight({highlight_id: _thisView.model.get('highlight_id'), graph_id: _thisView.model.get('graph_id')});
+                }
+
+                dc.app.editor.annotationEditor.setRecommendations(_thisView.model.get('template_fields'));
+                _thisView.render(annotationId);
             }
         });
     },
@@ -170,7 +175,7 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
 
         if(highlight){
             _view.highlight();
-            dc.app.editor.annotationEditor.showHighlight(model, 'annotation', false);
+            dc.app.editor.annotationEditor.showHighlight({highlight_id: model.get('highlight_id'), annotation_id: model.get('id')}, false, false);
         }
 
         this.listenTo(_view, 'requestAnnotationClear', this.clearAnnotations);
@@ -186,16 +191,35 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
             return false;
         }
 
-        var _point = new dc.model.Annotation({
-            group_id: this.model.id,
-            document_id: this.model.get('document_id'),
-            templated: false,
-            is_graph_data: false
-        });
+        this.addAnnoView();
+        _view.prepareForAnnotation();
+    },
+
+
+    createDataPointCopy: function(anno) {
+        //Replace some properties of original with new ones
+        anno.id = null;
+        anno.iteration = this.docModel.get('iteration');
+
+        var _view = this.addAnnoView(anno);
+        _view.model.save();
+        return _view;
+    },
+
+
+    addAnnoView: function(anno) {
+        //Set defaults
+        var _anno = anno ? anno : {};
+        _anno.group_id = this.model.id;
+        _anno.document_id = this.model.get('document_id');
+        _anno.templated = false;
+        _anno.is_graph_data = false;
+
+        var _point = new dc.model.Annotation(_anno);
         this.model.annotations.add(_point);
         var _view = this.addDataPoint(_point);
-        _view.prepareForAnnotation();
-        $('#annotation_section').append(_view.$el);
+        $('#annotation_section', this.el).append(_view.$el);
+        return _view;
     },
 
 
@@ -296,5 +320,15 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
     //handleFileNote: blank placeholder to be overridden if class wishes to handle file notes
     handleFileNote: function(group) {
         alert('Error: Control Panel implementation has not written file note handler!');
+    },
+
+    //handleAnnotationSelect: blank placeholder to be overridden if class wishes to handle anno select
+    handleAnnotationSelect: function(anno) {
+        alert('Error: Control Panel implementation has not written annotation select handler!');
+    },
+
+    //handleGraphSelect: blank placeholder to be overridden if class wishes to handle anno select
+    handleGraphSelect: function(graph) {
+        alert('Error: Control Panel implementation has not written graph select handler!');
     }
 });

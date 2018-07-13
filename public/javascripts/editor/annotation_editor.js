@@ -46,7 +46,9 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
             //If highlight already has location, just show it
             if( highlight.get('highlight_id') ){
                 success.call();
-                return _me.showHighlight(highlight, highlight_type, showEdit);
+                var highlightInfo = {highlight_id: highlight.get('highlight_id')};
+                (highlight_type == 'graph') ? highlightInfo['graph_id'] = highlight.get('id') : highlightInfo['anno_id'] = highlight.get('id');
+                return _me.showHighlight(highlightInfo, showEdit, false);
             }
 
             if (highlight != null) { _me._active_highlight = highlight; }
@@ -234,10 +236,8 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
 
 
     // Cause matching highlight in viewer to be selected
-    showHighlight: function(highl, highlight_type, showEdit) {
-        var highlightInfo = {highlight_id: highl.get('highlight_id')};
-        (highlight_type == 'graph') ? highlightInfo['graph_id'] = highl.get('id') : highlightInfo['anno_id'] = highl.get('id');
-        currentDocument.api.selectHighlight(highlightInfo, showEdit);
+    showHighlight: function(highlightInfo, showEdit, callbacks) {
+        currentDocument.api.selectHighlight(highlightInfo, showEdit, callbacks ? callbacks : false);
     },
 
 
@@ -357,8 +357,8 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
     },
 
     //Temporarily update view to mark highlight's state of approval
-    markApproval: function(anno_id, group_id, approved) {
-        currentDocument.api.markApproval(anno_id, group_id, approved);
+    markApproval: function(highlight_id, content_id, content_type, approved) {
+        currentDocument.api.markApproval(highlight_id, content_id, content_type, approved);
     },
 
 

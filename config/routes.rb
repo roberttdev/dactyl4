@@ -97,6 +97,7 @@ DC::Application.routes.draw do
     #Groups
     resources :groups do
       post :clone
+      post :graph_clone
       post :update_approval
     end
 
