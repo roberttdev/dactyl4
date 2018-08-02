@@ -91,9 +91,9 @@ dc.ui.BaseGroupListing = Backbone.View.extend({
 
   deleteGroup: function() {
     _thisView = this;
-    this.model.destroy({success: function() {
+    this.model.destroy({success: function(model) {
         $(_thisView.el).remove();
-        _thisView.trigger("groupDeleted");
+        _thisView.trigger("groupDeleted", model);
     }});
     return true;
   },

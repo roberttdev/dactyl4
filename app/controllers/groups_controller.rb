@@ -87,6 +87,11 @@ class GroupsController < ApplicationController
         group = Group.find(params[:id])
         doc = Document.find(group.document_id)
 
+        if(group.is_graph_data) then
+            #If graph data, surgically remove data from JSON
+            group.parent.graph.remove_measurement(group.id)
+        end
+
         doc.in_supp_de? ? group.mark_deleted_in_supp() : group.destroy()
 
         json({"success" => true})
@@ -127,7 +132,12 @@ class GroupsController < ApplicationController
             #If no graph attached to group, this is subgroup graph data.  Add to parent
             par_graph = Graph.where({:group_id => params[:parent_id]}).first
             doc = Document.find(par_graph.document_id)
-            json par_graph.add_measurement_clone(params[:group_id], current_account.id, doc.iteration)
+            clone_resp = par_graph.add_measurement_clone(params[:group_id], current_account.id, doc.iteration)
+            if !clone_resp['errorText'].nil?
+                return json clone_resp, 500
+            else
+                return json clone_resp
+            end
         end
     end
 
@@ -187,7 +197,7 @@ class GroupsController < ApplicationController
             end
         end
 
-        json(graph)
+        json(graph.as_json(:account => current_account))
     end
 
 

@@ -733,6 +733,20 @@
 }
 
 /*------------------------ show/hide the edit UI ---------------------------------*/
+.DV-highlight .DV-de_icon {
+    float: left;
+    background: url(images/DV/embed/de.ico?1532538069) no-repeat left 1px;
+    width: 32px;
+    height: 33px;
+}
+
+ .DV-highlight .DV-qc_icon {
+     float: left;
+     background: url(images/DV/embed/qc.ico?1532538269) no-repeat left 1px;
+     width: 32px;
+     height: 33px;
+ }
+
 .DV-highlight .DV-editVisible {
   display: none;
 }

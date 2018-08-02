@@ -61,7 +61,10 @@ class Group < ActiveRecord::Base
 
     def attributes
         merge_hash = {
-            'is_graph_group' => nil
+            'is_graph_group' => nil,
+            'graph_id' => nil,
+            'highlight_id' => nil,
+            'based_on' => nil
         }
         if document.in_qa? || document.in_supp_qa? || document.in_supp_de? || document.in_supp_qc?
             merge_hash = {
@@ -101,6 +104,17 @@ class Group < ActiveRecord::Base
         return self.graph ? true : false
     end
 
+    def graph_id
+        return self.graph ? self.graph.id : nil
+    end
+
+    def highlight_id
+        return self.graph ? self.graph.highlight_id : nil
+    end
+
+    def based_on
+        return self.graph ? self.graph.based_on : nil
+    end
 
     def approved
         qa_approved_by ? true : false
@@ -143,12 +157,6 @@ class Group < ActiveRecord::Base
 
         if options[:ancestry]
             json[:ancestry] = get_ancestry
-        end
-
-        #If there's a graph, include its info
-        if self.graph
-            json[:graph_id] = self.graph.id
-            json[:highlight_id] = self.graph.highlight_id
         end
 
         #If special filtered children are requested, reframe as children

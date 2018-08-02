@@ -117,8 +117,12 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
     //reloadPoints: fetch data again and re-render. Expects group ID (null is no group)
     //annotationId is optional; will highlight that if exists
     //based_on: If true, get the group/anno based on the passed values instead
-    reloadPoints: function(groupId, annotationId) {
+    //showInDV: If true, update DV to show this group
+    reloadPoints: function(groupId, annotationId, showInDV = true) {
         var _thisView = this;
+
+        //Never show if anno requested
+        showInDV = annotationId ? false : showInDV;
 
         //Clear
         this.groupViewList = [];
@@ -133,7 +137,7 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
             data:    $.param(requestParams),
             success: function(){
                 //If graph, highlight graph in DV
-                if( _thisView.model.get('is_graph_group') ){
+                if( _thisView.model.get('is_graph_group') && showInDV ){
                     dc.app.editor.annotationEditor.showHighlight({highlight_id: _thisView.model.get('highlight_id'), graph_id: _thisView.model.get('graph_id')});
                 }
 
@@ -145,8 +149,8 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
 
 
     //reloadCurrent: request reload of current group
-    reloadCurrent: function(){
-        this.reloadPoints(this.model.id);
+    reloadCurrent: function(showInDV){
+        this.reloadPoints(this.model.id, null, showInDV);
     },
 
 

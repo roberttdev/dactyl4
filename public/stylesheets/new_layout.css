@@ -57,7 +57,7 @@ input.long {
 /*
  * TABLES (GENERAL)
  */
-td {
+td, .dialog td{
     padding: 5px 10px;
     vertical-align: middle;
 }

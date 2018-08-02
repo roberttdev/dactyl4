@@ -190,15 +190,17 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
                 highlightInfo['graphs'] = [{
                     document_id: _highlight.get('document_id'),
                     graph_json: _highlight.get('graph_json'),
-                    group_id: _highlight.get('group_id')
+                    group_id: _highlight.get('group_id'),
+                    owns_note: true
                 }];
             } else {
                 highlightInfo['annotations'] = [{
-                    title: _highlight.get('title'),
                     content: _highlight.get('content'),
                     document_id: _highlight.get('document_id'),
                     group_id: _highlight.get('group_id'),
-                    id: _highlight.id
+                    id: _highlight.id,
+                    owns_note: true,
+                    title: _highlight.get('title')
                 }];
             }
 
@@ -358,7 +360,15 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
 
     //Temporarily update view to mark highlight's state of approval
     markApproval: function(highlight_id, content_id, content_type, approved) {
-        currentDocument.api.markApproval(highlight_id, content_id, content_type, approved);
+        var updateHash = {
+            type: content_type,
+            content: {
+                highlight_id: highlight_id,
+                id: content_id,
+                approved: approved
+            }
+        }
+        this.syncDV(updateHash);
     },
 
 

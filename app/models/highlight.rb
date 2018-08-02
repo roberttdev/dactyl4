@@ -12,7 +12,7 @@ class Highlight < ActiveRecord::Base
         data['published_url'] = document.published_url || document.document_viewer_url(:allow_ssl => true) if opts[:include_document_url]
 
         data['annotations'] = get_canonical_annotations.map {|a| a.canonical(opts)}
-        data['graphs'] = get_canonical_graphs.map {|g| g.as_json() }
+        data['graphs'] = get_canonical_graphs.map {|g| g.as_json(opts) }
 
         data
     end
@@ -27,7 +27,6 @@ class Highlight < ActiveRecord::Base
 
     def get_canonical_graphs()
         whereClause = ""
-        whereClause += " based_on IS NULL" if document.in_qc?
         graphs.where(whereClause)
     end
 end

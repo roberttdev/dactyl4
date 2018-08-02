@@ -18,7 +18,7 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
         this.listenTo(this.deTwoSubpanel, 'requestGroupClone', this.handleGroupCloneRequest);
         this.listenTo(this.deTwoSubpanel, 'requestAnnotationMatch', this.handleAnnotationMatchRequest);
         this.listenTo(this.qcSubpanel, 'removeFromQC', this.handleRemoveFromQC);
-        this.listenTo(this.qcSubpanel, 'groupDeleted', this.refreshDE);
+        this.listenTo(this.qcSubpanel, 'groupDeleted', this.handleGroupDelete);
 
         this.render();
     },
@@ -48,6 +48,7 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
     handleGraphSelect: function(graph) {
         if( graph.account_id == window.currentDocumentModel.de_one_id ){ this.deOneSubpanel.handleGraphSelect(graph); }
         if( graph.account_id == window.currentDocumentModel.de_two_id ){ this.deTwoSubpanel.handleGraphSelect(graph); }
+        if( graph.account_id == dc.account.id ){ this.qcSubpanel.handleGraphSelect(graph); }
     },
 
 
@@ -85,10 +86,25 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
     handleGroupCloneRequest: function(group) {
         var _thisView = this;
         var _success = function(response){
-                        _thisView.qcSubpanel.reloadPoints(response.id);
-                        dc.app.editor.annotationEditor.syncDV(response);
-                    };
-        var _error = function(reponse){};
+            if(_graph_clone){
+                //If graph..
+                _thisView.qcSubpanel.reloadPoints(response.group_id, null, false);
+                newContent = response;
+                newContent.type = 'graph';
+                //Add QC graph, update approval status of DE graph
+                dc.app.editor.annotationEditor.addContentToHighlight(newContent.highlight_id, newContent, false);
+                dc.app.editor.annotationEditor.markApproval(newContent.highlight_id, newContent.based_on, 'graph', true);
+            }else{
+               //If group..
+                _thisView.qcSubpanel.reloadPoints(response.id);
+            }
+        };
+
+        var _error = function(response){
+            //If error, display
+            dc.ui.Dialog.alert(JSON.parse(response.responseText).errorText);
+        };
+
         var _graph_clone = group.get('is_graph_group') || group.get('is_graph_data');
 
         //If this is graph subgroup, and not cloning into a main graph group, error
@@ -108,9 +124,34 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
     },
 
 
+    handleGroupDelete: function(group){
+        //If graph group, update DV
+        if(group.get('based_on')){
+            dc.app.editor.annotationEditor.markApproval(group.get('highlight_id'), group.get('based_on'), 'graph', false);
+        }
+
+        //If graph data, update parent graph JSON in DV
+        if(group.get('is_graph_data')){
+            var qc_model = this.qcSubpanel.model;
+            qc_model.fetch();
+            var updateHash = {
+                type: 'graph',
+                content: {
+                    highlight_id: qc_model.get('highlight_id'),
+                    id: qc_model.get('graph_id'),
+                    graph_json: qc_model.get('graph_json')
+                }
+            }
+            dc.app.editor.annotationEditor.syncDV(updateHash);
+        }
+
+        this.refreshDE();
+    },
+
+
     //Refresh DE views
-    refreshDE: function(anno){
-        this.deOneSubpanel.reloadCurrent();
-        this.deTwoSubpanel.reloadCurrent();
+    refreshDE: function(){
+        this.deOneSubpanel.reloadCurrent(false);
+        this.deTwoSubpanel.reloadCurrent(false);
     }
 });

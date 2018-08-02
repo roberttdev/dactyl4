@@ -177,7 +177,7 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
 
     //markComplete: If confirmed, save current data and send request to mark complete; handle error if not able to mark complete
     markComplete: function() {
-        var _thisView = this;
+        _thisView = this;
         dc.ui.Dialog.confirm(_.t('confirm_mark_complete'), function(){
             _thisView.save(function() {
                 _thisView.docModel.markComplete({

@@ -1,102 +1,107 @@
 dc.ui.ViewerQcSubpanel = dc.ui.ViewerBaseControlPanel.extend({
 
-  AnnoClass:    FuncUtils.stringToFunction("dc.ui.QCAnnotationListing"),
+    AnnoClass:    FuncUtils.stringToFunction("dc.ui.QCAnnotationListing"),
 
-  reloadParams: {qc: true},
-
-
-  initialize: function(options) {
-      dc.ui.ViewerBaseControlPanel.prototype.initialize.apply(this, arguments);
-
-      this.events['click .reject'] = 'rejectDE';
-  },
+    reloadParams: {qc: true},
 
 
-  render : function(annoId) {
-    var _deView           = this;
-    var _mainJST = JST['qc_subpanel'];
-    var templateName    = this.model.get('group_template') == null ? null : this.model.get('group_template').name;
-    $(this.el).html(_mainJST({template_name: templateName ? templateName.substring(0,39) : null}));
+    initialize: function(options) {
+        dc.ui.ViewerBaseControlPanel.prototype.initialize.apply(this, arguments);
 
-    //Group Navigation
-    this.$('.group_navigation').html(this.generateGroupNav());
-
-    //Group Listings
-    this.model.children.each(function(model, index){
-      var _canEdit = model.get('iteration') == currentDocumentModel.iteration;
-      _deView.addGroup({
-          model: model,
-          showStatus: false,
-          showClone: false,
-          showEdit: _canEdit,
-          showDelete: _canEdit
-      });
-    });
-    this.$('#group_section').html(_.pluck(this.groupViewList, 'el'));
-
-    //Annotations
-    this.model.annotations.each(function(model, index) {
-       _anno = _deView.addDataPoint(model, (model.id == annoId));
-       _deView.listenTo(_anno, 'removeFromQC', _deView.passRemoveFromQC);
-    });
-    this.$('#annotation_section').html(_.pluck(this.pointViewList,'el'));
-
-    this.$('.file_note').hide();
-
-    return this.el;
-  },
+        this.events['click .reject'] = 'rejectDE';
+    },
 
 
-  //Take in DE point, and make an approved copy if it doesn't already exist
-  approveDEPoint: function(anno, group_id){
-    if( this.isTitleDuplicated(anno.get('title')) ){ return false; }
-    else {
-        anno.set({
-            approved: true,
-            based_on: anno.get('id')
+    render : function(annoId) {
+        var _deView           = this;
+        var _mainJST = JST['qc_subpanel'];
+        var templateName    = this.model.get('group_template') == null ? null : this.model.get('group_template').name;
+        $(this.el).html(_mainJST({template_name: templateName ? templateName.substring(0,39) : null}));
+
+        //Group Navigation
+        this.$('.group_navigation').html(this.generateGroupNav());
+
+        //Group Listings
+        this.model.children.each(function(model, index){
+            var _canEdit = model.get('iteration') == currentDocumentModel.iteration;
+                _deView.addGroup({
+                    model: model,
+                    showStatus: false,
+                    showClone: false,
+                    showEdit: _canEdit,
+                    showDelete: _canEdit
+                });
         });
-        var _view = this.createDataPointCopy(anno.attributes);
-        this.listenTo(_view, 'removeFromQC', this.passRemoveFromQC);
-        return true;
-    }
-  },
+        this.$('#group_section').html(_.pluck(this.groupViewList, 'el'));
+
+        //Annotations
+        this.model.annotations.each(function(model, index) {
+            _anno = _deView.addDataPoint(model, (model.id == annoId));
+            _deView.listenTo(_anno, 'removeFromQC', _deView.passRemoveFromQC);
+        });
+        this.$('#annotation_section').html(_.pluck(this.pointViewList,'el'));
+
+        this.$('.file_note').hide();
+
+        return this.el;
+    },
 
 
-  //Send document back to DE
-  rejectDE: function(){
-      dc.ui.QCRejectDialog.open(this.model.get('document_id'));
-  },
+    //Take in DE point, and make an approved copy if it doesn't already exist
+    approveDEPoint: function(anno, group_id){
+        if( this.isTitleDuplicated(anno.get('title')) ){ return false; }
+        else {
+            anno.set({
+                approved: true,
+                based_on: anno.get('id')
+            });
+            var _view = this.createDataPointCopy(anno.attributes);
+            this.listenTo(_view, 'removeFromQC', this.passRemoveFromQC);
+            return true;
+        }
+    },
 
 
-  //Remove qc point model/view and pass removeFromQC event up the chain
-  passRemoveFromQC: function(annoView, group_id) {
-      var anno = annoView.model;
-      this.model.annotations.remove(anno);
+    //Send document back to DE
+    rejectDE: function(){
+        dc.ui.QCRejectDialog.open(this.model.get('document_id'));
+    },
 
-      for(var i=0; i < this.pointViewList.length; i++){
+
+    //Remove qc point model/view and pass removeFromQC event up the chain
+    passRemoveFromQC: function(annoView, group_id) {
+        var anno = annoView.model;
+        this.model.annotations.remove(anno);
+
+        for(var i=0; i < this.pointViewList.length; i++){
         if( this.pointViewList[i].cid == annoView.cid ){ this.pointViewList.splice(i, 1); }
-      }
+        }
 
-      this.trigger('removeFromQC', anno, group_id);
-  },
-
-
-  //Pass group delete notification up
-  handleGroupDelete: function(group) {
-      this.reloadHighlights();
-      this.trigger('groupDeleted', group);
-  },
+        this.trigger('removeFromQC', anno, group_id);
+    },
 
 
-  //Handle click of 'mark complete' button
-  markComplete: function(){
-      var _thisView = this;
-      this.save(function(){ dc.ui.QCCompleteDialog.open(_thisView.docModel); });
-  },
+    //Pass group delete notification up
+    handleGroupDelete: function(group) {
+        this.reloadHighlights();
+        this.trigger('groupDeleted', group);
+    },
 
 
-  //Handle message from QC that approval succeeded
-  handleApprovalSuccess: function(){
-      this.changeGroupView(this.model.get('parent_id'));
-  }
+    //Handle click of 'mark complete' button
+    markComplete: function(){
+        var _thisView = this;
+        this.save(function(){ dc.ui.QCCompleteDialog.open(_thisView.docModel); });
+    },
+
+
+    //Handle message from QC that approval succeeded
+    handleApprovalSuccess: function(){
+        this.changeGroupView(this.model.get('parent_id'));
+    },
+
+
+    handleGraphSelect: function(graph){
+        this.reloadPoints(graph.group_id);
+    },
 });

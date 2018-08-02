@@ -10943,6 +10943,7 @@ DV.GraphView = function(highlViewRef, graphModel){
 DV.GraphView.prototype.render = function(argHash){
     argHash.graph_json = _.escape(JSON.stringify(this.model.get('graph_json')));
     argHash.owns_note = this.model.get('owns_note');
+    argHash.show_icon = (this.model.get('based_on')) ? 'qc' : 'de';
 
     var returnHTML = JST['DV/views/graph'](argHash);
     return returnHTML;
@@ -10958,7 +10959,7 @@ DV.GraphView.prototype.initWPD = function(){
     //If wpd loaded, run init -- if not, it's already loading, so wait and try again
     if(typeof(wpd) != 'undefined'){
         wpd.iframe_api.setParentMsgFunction(this.highlight.viewer.wpd_api.receiveMessage.bind(this.highlight.viewer.wpd_api));
-        wpd.initApp(true, this.highlight.model.get('image_link'), this.model.get('graph_json'), $(this.highlight.highlightEl).find('#graph_frame'), !this.model.get('owns_note'));
+        wpd.initApp(true, this.highlight.model.get('image_link'), this.model.get('graph_json'), $(this.highlight.highlightEl).find('#graph_frame'), this.showReadOnly());
     }else{
         //If not loaded, try again in 1 second
         setTimeout(this.initWPD.bind(this), 1000);
@@ -10988,16 +10989,27 @@ DV.GraphView.prototype.showGraphEditor = function(){
             var script = document.createElement('script');
             script.src = '/viewer/WPD/combined-compiled.js';
             script.onload = function(){
-                $(frame).html(JST['WPD/wpd']);
-                _thisView.initWPD();
+                _thisView.setWPDDOM();
             }
             document.body.appendChild(script);
             DV.WPD_loaded = true;
         }else {
-            $(frame).html(JST['WPD/wpd']);
-            _thisView.initWPD();
+           _thisView.setWPDDOM();
         }
     });
+};
+
+
+DV.GraphView.prototype.setWPDDOM = function(){
+    var frame = this.highlight.highlightEl.find('#graph_frame')[0];
+    $(frame).html(JST['WPD/wpd']);
+
+    //Sometimes this doesn't work because page jump hasn't rendered yet (render process is on a timer).  If so, wait for render and retry
+    if( $(frame).html() == "" ){
+        setTimeout(this.setWPDDOM.bind(this), 1000);
+    }else {
+        this.initWPD();
+    }
 };
 
 
@@ -11043,6 +11055,13 @@ DV.GraphView.prototype.hasChanged = function() {
     var compareJSON = this.model.get('graph_json') == null ? "" : JSON.stringify(this.model.get('graph_json'));
     return this.highlight.highlightEl.hasClass('DV-editing') && (_.unescape(this.highlight.highlightEl.find('.DV-graphData').val()) != compareJSON);
 };
+
+
+//Return whether graph should show read-only
+DV.GraphView.prototype.showReadOnly = function() {
+    var docStatus = this.highlight.viewer.schema.document.status;
+    return !(([2,3,10].indexOf(docStatus) > -1) && this.model.get('owns_note'));
+}
 DV.HighlightView = function(highl, page, active, edit){
     this.LEFT_MARGIN      = 25;
     this.SCROLLBAR_WIDTH  = 25;
@@ -11169,7 +11188,7 @@ DV.HighlightView.prototype.refresh = function(active, edit, callbacks) {
     this.renderedHTML = DV.jQuery(this.render());
     this.remove();
     this.add();
-    if(active != false){ this.show({callbacks: callbacks ? callbacks : false, edit: edit}); }else{ this.hide(true); }
+    if(active != false){ this.show({active: active, callbacks: callbacks ? callbacks : false, edit: edit}); }else{ this.hide(true); }
 };
 
 
@@ -12635,9 +12654,9 @@ DV.Schema.prototype.loadHighlight = function(highl) {
 DV.Schema.prototype.setActiveContent = function(highlightInfo) {
     var highl = this.findHighlight({id: highlightInfo.highlight_id});
     if( "anno_id" in highlightInfo ){
-        highl.displayIndex = highl.annotations.findIndex(function(anno){ return anno.server_id == highlightInfo.anno_id; });
+        highl.set({'displayIndex': highl.annotations.findIndex(function(anno){ return anno.server_id == highlightInfo.anno_id; })});
       }else if( "graph_id" in highlightInfo ){
-        highl.displayIndex = highl.graphs.findIndex(function(graph){ return graph.server_id == highlightInfo.graph_id; }) + highl.annotations.length;
+        highl.set({'displayIndex': highl.graphs.findIndex(function(graph){ return graph.server_id == highlightInfo.graph_id; }) + highl.annotations.length});
     }
 };
 
@@ -12661,28 +12680,22 @@ DV.Schema.prototype.addHighlightContent = function(highl, new_content){
     if( new_content.type == 'annotation' ){
         var annoHash = {};
         if(new_content.id){
-            annoHash.id         = new_content.id;
-            annoHash.server_id  = new_content.id;
-            annoHash.unsaved    = (new_content.text && new_content.text != '' && new_content.title && new_content.title != '') ? false : true;
+            new_content.owns_note = true;
+            new_content.server_id  = new_content.id;
+            new_content.unsaved    = (new_content.text && new_content.text != '' && new_content.title && new_content.title != '') ? false : true;
         }
-        if(new_content.group_id) annoHash.group_id = new_content.group_id;
-        if(new_content.title) annoHash.title = new_content.title;
-        if(new_content.text) annoHash.text = new_content.text;
 
-        highl.addAnnotation(annoHash);
+        highl.addAnnotation(new_content);
         highl.set({displayIndex: highl.annotations.length - 1});
     }else if( new_content.type == 'graph' ) {
         var graphHash = {};
         if(new_content.id){
-            graphHash.id         = new_content.id;
-            graphHash.server_id  = new_content.id;
-            graphHash.unsaved    = (new_content.graph_json && new_content.graph_json != '') ? false : true;
+            new_content.owns_note = true;
+            new_content.server_id  = new_content.id;
+            new_content.unsaved    = (new_content.graph_json && new_content.graph_json != '') ? false : true;
         }
-        if(new_content.graph_json) annoHash.graph_json = new_content.graph_json;
-        if(new_content.group_id) graphHash.group_id = new_content.group_id;
-        if(new_content.image_link) annoHash.image_link = new_content.image_link;
 
-        highl.addGraph(graphHash);
+        highl.addGraph(new_content);
         highl.set({displayIndex: highl.annotations.length + highl.graphs.length - 1});
     }
 }
@@ -12756,6 +12769,9 @@ DV.Schema.prototype.syncHighlight = function(highlightInfo) {
         highl = highl[0];
     }
 
+    //Since it's being set from a DB pull, it's always saved
+    highlightInfo.content.unsaved = false;
+
     //If the content passed is an annotation..
     if( contentType == 'annotation' ){
         //Match anno.  If no luck, find anno with no ID and set that one
@@ -12770,18 +12786,14 @@ DV.Schema.prototype.syncHighlight = function(highlightInfo) {
             annos = _.filter(highl.annotations, function(listAnno){ return listAnno.title == anno.title && listAnno.text == anno.text; });
             DV._.each(annos, function(listAnno){
                 listAnno.set({
+                    approved:   content.approved,
                     text:       content.content,
                     title:      content.title,
                     unsaved:    false
                 });
             });
         }else{
-            anno.set({
-                group_id:   content.group_id,
-                text:       content.content,
-                title:      content.title,
-                unsaved:    false
-            });
+            anno.set(highlightInfo.content);
         }
     }
 
@@ -12793,11 +12805,7 @@ DV.Schema.prototype.syncHighlight = function(highlightInfo) {
             graph = highl.findGraph(null);
             graph.set({id: content.id, server_id: content.id});
         }
-        graph.set({
-            graph_json: content.graph_json,
-            group_id:   content.group_id,
-            unsaved:    false
-        })
+        graph.set(highlightInfo.content);
     }
 };
 
@@ -12915,7 +12923,9 @@ DV.Schema.prototype.getUniqueID = function(){
     }
 
     return id;
-}
+};
+
+
 // We cache DOM references to improve speed and reduce DOM queries
 DV.Schema.elements =
 [
@@ -13174,6 +13184,7 @@ DV.GraphModel = function(argHash){
     this.access = 'public';
     this.account_id = null;
     this.approved = false;
+    this.based_on = null;
     this.graph_json = null;
     this.group_id = null;
     this.id = null;
@@ -13195,7 +13206,7 @@ DV.GraphModel.prototype.get = function(property){
 DV.GraphModel.prototype.set = function(argHash){
     DV._.each(argHash, DV.jQuery.proxy(function(element, index){
         //Whitelist parameters
-        if(['access','account_id','approved','graph_json','group_id','id','owns_note','server_id','unsaved'].indexOf(index) >= 0){
+        if(['access','account_id','approved','based_on','graph_json','group_id','id','owns_note','server_id','unsaved'].indexOf(index) >= 0){
             this[index] = element;
         }
 
@@ -15424,7 +15435,11 @@ DV.Api.prototype = {
   addContentToHighlight: function(highlightId, new_content, showEdit){
       highl = this.viewer.schema.findHighlight({id: highlightId });
       this.viewer.schema.addHighlightContent(highl, new_content);
-      this.viewer.pageSet.refreshHighlight(highl, true, showEdit);
+
+      contentHash = {highlight_id: highl.id};
+      if(new_content.type == 'annotation'){ contentHash.anno_id = new_content.id; }
+      if(new_content.type == 'graph'){ contentHash.graph_id = new_content.id; }
+      this.selectHighlight(contentHash, showEdit, false);
   },
 
   // Find highlight and make it the active one
@@ -15453,8 +15468,8 @@ DV.Api.prototype = {
   syncHighlights: function(highlightInfo) {
       var _this = this;
       _this.viewer.schema.syncHighlight(highlightInfo);
-      this.viewer.activeHighlight.highlightEl.removeClass('DV-editing');
-      this.viewer.pageSet.refreshHighlight(this.viewer.activeHighlight.model, true, false);
+      if(this.viewer.activeHighlight){ this.viewer.activeHighlight.highlightEl.removeClass('DV-editing'); }
+      this.viewer.pageSet.refreshHighlight(this.viewer.schema.findHighlight({id: highlightInfo.content.highlight_id}), true, false);
   },
 
   //Request current highlight to display/hide clone confirm buttons
@@ -15834,7 +15849,7 @@ window.JST['DV/views/descriptionContainer'] = DV._.template('<% if (description)
 window.JST['DV/views/footer'] = DV._.template('<% if (!options.sidebar) { %>\n  <div class="DV-footer">\n    <div class="DV-fullscreenContainer"></div>\n    <div class="DV-navControlsContainer"></div>\n  </div>\n<% } %>');
 window.JST['DV/views/fullscreenControl'] = DV._.template('<div class="DV-fullscreen" title="<%= DV.t(\'view_fullscreen\') %>"></div>\n');
 window.JST['DV/views/generatingImage'] = DV._.template('<div id="generating_img_notice">Generating Image...</div>');
-window.JST['DV/views/graph'] = DV._.template('  <div>\n    <input class="DV-graphData" type="hidden" value="<%=graph_json%>"/>\n    <div id="graph_frame"></div>\n  </div>\n  <div class="DV-annotationMeta <%= accessClass %>">\n    <div class="DV-annotationEditControls DV-editVisible">\n      <%if(owns_note){%>\n      <div class="DV-clearfix">\n        <div class="DV-errorMsg float_left"></div>\n        <div class="minibutton default DV-saveAnnotation float_right"><%= DV.t(\'save\') %></div>\n        <div class="minibutton DV-cancelEdit float_right"><%= DV.t(\'cancel\') %></div>\n        <div class="float_right DV-data_error"></div>\n      </div>\n      <%}%>\n    </div>\n  </div>\n');
+window.JST['DV/views/graph'] = DV._.template('  <div>\n    <input class="DV-graphData" type="hidden" value="<%=graph_json%>"/>\n    <div id="graph_frame"></div>\n  </div>\n  <div class="DV-annotationMeta <%= accessClass %>">\n    <div class="DV-annotationEditControls DV-editVisible">\n      <div class="DV-clearfix">\n      <%if(show_icon == \'de\'){%>\n        <div class="DV-de_icon"></div>\n      <%}else if(show_icon == \'qc\'){%>\n        <div class="DV-qc_icon"></div>\n      <%}%>\n      <%if(owns_note){%>\n\n        <div class="DV-errorMsg float_left"></div>\n        <div class="minibutton default DV-saveAnnotation float_right"><%= DV.t(\'save\') %></div>\n        <div class="minibutton DV-cancelEdit float_right"><%= DV.t(\'cancel\') %></div>\n        <div class="float_right DV-data_error"></div>\n      <%}%>\n      </div>\n    </div>\n  </div>\n');
 window.JST['DV/views/header'] = DV._.template('<div class="DV-header">\n  <div class="DV-headerHat" class="DV-clearfix">\n    <div class="DV-branding">\n      <% if (story_url) { %>\n        <span class="DV-storyLink"><%= story_url %></span>\n      <% } %>\n    </div>\n    <div class="DV-title">\n      <%= title %>\n    </div>\n  </div>\n</div>\n\n<div id="noSaveDialog">You will lose your changes.  Continue?</div>\n\n<div id="dupeAlert">This annotation has duplicates.  Update all with your changes?</div>\n');
 window.JST['DV/views/highlight'] = DV._.template('<div class="DV-highlight <%= accessClass %> DV-ownsHighlight" style="top:<%= top %>px; width:<%= width %>px; margin-left: <%=leftMargin%>px;" id="DV-highlight-<%= id %>" data-id="<%= id %>">\n\n  <div class="DV-highlightTab" style="top:<%= tabTop %>px;">\n    <div class="DV-highlightClose DV-trigger">\n    </div>\n  </div>\n\n  <div class="DV-highlightRegion <%= approvedClass %>" style="margin-left:<%= excerptMarginLeft - 4 %>px; height:<%= excerptHeight %>px; width:<%= excerptWidth - 1 %>px;">\n    <div class="<%= accessClass %>">\n      <div class="DV-highlightEdge DV-highlightEdgeTop"></div>\n      <div class="DV-highlightEdge DV-highlightEdgeRight"></div>\n      <div class="DV-highlightEdge DV-highlightEdgeBottom"></div>\n      <div class="DV-highlightEdge DV-highlightEdgeLeft"></div>\n      <div class="DV-highlightCorner DV-highlightCornerTopLeft"></div>\n      <div class="DV-highlightCorner DV-highlightCornerTopRight"></div>\n      <div class="DV-highlightCorner DV-highlightCornerBottomLeft"></div>\n      <div class="DV-highlightCorner DV-highlightCornerBottomRight"></div>\n    </div>\n    <!--<div class="DV-highlightRegionExclusive"></div>-->\n  </div>\n\n  <div class="DV-highlightContent" style="margin-left: <%= showWindowMarginLeft %>px;">\n    <div class="DV-pagination DV-hideNav">\n      <% if( contentCount > 1 ){ %>\n          <% if( currentContent != 1 ) { %><span class="DV-trigger DV-highlightPrevious" title="<%= DV.t(\'previous_note\') %>"><%= DV.t(\'previous\') %></span><% } %>\n          <span class="DV-groupCount">(<%=currentContent%> of <%=contentCount%>)</span>\n          <% if( currentContent != contentCount ){ %><span class="DV-trigger DV-highlightNext" title="<%= DV.t(\'next_note\') %>"><%= DV.t(\'next\') %></span><% } %>\n      <% } %>\n    </div>\n    <%= innerHTML %>\n  </div>\n</div>\n');
 window.JST['DV/views/highlightNav'] = DV._.template('<div class="DV-highlightMarker" id="DV-highlightMarker-<%= id %>">\n  <span class="DV-trigger">\n    <span class="DV-navHighlightTitle">Highlight <%= id %></span>&nbsp;<span class="DV-navPageNumber"><%= DV.t(\'pg\') %> <%= page %></span>\n  </span>\n</div>');

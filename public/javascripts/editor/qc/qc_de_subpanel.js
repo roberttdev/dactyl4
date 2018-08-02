@@ -66,7 +66,7 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
     }
   },
 
-    
+
   handleGraphSelect: function(graph){
       this.reloadPoints(graph.group_id);
   },
@@ -116,7 +116,7 @@ dc.ui.ViewerQcDeSubpanel = dc.ui.ViewerBaseControlPanel.extend({
   //Pass along group clone request and reload this view to cloned group
   handleGroupCloneRequest: function(group) {
     this.trigger('requestGroupClone', group);
-    this.reloadPoints(group.id);
+    this.reloadPoints(group.id, null, false);
   },
 
 
