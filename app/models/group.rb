@@ -67,10 +67,8 @@ class Group < ActiveRecord::Base
             'based_on' => nil
         }
         if document.in_qa? || document.in_supp_qa? || document.in_supp_de? || document.in_supp_qc?
-            merge_hash = {
-                'approved' => nil,
-                'qa_reject_note' => nil
-            }
+            merge_hash['approved'] = nil
+            merge_hash['qa_reject_note'] = nil
         end
 
         merge_hash[:unapproved_count] = nil
@@ -140,7 +138,7 @@ class Group < ActiveRecord::Base
             unapproved = annos.count
         elsif document.in_qa? || document.in_supp_qa?
             sqlID = ActiveRecord::Base.connection.quote(id)
-            sql = "SELECT ag.id
+            sql = "SELECT a.id
                 FROM get_descendants(#{sqlID}) grps
                 INNER JOIN annotations a ON grps.group_id=a.group_id
                 WHERE a.qa_approved_by IS NULL"
@@ -194,6 +192,7 @@ class Group < ActiveRecord::Base
     # 'same_name' overrides the default behavior of adding '(copy)' to the name of the copy
     # 'keep_values' keep anno-group values, notes and approval status if true; null if not
     # 'graph_only' only copy graph-related anno/groups
+    # 'as_graph' treat result as graph (vs. vanilla grp/annos)
     def clone(parent_id, account_id, is_sub, related, iteration, same_name, keep_values, graph_only)
         cloned = Group.create({
             :account_id => account_id,
@@ -230,6 +229,7 @@ class Group < ActiveRecord::Base
                         :document_id => a.document_id,
                         :group_id => cloned.id,
                         :highlight_id => a.highlight_id,
+                        :is_graph_data => a.is_graph_data,
                         :iteration => iteration,
                         :qa_approved_by => a.qa_approved_by,
                         :templated => a.templated,
@@ -247,6 +247,7 @@ class Group < ActiveRecord::Base
                         :created_by => anno.created_by,
                         :document_id => anno.document_id,
                         :group_id => cloned.id,
+                        :is_graph_data => anno.is_graph_data,
                         :iteration => iteration,
                         :qa_approved_by => anno.qa_approved_by,
                         :templated => anno.templated,

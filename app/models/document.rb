@@ -709,8 +709,8 @@ class Document < ActiveRecord::Base
         AnnotationGroup.joins(:group).where({"groups.document_id" => self.id, :iteration => self.iteration}).update_all({approved_count: 0})
       when STATUS_IN_QA, STATUS_IN_SUPP_QA
         annotation_notes.where({:document_id => self.id}).destroy_all
-        AnnotationGroup.joins(:group).where({"groups.document_id" => self.id, :iteration => self.iteration}).update_all({qa_approved_by: nil})
-        Group.where({"groups.document_id" => self.id, :iteration => self.iteration}).update_all({qa_approved_by: nil})
+        Annotation.where({:document_id => self.id, :iteration => self.iteration}).update_all({qa_approved_by: nil})
+        Group.where({:document_id => self.id, :iteration => self.iteration}).update_all({qa_approved_by: nil})
         self.update({status: self.status - 1, qa_id: nil, qa_note: nil})
       when STATUS_IN_SUPP_DE
         Group.destroy_all({document_id: self.id, iteration: self.iteration})

@@ -21,12 +21,14 @@ class Highlight < ActiveRecord::Base
     def get_canonical_annotations()
         whereClause = "(is_graph_data IS NULL OR is_graph_data=FALSE)"
         whereClause += " AND based_on IS NULL" if document.in_qc?
+        whereClause += " AND based_on IS NOT NULL" if document.in_qa?
         annotations.where(whereClause)
     end
 
 
     def get_canonical_graphs()
         whereClause = ""
+        whereClause += " based_on IS NOT NULL" if document.in_qa?
         graphs.where(whereClause)
     end
 end
