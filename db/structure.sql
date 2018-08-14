@@ -154,9 +154,7 @@ CREATE TABLE annotations (
     is_graph_data boolean,
     highlight_id integer,
     group_id integer,
-    created_by integer,
     qa_approved_by integer,
-    qc_approved_by integer,
     based_on integer
 );
 
@@ -519,8 +517,7 @@ CREATE TABLE graphs (
     highlight_id integer,
     group_id integer,
     created_by integer,
-    based_on integer,
-    qa_by integer
+    based_on integer
 );
 
 
@@ -2096,4 +2093,6 @@ INSERT INTO schema_migrations (version) VALUES ('20180209200510');
 INSERT INTO schema_migrations (version) VALUES ('20180607144042');
 
 INSERT INTO schema_migrations (version) VALUES ('20180628170547');
+
+INSERT INTO schema_migrations (version) VALUES ('20180813125257');
 

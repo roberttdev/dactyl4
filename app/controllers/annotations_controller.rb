@@ -151,7 +151,13 @@ class AnnotationsController < ApplicationController
     end
     json Annotation.where({:document_id => params[:document_id], :group_id => group_id})
   end
-  
+
+
+  def qa_approval
+      anno = Annotation.find(params[:id])
+      anno.update_qa_status(params[:approved], params[:qa_reject_note], current_account.id, params[:document_id])
+      json anno
+  end
 
   #Return top 10 unique annotation names that match search term
   def search

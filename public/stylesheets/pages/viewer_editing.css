@@ -502,9 +502,10 @@ div input.error {
   border: 1px solid #ccc;
 }
 
-.approve_all {
+#control_panel .approve_all {
     margin-left: 10px;
     margin-top: 10px;
+    width: 120px;
 }
 
 /* Hide annotations while redacting. ---------------------------------------*/

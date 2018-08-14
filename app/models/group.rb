@@ -103,10 +103,19 @@ class Group < ActiveRecord::Base
     end
 
     def graph_id
-        return self.graph ? self.graph.id : nil
+        if self.graph
+            return self.graph.id
+        elsif is_graph_data
+            return self.parent.graph.id
+        end
     end
 
     def highlight_id
+        if self.graph
+            return self.graph.highlight_id
+        elsif is_graph_data
+            return self.parent.graph.highlight_id
+        end
         return self.graph ? self.graph.highlight_id : nil
     end
 
@@ -306,8 +315,8 @@ class Group < ActiveRecord::Base
 
         #If subitems need to be addressed as well, then do so
         if subitems_too
-            self.annotation_groups.each do |ag|
-                ag.update_qa_status(addressed, note, account_id, self.document_id)
+            self.annotations.each do |a|
+                a.update_qa_status(addressed, note, account_id, self.document_id)
             end
             self.children.each do |child|
                 child.update_qa_status(addressed, note, account_id, true)

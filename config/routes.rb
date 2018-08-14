@@ -88,6 +88,9 @@ DC::Application.routes.draw do
   #Un-QC
   put '/groups/:group_id/annotations/:id/unapprove' => 'annotations#unapprove'
 
+  #QA
+  put '/groups/:group_id/annotations/:id/qa_approval' => 'annotations#qa_approval'
+
   #File Notes
   resources :file_notes, path: '/documents/:document_id/file_notes'
 

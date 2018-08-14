@@ -746,18 +746,17 @@ class Document < ActiveRecord::Base
 
       #########QUALITY ASSURANCE#########
       when STATUS_IN_QA, STATUS_IN_SUPP_QA
-        #Check that all annotation groups have been addressed
-        ag = AnnotationGroup.joins(:group).where({
-           "groups.document_id" => self.id,
-           :created_by => self.qc_id,
-           "qa_approved_by" => nil,
+        #Check that all annotations have been addressed
+        anno = Annotation.where({
+           :document_id => self.id,
+           :qa_approved_by => nil,
            :iteration => self.iteration
-        }).take
+        }).where.not({:based_on => nil}).take
 
-        if ag
+        if anno
           return {
               'errorText' => 'Completion failed because a data point has not been addressed.  Please address all points.',
-              'data' => {id: ag.annotation_id, group_id: ag.group_id}
+              'data' => {id: anno.id, group_id: anno.group_id}
           }
         end
 
@@ -789,11 +788,11 @@ class Document < ActiveRecord::Base
             end
           end
 
-          group.annotation_groups.each do |child|
+          group.annotations.each do |child|
             if child.annotation_note.nil?
               return {
                   'errorText' => 'Completion failed because a rejected group contained an approved point. Please address to continue.',
-                  'data' => {id: child.annotation_id, group_id: group.id}
+                  'data' => {id: child.id, group_id: group.id}
               }
             end
           end

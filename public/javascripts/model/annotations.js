@@ -25,7 +25,22 @@ dc.model.Annotation = Backbone.Model.extend({
                           },
             error       : options['error']
         })
-    }
+    },
+
+    //Update Approval:
+    update_qa_approval: function(success, error) {
+        var _thisModel = this;
+        var _thisData = _thisModel.attributes;
+        $.ajax({
+            url         : '/groups/' + _thisData.group_id + '/annotations/' + this.id + '/qa_approval',
+            contentType : 'application/json; charset=utf-8',
+            type        : 'put',
+            data        : JSON.stringify(_thisData),
+            success     : success,
+            error       : error
+        })
+    },
+
 });
 
 

@@ -1,6 +1,6 @@
 class AnnotationNote < ActiveRecord::Base
   belongs_to :annotation
-  belongs_to :supp_de_ag, :class_name => "AnnotationGroup", :foreign_key => :de_ref
+  belongs_to :supp_de_anno, :class_name => "Annotation", :foreign_key => :de_ref
   
   belongs_to :document
   belongs_to :group
@@ -24,6 +24,7 @@ class AnnotationNote < ActiveRecord::Base
   def as_json(opts)
     json = {
       :id               => id,
+      :annotation_id    => annotation_id,
       :document_id      => document_id,
       :group_id         => group_id,
       :note             => note,
@@ -35,21 +36,7 @@ class AnnotationNote < ActiveRecord::Base
       if !group_id.nil?
         json[:group_id] = de_ref
       else
-        json[:annotation_group] = {
-          :id             => supp_de_ag.id,
-          :annotation_id  => supp_de_ag.annotation_id,
-          :group_id       => supp_de_ag.group_id
-        }
-      end
-    else
-      if self.annotation_group
-        json[:annotation_group] = {
-          :id             => annotation_group_id,
-          :annotation_id  => annotation_group.annotation_id,
-          :group_id       => annotation_group.group_id
-        }
-      else
-        json[:annotation_group] = nil
+        json[:annotation_id] = supp_de_anno.id
       end
     end
 

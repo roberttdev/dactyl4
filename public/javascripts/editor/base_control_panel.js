@@ -67,8 +67,8 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
         var _view = new this.GroupClass(options);
         this.groupViewList.push(_view);
         _view.render();
-        if(options['showDelete'] != false){ this.listenTo(_view, 'groupDeleted', function(group){ this.handleGroupDelete(group) }); }
-        if(options['showClone'] != false){ this.listenTo(_view, 'requestGroupClone', function(group){ this.handleGroupCloneRequest(group); }); }
+        if(options['showDelete'] != false){ this.listenTo(_view, 'groupDeleted', function(){ this.handleGroupDelete(_view) }); }
+        if(options['showClone'] != false){ this.listenTo(_view, 'requestGroupClone', function(){ this.handleGroupCloneRequest(_view); }); }
         return _view;
     },
 
@@ -137,7 +137,7 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
             data:    $.param(requestParams),
             success: function(){
                 //If graph, highlight graph in DV
-                if( _thisView.model.get('is_graph_group') && showInDV ){
+                if( (_thisView.model.get('is_graph_group') || _thisView.model.get('is_graph_data')) && showInDV ){
                     dc.app.editor.annotationEditor.showHighlight({highlight_id: _thisView.model.get('highlight_id'), graph_id: _thisView.model.get('graph_id')});
                 }
 
@@ -317,7 +317,7 @@ dc.ui.ViewerBaseControlPanel = Backbone.View.extend({
     },
 
     //handleGroupDelete: blank placeholder to be overridden if class wishes to handle group deletes
-    handleGroupDelete: function(group) {
+    handleGroupDelete: function(groupView) {
         alert('Error: Control Panel implementation has not written delete handler!');
     },
 

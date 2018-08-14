@@ -47,9 +47,17 @@ dc.ui.QAAnnotationListing = dc.ui.BaseAnnotationListing.extend({
 
 
     handleApprove: function(){
+        var _thisView = this;
         this.model.set({approved: true, qa_reject_note: null});
         this.setApprove(false);
-        this.trigger('qaAddress', this);
+        this.model.update_qa_approval(
+            function(){
+                if(!_thisView.model.get('is_graph_data')){ _thisView.trigger('qaAddress', _thisView); }
+            },
+            function(){
+                alert('Error: Approval failed!')
+            }
+        );
     },
 
 
@@ -57,7 +65,7 @@ dc.ui.QAAnnotationListing = dc.ui.BaseAnnotationListing.extend({
         var _thisView = this;
         dc.ui.QARejectDialog.open(_thisView.model, false, function(){
             _thisView.setReject();
-            _thisView.trigger('qaAddress', _thisView);
+            if(!_thisView.model.get('is_graph_data')){ _thisView.trigger('qaAddress', _thisView); }
         });
     },
 

@@ -13,8 +13,10 @@ class Graph < ActiveRecord::Base
 
 
     def approved()
-        if document.status == STATUS_IN_QC then
+        if document.status == STATUS_IN_QC
             return !qc_clone.nil? || !clone_of.nil?
+        elsif document.status == STATUS_IN_QA
+            return !group.qa_approved_by.nil?
         end
     end
 
@@ -61,7 +63,7 @@ class Graph < ActiveRecord::Base
 
 
     def clone(parent_id, new_acct_id, new_iteration)
-        grp_clone = self.group.clone(parent_id, new_acct_id, false, true, new_iteration, true, true, true)
+        grp_clone = self.group.clone(parent_id, new_acct_id, false, true, new_iteration, true, true, true, !self.document.in_qc?, true)
         grph_clone = Graph.create({
              'account_id'          => new_acct_id,
              'based_on'            => self.id,

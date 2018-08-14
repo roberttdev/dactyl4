@@ -106,15 +106,29 @@ dc.ui.BaseGroupListing = Backbone.View.extend({
   approveGroup: function() {
     var _thisView = this;
     this.model.set({approved: true, qa_reject_note: null});
-    this.model.update_approval(false, _thisView.setApprove);
+    this.model.update_approval(false,
+            function(){ _thisView.updateGraphApproval(_thisView.setApprove); },
+            function(){ alert('Error: Group approval failed!'); }
+        );
   },
 
   rejectGroup: function() {
     var _thisView = this;
     dc.ui.QARejectDialog.open(_thisView.model, true, function(subitems_too){
-        _thisView.model.update_approval(subitems_too, _thisView.setReject);
+        _thisView.model.update_approval(subitems_too,
+            function(){ _thisView.updateGraphApproval(_thisView.setReject); },
+            function(){ alert('Error: Group rejection failed!')});
     });
   },
+
+
+  updateGraphApproval: function(success) {
+      if(_thisView.model.get('is_graph_group')){
+          dc.app.editor.annotationEditor.markApproval(_thisView.model.get('highlight_id'), _thisView.model.get('graph_id'), 'graph', true);
+      }
+      success.call();
+  },
+
 
   openNote: function() {
     var _thisView = this;

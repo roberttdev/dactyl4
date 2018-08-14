@@ -125,7 +125,7 @@
   - apply_all_files: apply to all files
   - apply_fields_all_files: apply this description, source, and access level to all
       files
-  - approve_all: Approve All
+  - approve_all: Approve All Points
   - assign_to_self: Assign To Self?
   - at: at
   - back: Back

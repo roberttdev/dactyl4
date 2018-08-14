@@ -45,26 +45,17 @@ dc.ui.ViewerQAControlPanel = dc.ui.ViewerBaseControlPanel.extend({
   },
 
 
-  //Save: save all valid data point changes if no errors
-  save: function(success) {
-    var _deView = this;
-
-    this.model.annotations.pushAll({success: success});
-  },
-
-
   //Handle click of 'mark complete' button
   markComplete: function(){
     var _thisView = this;
-    this.save(function() {
-      _thisView.docModel.markComplete({
+
+    _thisView.docModel.markComplete({
         data: {},
         error: _thisView.handleMarkCompleteResponse,
         success: function(){
           if(window.opener){ window.opener.location.reload(); }
           window.close();
         }
-      });
     });
   },
 
@@ -90,17 +81,15 @@ dc.ui.ViewerQAControlPanel = dc.ui.ViewerBaseControlPanel.extend({
 
     //If the group selected is this group, find and highlight point; otherwise save and reload proper group
     if( anno.group_id == this.model.id ){
-      _view = _.find(this.pointViewList, function(view){ return view.model.id == anno.id; });
-      _view.highlight();
+        _view = _.find(this.pointViewList, function(view){ return view.model.id == anno.id; });
+        _view.highlight();
     }else {
-      this.save(function () {
-          _deView.reloadPoints(anno.group_id, anno.id);
-      });
+        _deView.reloadPoints(anno.group_id, anno.id);
     }
   },
 
 
-  //Approve all unaddressed annotation
+  //Approve all unaddressed annotations (NOT GROUPS)
   approveAll: function(){
     var allAnnosApproved = true;
     var allGroupsApproved = true;
@@ -119,16 +108,28 @@ dc.ui.ViewerQAControlPanel = dc.ui.ViewerBaseControlPanel.extend({
     }
 
     if( allAnnosApproved && allGroupsApproved && !this.model.get('base') ){
-      //If all approved, and group isn't approved, approve it
-      if( !this.model.get('approved') ){ this.model.set({approved: true, qa_reject_note: null}); }
-      this.model.update_approval(false, this.changeGroupView(this.model.get('parent_id')));
+      //If all approved, and parent group isn't approved, approve it
+      if( !this.model.get('approved') ){
+          var _thisView = this;
+          this.model.set({approved: true, qa_reject_note: null});
+          this.model.update_approval(false,
+                function(){
+                    _thisView.changeGroupView(_thisView.model.get('parent_id'));
+                    _thisView.model.approveGroup();
+                },
+                function(){
+                    alert('Error: Approval of parent group failed!');
+                });
+      }else{
+          this.changeGroupView(this.model.get('parent_id'));
+      }
     }
   },
 
 
   //If anno approved/rejected, mark as addressed in DV
   handleQAAddress: function(annoView){
-    dc.app.editor.annotationEditor.markApproval(annoView.model.id, this.model.id, true);
+    dc.app.editor.annotationEditor.markApproval(annoView.model.get('highlight_id'), annoView.model.get('id'), 'annotation', true);
   },
 
 

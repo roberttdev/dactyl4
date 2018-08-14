@@ -327,10 +327,10 @@ ww
         return json errorResp, 500
       else
         #If Supp DE is opted out of, prompt a confirmation screen
-        if !params[:request_supp_work] && !params[:skip_de]
+        if doc.has_rejections? && !params[:request_supp_work] && !params[:skip_de]
           errorResp = {
             'errorText' => 'no_supp_confirm',
-            'data' => {'notes' => AnnotationNote.eager_load(:annotation_group).for_doc(doc).as_json({use_de_ref: false})}
+            'data' => {'notes' => AnnotationNote.for_doc(doc).as_json({use_de_ref: false})}
           }
           return json errorResp, 500
         end
