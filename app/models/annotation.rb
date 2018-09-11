@@ -194,7 +194,7 @@ class Annotation < ActiveRecord::Base
       'match_id'          => match_id,
       'match_strength'    => match_strength,
       'organization_id'   => organization_id,
-      'qa_reject_note'    => (self.association_cache.keys.include?(:annotation_note) || self.association_cache.keys.include?(:supp_de_note)) ? self.qa_reject_note : nil,
+      'qa_reject_note'    => (!self.annotation_note.nil? || self.association_cache.keys.include?(:supp_de_note)) ? self.qa_reject_note : nil,
       'templated'         => templated
     })
   end

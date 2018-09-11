@@ -105,14 +105,14 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
             dc.ui.Dialog.alert(JSON.parse(response.responseText).errorText);
         };
 
-        var _graph_clone = group.get('is_graph_group') || group.get('is_graph_data');
+        var _graph_clone = group.model.get('is_graph_group') || group.model.get('is_graph_data');
 
         //If this is graph subgroup, and not cloning into a main graph group, error
-        if(group.get('is_graph_data') && !this.qcSubpanel.model.get('is_graph_group')){
+        if(group.model.get('is_graph_data') && !this.qcSubpanel.model.get('is_graph_group')){
             dc.ui.Dialog.alert(_.t('graph_subgroup_clone_error'));
             return false;
         }else{
-            group.clone(this.qcSubpanel.model.id, _success, _error, _graph_clone);
+            group.model.clone(this.qcSubpanel.model.id, _success, _error, _graph_clone);
         }
     },
 
@@ -126,12 +126,12 @@ dc.ui.ViewerQCControlPanel = Backbone.View.extend({
 
     handleGroupDelete: function(group){
         //If graph group, update DV
-        if(group.get('based_on')){
-            dc.app.editor.annotationEditor.markApproval(group.get('highlight_id'), group.get('based_on'), 'graph', false);
+        if(group.model.get('based_on')){
+            dc.app.editor.annotationEditor.markApproval(group.model.get('highlight_id'), group.model.get('based_on'), 'graph', false);
         }
 
         //If graph data, update parent graph JSON in DV
-        if(group.get('is_graph_data')){
+        if(group.model.get('is_graph_data')){
             var qc_model = this.qcSubpanel.model;
             qc_model.fetch();
             var updateHash = {

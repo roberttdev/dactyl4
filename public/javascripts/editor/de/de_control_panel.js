@@ -11,7 +11,7 @@ dc.ui.ViewerDEControlPanel = dc.ui.ViewerBaseControlPanel.extend({
         this.listenTo(dc.app.editor.annotationEditor, 'highlightCancelled', this.handleAnnotationCancel);
         this.listenTo(dc.app.editor.annotationEditor, 'cloneConfirmed', this.handleCloneConfirm);
 
-         _.bindAll(this, 'handleMarkCompleteError')
+         _.bindAll(this, 'handleMarkCompleteError','markComplete');
 
         dc.ui.ViewerBaseControlPanel.prototype.initialize.apply(this, arguments);
     },

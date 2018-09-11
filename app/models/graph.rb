@@ -63,7 +63,7 @@ class Graph < ActiveRecord::Base
 
 
     def clone(parent_id, new_acct_id, new_iteration)
-        grp_clone = self.group.clone(parent_id, new_acct_id, false, true, new_iteration, true, true, true, !self.document.in_qc?, true)
+        grp_clone = self.group.clone(parent_id, new_acct_id, false, true, new_iteration, true, true, true)
         grph_clone = Graph.create({
              'account_id'          => new_acct_id,
              'based_on'            => self.id,

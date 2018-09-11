@@ -1035,7 +1035,7 @@ class Document < ActiveRecord::Base
     #Supp DE: Clone the canon group for supp DE work
     if( self.status == STATUS_IN_SUPP_DE )
       to_clone = Group.where({document_id: self.id, base:true, canon: true}).take
-      to_clone.clone(nil, account.id, false, true, self.iteration, true, true)
+      to_clone.clone(nil, account.id, false, true, self.iteration, true, true, false)
     end
 
   end

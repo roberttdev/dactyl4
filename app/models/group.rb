@@ -201,7 +201,6 @@ class Group < ActiveRecord::Base
     # 'same_name' overrides the default behavior of adding '(copy)' to the name of the copy
     # 'keep_values' keep anno-group values, notes and approval status if true; null if not
     # 'graph_only' only copy graph-related anno/groups
-    # 'as_graph' treat result as graph (vs. vanilla grp/annos)
     def clone(parent_id, account_id, is_sub, related, iteration, same_name, keep_values, graph_only)
         cloned = Group.create({
             :account_id => account_id,
@@ -234,7 +233,6 @@ class Group < ActiveRecord::Base
                         :account_id => account_id,
                         :based_on => document.in_qc? ? a.id : based_on,
                         :content => a.content,
-                        :created_by => a.created_by,
                         :document_id => a.document_id,
                         :group_id => cloned.id,
                         :highlight_id => a.highlight_id,
