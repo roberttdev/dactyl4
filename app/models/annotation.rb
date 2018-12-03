@@ -17,8 +17,6 @@ class Annotation < ActiveRecord::Base
 
   has_one :qc_clone, :class_name => "Annotation", :foreign_key => 'based_on'
   has_one :annotation_note
-  has_one :supp_de_note, -> { where("(annotation_notes.annotation_id IS NOT NULL)") },
-          :class_name => "AnnotationNote", :foreign_key => :de_ref
 
   attr_accessor :author
 
@@ -194,7 +192,7 @@ class Annotation < ActiveRecord::Base
       'match_id'          => match_id,
       'match_strength'    => match_strength,
       'organization_id'   => organization_id,
-      'qa_reject_note'    => (!self.annotation_note.nil? || self.association_cache.keys.include?(:supp_de_note)) ? self.qa_reject_note : nil,
+      'qa_reject_note'    => (!self.annotation_note.nil?) ? self.qa_reject_note : nil,
       'templated'         => templated
     })
   end
@@ -204,7 +202,7 @@ class Annotation < ActiveRecord::Base
       approved = false
       if document.in_qc?
           approved = qc_clone ? true : false
-      elsif document.in_qa?
+      elsif document.in_qa? || document.in_supp_de?
           approved = qa_approved_by ? true : false
       end
   end

@@ -22,7 +22,7 @@ dc.ui.FileNoteListing = Backbone.View.extend({
 
   render : function(showApproval) {
     _thisView = this;
-    var noteText = this.model.get('group_id') ? '[GROUP] ' : '[POINT] '
+    var noteText = this.model.get('annotation_id') ? '[POINT] ' : '[GROUP] '
     $(this.el).html(this._mainJST({
       title:          noteText + this.model.get('note'),
       show_approval:  showApproval
@@ -52,8 +52,8 @@ dc.ui.FileNoteListing = Backbone.View.extend({
   //Send request to redirect to the AnnotationGroup this note refers to
   requestPointReload : function() {
     var payload = {
-      group_id: this.model.get('group_id') ? this.model.get('group_id') : this.model.get('annotation_group').group_id,
-      annotation_id: this.model.get('annotation_group') ? this.model.get('annotation_group').annotation_id : null
+      group_id: this.model.get('group_id'),
+      annotation_id: this.model.get('annotation_id')
     }
     this.trigger('requestPointReload', payload);
   },

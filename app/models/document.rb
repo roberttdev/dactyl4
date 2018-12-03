@@ -321,8 +321,10 @@ class Document < ActiveRecord::Base
     whereClause = "(annotations.account_id=#{account.id} OR graphs.account_id=#{account.id})" if in_de?
     whereClause = "(annotations.account_id IN (#{de_one_id},#{de_two_id}) OR graphs.account_id IN (#{de_one_id},#{de_two_id}))" if in_qc?
     whereClause = "(annotations.account_id=#{qc_id} OR graphs.account_id=#{qc_id})" if in_qa?
-    whereClause = "((annotations.group_id IN (SELECT id FROM groups WHERE document_id=#{self.id} AND iteration=#{self.iteration}))" \
-                    " OR (graphs.group_id IN (SELECT id FROM groups WHERE document_id=#{self.id} AND iteration=#{self.iteration}))"  if in_supp_de?
+    whereClause = "(annotations.group_id IN (SELECT id FROM groups WHERE document_id=#{self.id}" \
+                    " AND (qa_approved_by IS NOT NULL OR iteration=#{self.iteration}))" \
+                    " OR (graphs.group_id IN (SELECT id FROM groups WHERE document_id=#{self.id}" \
+                    " AND (qa_approved_by IS NOT NULL OR iteration=#{self.iteration}))))"  if in_supp_de?
     whereClause = "(annotations.qa_approved_by IS NOT NULL OR graphs.qa_approved_by IS NOT NULL)" if in_extraction?
 
     self.highlights.joins(joinClause).includes(:annotations,:graphs).where(whereClause).order('page_number asc, location asc nulls first').distinct
@@ -706,7 +708,7 @@ class Document < ActiveRecord::Base
       when STATUS_IN_QC, STATUS_IN_SUPP_QC
         Group.destroy_all({document_id: self.id, account_id: account.id, iteration: self.iteration})
         self.update({status: self.status - 1, qc_id: nil})
-        AnnotationGroup.joins(:group).where({"groups.document_id" => self.id, :iteration => self.iteration}).update_all({approved_count: 0})
+        Annotation.where({:document_id => self.id, :iteration => self.iteration}).update_all({approved_count: 0})
       when STATUS_IN_QA, STATUS_IN_SUPP_QA
         annotation_notes.where({:document_id => self.id}).destroy_all
         Annotation.where({:document_id => self.id, :iteration => self.iteration}).update_all({qa_approved_by: nil})
@@ -714,8 +716,7 @@ class Document < ActiveRecord::Base
         self.update({status: self.status - 1, qa_id: nil, qa_note: nil})
       when STATUS_IN_SUPP_DE
         Group.destroy_all({document_id: self.id, iteration: self.iteration})
-        AnnotationGroup.joins(:annotation).destroy_all({"annotations.document_id" => self.id, :iteration => self.iteration, :created_by => account.id})
-        self.annotation_notes.where(:iteration => self.iteration - 1).update_all({:de_ref => nil})
+        Annotation.destroy_all({:document_id => self.id, :iteration => self.iteration, :account_id => account.id})
         self.update({status: STATUS_READY_SUPP_DE, de_one_id: nil})
     end
   end
@@ -1032,11 +1033,11 @@ class Document < ActiveRecord::Base
       })
     end
 
-    #Supp DE: Clone the canon group for supp DE work
-    if( self.status == STATUS_IN_SUPP_DE )
-      to_clone = Group.where({document_id: self.id, base:true, canon: true}).take
-      to_clone.clone(nil, account.id, false, true, self.iteration, true, true, false)
-    end
+    #Supp DE: Clone the canon group for supp DE work (old way.. skip in the new way?)
+    #if( self.status == STATUS_IN_SUPP_DE )
+      #to_clone = Group.where({document_id: self.id, base:true, canon: true}).take
+      #to_clone.clone(nil, account.id, false, true, self.iteration, true, true, true, false)
+    #end
 
   end
 

@@ -11032,7 +11032,8 @@ DV.GraphView.prototype.processImage = function(){
     //Determine name of large image
     var image_url = this.highlight.page.getPageImageURL();
     img_json['img_name'] = image_url.substring(0, image_url.lastIndexOf("-")) + '-large' + image_url.substring(image_url.lastIndexOf("."), image_url.length);
-    img_json['img_name']= img_json['img_name'].substring(0, img_json['img_name'].lastIndexOf("?") );
+    var q_loc = img_json['img_name'].lastIndexOf("?");
+    if( q_loc >= 0 ){ img_json['img_name'] = img_json['img_name'].substring(0, img_json['img_name'].lastIndexOf("?") ); }
 
     DV.jQuery.ajax({
         url: DV.img_slice_link,

@@ -287,4 +287,4 @@ DEPENDENCIES
   sunspot_solr (~> 2.1.0)
 
 BUNDLED WITH
-   1.13.6
+   1.17.1

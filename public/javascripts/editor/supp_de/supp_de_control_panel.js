@@ -45,45 +45,6 @@ dc.ui.ViewerSuppDEControlPanel = dc.ui.ViewerDEControlPanel.extend({
     },
 
 
-    //Save: save all valid data point changes if no errors
-    save: function(success) {
-      var _deView = this;
-
-      //Clear error class from all inputs
-      $('input').removeClass('error');
-      var _hasErrors = false;
-
-      //Check for duplicate annotation titles.  If found, throw error and exit
-      var titleList = [];
-      for(var i=0; i < this.pointViewList.length; i++){
-        if( this.pointViewList[i].model.get('qa_reject_note') == null ) {
-          if ($.inArray(this.pointViewList[i].model.get('title'), titleList) > 0) {
-            dc.ui.Dialog.alert(_.t('duplicate_titles', this.pointViewList[i].model.get('title')));
-            return false;
-          } else {
-            titleList.push(this.pointViewList[i].model.get('title'));
-          }
-        }
-      }
-
-      //Remove any blank points
-      this.model.annotations.each(function(model, index) {
-          if(model.get('title') == null && model.get('content') == null){ _deView.model.annotations.remove(model); }
-      });
-
-      //If there are non-blank annotations, attempt to sync them with DB.
-      if( this.model.annotations.length > 0 ) {
-          this.model.annotations.pushAll({success: function(){
-              _deView.syncDV(success)
-          }});
-      }
-      else {
-          //If not, just pass along to success function
-          success.call();
-      }
-    },
-
-
     //When annotation selected in DV, find a data point that's waiting for DV input or matches the annotation and pass response to it.  If neither,
     //reload to a group that contains a point that matches it
     handleAnnotationSelect: function(anno){
@@ -110,12 +71,12 @@ dc.ui.ViewerSuppDEControlPanel = dc.ui.ViewerDEControlPanel.extend({
               }
           }else{
               //If the group selected is this group, find and highlight point; otherwise save and reload proper group
-              if( anno.groups[0].group_id == _deView.model.id ) {
+              if( anno.group_id == _deView.model.id ) {
                   _view = _.find(this.pointViewList, function(view){ return view.model.id == anno.id; });
                   if( _view ){ _view.highlight(); }
               }else {
                   this.save(function () {
-                      _deView.reloadPoints(anno.groups[0].group_id, anno.id);
+                      _deView.reloadPoints(anno.group_id, anno.id);
                   });
               }
           }
@@ -143,7 +104,7 @@ dc.ui.ViewerSuppDEControlPanel = dc.ui.ViewerDEControlPanel.extend({
     handleReloadRequest: function(annoGroupInfo) {
       var _thisView = this;
       this.save(function () {
-        _thisView.reloadPoints(annoGroupInfo.group_id, annoGroupInfo.id, true);
+        _thisView.reloadPoints(annoGroupInfo.group_id, annoGroupInfo.annotation_id, true);
       });
     },
 

@@ -10,9 +10,6 @@ class Group < ActiveRecord::Base
     has_many :supp_qc_de1_children, -> { includes(:annotation_note).where("(groups.iteration <> (SELECT iteration FROM documents WHERE id=groups.document_id))") },
            :class_name => "Group", :foreign_key => 'parent_id'
 
-    has_many :supp_qc_de2_children, -> { where("id NOT IN (SELECT de_ref FROM annotation_notes an WHERE an.document_id=groups.document_id AND group_id IS NOT NULL)") },
-           :class_name => "Group", :foreign_key => 'parent_id'
-
     has_many :supp_qa_children, -> { where("((groups.iteration <> (SELECT iteration FROM documents WHERE id=groups.document_id)
               AND NOT EXISTS (SELECT * FROM annotation_notes WHERE document_id=groups.document_id AND groups.id=annotation_notes.group_id))
               OR groups.iteration = (SELECT iteration FROM documents WHERE id=groups.document_id))") },
@@ -26,8 +23,6 @@ class Group < ActiveRecord::Base
     has_many :annotations, :dependent => :destroy
 
     has_one :annotation_note
-    has_one :supp_de_note, -> { where("(annotation_notes.group_id IS NOT NULL)") },
-          :class_name => "AnnotationNote", :foreign_key => :de_ref
 
     #Base group for document/user
     scope :base, ->(doc, account_id=nil, de=nil, qc=nil) {
@@ -36,7 +31,7 @@ class Group < ActiveRecord::Base
             :base => true
         }
 
-        if doc.in_de? || doc.in_supp_de?
+        if doc.in_de?
             accountId = account_id
         elsif doc.in_qc?
             accountId = doc.de_one_id if de == "1"
@@ -46,11 +41,7 @@ class Group < ActiveRecord::Base
         elsif doc.in_qa? || doc.in_extraction? || doc.in_supp_qa?
             accountId = doc.qc_id
         elsif doc.in_supp_qc?
-            if de == "2"
-                whereClause[:iteration] = doc.iteration
-            else
-                whereClause[:canon] = true
-            end
+            whereClause[:canon] = true
         end
 
         whereClause[:account_id] = accountId if !accountId.nil?
@@ -130,7 +121,6 @@ class Group < ActiveRecord::Base
 
     def qa_reject_note
         return annotation_note.note if !annotation_note.nil?
-        return supp_de_note.note if !supp_de_note.nil?
     end
 
 
@@ -174,9 +164,6 @@ class Group < ActiveRecord::Base
             elsif options[:include].include?(:supp_qc_de1_children)
                 json[:children] = json['supp_qc_de1_children']
                 json.delete(:supp_qc_de1_children)
-            elsif options[:include].include?(:supp_qc_de2_children)
-                json[:children] = json['supp_qc_de2_children']
-                json.delete(:supp_qc_de2_children)
             elsif options[:include].include?(:supp_qa_children)
                 json[:children] = json['supp_qa_children']
                 json.delete(:supp_qa_children)
@@ -200,8 +187,9 @@ class Group < ActiveRecord::Base
     # 'related' indicates whether to include related objects (children and annotations)
     # 'same_name' overrides the default behavior of adding '(copy)' to the name of the copy
     # 'keep_values' keep anno-group values, notes and approval status if true; null if not
+    # 'clone_graph' create new cloned graph along with group clone
     # 'graph_only' only copy graph-related anno/groups
-    def clone(parent_id, account_id, is_sub, related, iteration, same_name, keep_values, graph_only)
+    def clone(parent_id, account_id, is_sub, related, iteration, same_name, keep_values, clone_graph, graph_only)
         cloned = Group.create({
             :account_id => account_id,
             :base => base,
@@ -216,12 +204,14 @@ class Group < ActiveRecord::Base
             :template_id => template_id
         })
 
-        if keep_values && annotation_note
-            annotation_note.update({ :de_ref => cloned.id })
-        end
-
         if related
             if keep_values
+                if clone_graph
+                    if self.graph
+                        self.graph.clone(cloned.id, account_id, iteration)
+                    end
+                end
+
                 if graph_only
                     annos = annotations.where({:is_graph_data => true})
                 else
@@ -242,10 +232,6 @@ class Group < ActiveRecord::Base
                         :templated => a.templated,
                         :title => a.title
                     })
-
-                    if a.annotation_note
-                        a.annotation_note.update({ :de_ref => cloned_a.id })
-                    end
                 end
             else
                 annotations.each do |anno|
@@ -270,7 +256,7 @@ class Group < ActiveRecord::Base
                 child_grps = children
             end
             child_grps.each do |child|
-                child.clone(cloned.id, account_id, true, related, iteration, same_name, keep_values, graph_only)
+                child.clone(cloned.id, account_id, true, related, iteration, same_name, keep_values, clone_graph, graph_only)
             end
         end
 

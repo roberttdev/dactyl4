@@ -22,6 +22,7 @@ class Highlight < ActiveRecord::Base
         whereClause = "(is_graph_data IS NULL OR is_graph_data=FALSE)"
         whereClause += " AND based_on IS NULL" if document.in_qc?
         whereClause += " AND based_on IS NOT NULL" if document.in_qa?
+        whereClause += " AND (qa_approved_by IS NOT NULL OR iteration=#{self.document.iteration})" if document.in_supp_de?
         annotations.where(whereClause)
     end
 
@@ -29,6 +30,8 @@ class Highlight < ActiveRecord::Base
     def get_canonical_graphs()
         whereClause = ""
         whereClause += " based_on IS NOT NULL" if document.in_qa?
+        whereClause += " group_id IN (SELECT id FROM groups WHERE document_id=#{self.document.id} " \
+                        " AND (qa_approved_by IS NOT NULL OR iteration=#{self.document.iteration}))" if document.in_supp_de?
         graphs.where(whereClause)
     end
 end

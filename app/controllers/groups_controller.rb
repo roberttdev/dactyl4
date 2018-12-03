@@ -116,7 +116,7 @@ class GroupsController < ApplicationController
         to_clone = Group.find(params[:group_id])
         doc = Document.find(to_clone.document_id)
         in_qc = doc.in_qc? || doc.in_supp_qc?
-        json to_clone.clone(params[:parent_id], current_account.id, false, !in_qc, doc.iteration, in_qc, false, false)
+        json to_clone.clone(params[:parent_id], current_account.id, false, !in_qc, doc.iteration, in_qc, false, false, false)
     end
 
 
@@ -127,7 +127,8 @@ class GroupsController < ApplicationController
         if(to_clone)
             #If graph attached, this is base graph group.. clone entire graph
             doc = Document.find(to_clone.document_id)
-            json to_clone.clone(params[:parent_id], current_account.id, doc.iteration)
+            grp_clone = Group.find(params[:group_id]).clone(params[:parent_id], current_account.id, false, true, doc.iteration, true, true, true, true)
+            json grp_clone.graph
         else
             #If no graph attached to group, this is subgroup graph data.  Add to parent
             par_graph = Graph.where({:group_id => params[:parent_id]}).first
@@ -219,8 +220,6 @@ class GroupsController < ApplicationController
         #Determine what filter (if any) for children to use
         if params[:de] == '1' && doc.iteration > 1
             includes = [:supp_qc_de1_children, :group_template]
-        elsif params[:de] == '2' && doc.iteration > 1
-            includes = [:supp_qc_de2_children, :group_template]
         elsif params[:qc] && doc.iteration > 1
             includes = [:supp_qc_children, :group_template]
         elsif doc.in_supp_qa?

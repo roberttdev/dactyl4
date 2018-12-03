@@ -17,6 +17,21 @@ class Graph < ActiveRecord::Base
             return !qc_clone.nil? || !clone_of.nil?
         elsif document.status == STATUS_IN_QA
             return !group.qa_approved_by.nil?
+        elsif document.status == STATUS_IN_SUPP_DE
+            #Rejected if any graph data is rejected
+            grps = self.group.children.where(:is_graph_data=>true, :iteration=>document.iteration)
+            grps.each do |grp|
+                if !grp.annotation_note.nil? then
+                    return false
+                end
+                annos = grp.annotations.where(:is_graph_data=>true, :iteration=>document.iteration)
+                annos.each do |anno|
+                    if !anno.annotation_note.nil? then
+                        return false
+                    end
+                end
+            end
+            return true
         end
     end
 
@@ -62,15 +77,14 @@ class Graph < ActiveRecord::Base
     end
 
 
-    def clone(parent_id, new_acct_id, new_iteration)
-        grp_clone = self.group.clone(parent_id, new_acct_id, false, true, new_iteration, true, true, true)
+    def clone(grp_id, new_acct_id, new_iteration)
         grph_clone = Graph.create({
              'account_id'          => new_acct_id,
              'based_on'            => self.id,
              'created_by'          => new_acct_id,
              'document_id'         => document_id,
              'graph_json'          => graph_json,
-             'group_id'            => grp_clone.id,
+             'group_id'            => grp_id,
              'highlight_id'        => highlight_id,
              'iteration'           => new_iteration
         })
@@ -112,7 +126,7 @@ class Graph < ActiveRecord::Base
 
         to_pointJSON['data'].push(dataToCopy)
         self.update({graph_json: JSON.generate(my_json)})
-        grp_clone = meas_grp.clone(self.group_id, new_acct_id, false, true, new_iteration, true, true, true)
+        grp_clone = meas_grp.clone(self.group_id, new_acct_id, false, true, new_iteration, true, true, false, true)
     end
 
 

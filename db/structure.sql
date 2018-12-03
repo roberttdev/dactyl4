@@ -108,7 +108,6 @@ CREATE TABLE annotation_notes (
     updated_at timestamp without time zone,
     group_id integer,
     iteration integer,
-    de_ref integer,
     annotation_id integer
 );
 
@@ -2095,4 +2094,6 @@ INSERT INTO schema_migrations (version) VALUES ('20180607144042');
 INSERT INTO schema_migrations (version) VALUES ('20180628170547');
 
 INSERT INTO schema_migrations (version) VALUES ('20180813125257');
+
+INSERT INTO schema_migrations (version) VALUES ('20181011194517');
 
