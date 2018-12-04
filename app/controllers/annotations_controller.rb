@@ -54,7 +54,7 @@ class AnnotationsController < ApplicationController
     submitHash[:access] = DC::Access::PUBLIC
 
     #In certain modes, update creator and iteration
-    if doc.in_de? || doc.in_qc? || doc.in_supp_de? || doc.in_extraction?
+    if doc.in_de? || doc.in_qc? || doc.in_supp_de? || doc.in_supp_qc? || doc.in_extraction?
         submitHash[:account_id] = current_account.id
         submitHash[:iteration] = doc.iteration
         anno = Annotation.create(submitHash)

@@ -49,7 +49,9 @@ class Annotation < ActiveRecord::Base
       if de_num == "1"
         return self.where("iteration <> #{doc.iteration}")
       elsif de_num == "2"
-        return self.where("iteration = #{doc.iteration}")
+        return self.where("iteration = #{doc.iteration} AND based_on IS NULL")
+      else
+        return self.where("id NOT IN (SELECT annotation_id FROM annotation_notes WHERE document_id=#{doc.id} AND annotation_id IS NOT NULL) AND based_on IS NOT NULL")
       end
     end
   }
@@ -200,7 +202,7 @@ class Annotation < ActiveRecord::Base
 
   def get_approval_status
       approved = false
-      if document.in_qc?
+      if document.in_qc? || document.in_supp_qc?
           approved = qc_clone ? true : false
       elsif document.in_qa? || document.in_supp_de?
           approved = qa_approved_by ? true : false

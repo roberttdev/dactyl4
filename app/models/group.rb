@@ -132,7 +132,7 @@ class Group < ActiveRecord::Base
                 FROM get_descendants(#{sqlID}) grps
                 INNER JOIN annotations a ON grps.group_id=a.group_id
                 LEFT JOIN annotations qc ON qc.based_on=a.id
-                WHERE qc.id IS NULL AND a.qa_approved_by IS NULL"
+                WHERE qc.id IS NULL AND a.qa_approved_by IS NULL AND a.based_on IS NULL"
             annos = ActiveRecord::Base.connection.exec_query(sql)
             unapproved = annos.count
         elsif document.in_qa? || document.in_supp_qa?

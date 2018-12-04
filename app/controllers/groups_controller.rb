@@ -49,7 +49,7 @@ class GroupsController < ApplicationController
         #If parent group is a part of a graph, make this group graph-related as well
         if !group_attributes[:parent_id].nil?
             parent = Group.find(group_attributes[:parent_id])
-            if parent.is_graph_group || parent.is_graph_data
+            if (parent.is_graph_group || parent.is_graph_data) && parent.iteration == doc.iteration
                 group_attributes[:is_graph_data] = true
             end
         end

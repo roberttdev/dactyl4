@@ -911,7 +911,9 @@ class Document < ActiveRecord::Base
       upValues = {qc_id: nil, de_two_id: nil, de_two_complete: nil}
       case de_num
         when "1"
-          delWhere[:account_id] << de_one_id
+          if(self.status != STATUS_IN_SUPP_QC )
+            delWhere[:account_id] << de_one_id
+          end
           upValues[:de_one_id] = de_two_id
           upValues[:status] = (self.status == STATUS_IN_SUPP_QC) ? STATUS_READY_SUPP_DE : STATUS_DE1
         when "2"
@@ -932,7 +934,6 @@ class Document < ActiveRecord::Base
 
       Annotation.destroy_all(delWhere)
       Group.destroy_all(delWhere)
-      self.annotation_groups.where(iteration: self.iteration).update_all({approved_count: 0})
       self.update_attributes(upValues)
     else
       return false
