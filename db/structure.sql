@@ -154,7 +154,8 @@ CREATE TABLE annotations (
     highlight_id integer,
     group_id integer,
     qa_approved_by integer,
-    based_on integer
+    based_on integer,
+    canon boolean
 );
 
 
@@ -2096,4 +2097,6 @@ INSERT INTO schema_migrations (version) VALUES ('20180628170547');
 INSERT INTO schema_migrations (version) VALUES ('20180813125257');
 
 INSERT INTO schema_migrations (version) VALUES ('20181011194517');
+
+INSERT INTO schema_migrations (version) VALUES ('20181212160332');
 

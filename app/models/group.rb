@@ -2,17 +2,16 @@ class Group < ActiveRecord::Base
     belongs_to :parent, :class_name => 'Group', :foreign_key => 'parent_id'
     has_many :children, -> { includes :annotation_note }, :class_name => 'Group', :foreign_key => 'parent_id', :dependent => :destroy
 
-    has_many :supp_qc_children, -> { where("id NOT IN (SELECT group_id FROM annotation_notes an WHERE an.document_id=groups.document_id AND group_id IS NOT NULL)
-            AND (groups.iteration <> (SELECT iteration FROM documents WHERE id=groups.document_id)
-              OR groups.account_id=(SELECT qc_id FROM documents WHERE id=groups.document_id))") },
+    has_many :supp_qc_children, -> { where("canon=TRUE") },
            :class_name => "Group", :foreign_key => 'parent_id'
 
     has_many :supp_qc_de1_children, -> { includes(:annotation_note).where("(groups.iteration <> (SELECT iteration FROM documents WHERE id=groups.document_id))") },
            :class_name => "Group", :foreign_key => 'parent_id'
 
-    has_many :supp_qa_children, -> { where("((groups.iteration <> (SELECT iteration FROM documents WHERE id=groups.document_id)
-              AND NOT EXISTS (SELECT * FROM annotation_notes WHERE document_id=groups.document_id AND groups.id=annotation_notes.group_id))
-              OR groups.iteration = (SELECT iteration FROM documents WHERE id=groups.document_id))") },
+    has_many :supp_qc_de2_children, -> { includes(:annotation_note).where("(groups.account_id <> (SELECT qc_id FROM documents WHERE id=groups.document_id) OR
+               groups.iteration <> (SELECT iteration FROM documents WHERE id=groups.document_id))")}, :class_name => "Group", :foreign_key => 'parent_id'
+
+    has_many :supp_qa_children, -> { where("canon=TRUE") },
            :class_name => "Group", :foreign_key => 'parent_id'
 
     belongs_to :group_template, :foreign_key => 'template_id'
@@ -38,9 +37,9 @@ class Group < ActiveRecord::Base
             accountId = doc.de_two_id if de == "2"
             accountId = doc.qc_id if qc == "true"
             accountId = account_id if accountId.nil?
-        elsif doc.in_qa? || doc.in_extraction? || doc.in_supp_qa?
+        elsif doc.in_qa?
             accountId = doc.qc_id
-        elsif doc.in_supp_qc?
+        elsif doc.in_supp_qc? || doc.in_supp_qa? || doc.in_extraction?
             whereClause[:canon] = true
         end
 
@@ -164,6 +163,9 @@ class Group < ActiveRecord::Base
             elsif options[:include].include?(:supp_qc_de1_children)
                 json[:children] = json['supp_qc_de1_children']
                 json.delete(:supp_qc_de1_children)
+            elsif options[:include].include?(:supp_qc_de2_children)
+                json[:children] = json['supp_qc_de2_children']
+                json.delete(:supp_qc_de2_children)
             elsif options[:include].include?(:supp_qa_children)
                 json[:children] = json['supp_qa_children']
                 json.delete(:supp_qa_children)
@@ -193,7 +195,7 @@ class Group < ActiveRecord::Base
         cloned = Group.create({
             :account_id => account_id,
             :base => base,
-            :canon => false,
+            :canon => document.in_qc? || document.in_supp_qc?,
             :document_id => document_id,
             :extension => is_sub || same_name ? extension : 'COPY',
             :is_graph_data => is_graph_data,
@@ -221,7 +223,8 @@ class Group < ActiveRecord::Base
                 annos.each do |a|
                     cloned_a = Annotation.create({
                         :account_id => account_id,
-                        :based_on => document.in_qc? ? a.id : based_on,
+                        :based_on => document.in_qc? || document.in_supp_qc? ? a.id : based_on,
+                        :canon => document.in_qc? || document.in_supp_qc?,
                         :content => a.content,
                         :document_id => a.document_id,
                         :group_id => cloned.id,
@@ -292,9 +295,13 @@ class Group < ActiveRecord::Base
                     :iteration           => self.iteration
                 })
             end
+
+            #This means rejection, so remove canon status
+            self.update_attribute(:canon, false)
         else
-            #If note exists, destroy it
+            #If note exists, destroy it and restore canon status
             annotation_note.destroy if !annotation_note.nil?
+            self.update_attribute(:canon, true)
         end
 
         #If subitems need to be addressed as well, then do so

@@ -47,10 +47,8 @@ class Extraction
         SELECT DISTINCT(d1.id)
         FROM documents d1 #{sql_filters}
         WHERE status=8 AND repository_id#{repo_clause}) d
-      INNER JOIN groups g on d.id=g.document_id AND g.qa_approved_by IS NOT NULL AND UPPER(g.name) IN (#{sql_endpoint})
-      LEFT JOIN annotation_notes an on g.id=an.group_id
+      INNER JOIN groups g on d.id=g.document_id AND g.qa_approved_by IS NOT NULL AND UPPER(g.name) IN (#{sql_endpoint}) AND canon=TRUE
       INNER JOIN groups bg on d.id=bg.document_id AND bg.base=TRUE
-      WHERE an.id IS NULL
     EOS
     init_hash = ActiveRecord::Base.connection.exec_query(init_sql)
     init_hash.each do |doc_and_base|
@@ -69,9 +67,7 @@ class Extraction
         SELECT g.id AS group_id, g.name, a.title, a.content, a.id as anno_id
         FROM (SELECT g1.id, g1.name
         FROM groups g1 WHERE g1.id IN (#{grp_ids})) g
-        LEFT JOIN (SELECT a.*
-          FROM annotations a
-          LEFT JOIN annotation_notes an on a.id=an.annotation_id AND a.qa_approved_by IS NOT NULL AND an.id IS NULL) a ON g.id=a.group_id
+        LEFT JOIN annotations a on a.qa_approved_by IS NOT NULL AND canon=TRUE AND g.id=a.group_id
       EOS
       slice_hash = ActiveRecord::Base.connection.exec_query(slice_sql)
 
@@ -251,9 +247,7 @@ class Extraction
       SELECT g.id AS group_id, g.parent_id, g.document_id, g.name, a.title, a.content, a.id as anno_id
       FROM (SELECT g1.id, g1.parent_id, g1.document_id, g1.name
         FROM groups g1 WHERE g1.parent_id IN (#{@backbone_id_string}) AND g1.id NOT IN (#{@backbone_id_string})) g
-      LEFT JOIN (SELECT a.*
-        FROM annotations a
-        LEFT JOIN annotation_notes an on a.id=an.annotation_id AND a.qa_approved_by IS NOT NULL AND an.id IS NULL) a ON g.id=a.group_id
+      LEFT JOIN annotations a ON a.qa_approved_by IS NOT NULL AND a.canon=TRUE AND g.id=a.group_id
       ORDER BY g.document_id, g.id
     EOS
     flat_point_hash = ActiveRecord::Base.connection.exec_query(flattened_sql)
@@ -301,10 +295,7 @@ class Extraction
           SELECT g.id AS group_id, g.parent_id, g.document_id, g.name, a.title, a.content, a.id as anno_id
           FROM (SELECT g1.id, g1.parent_id, g1.document_id, g1.name
             FROM groups g1 WHERE g1.parent_id IN (#{group_id_array.join(',')})) g
-          LEFT JOIN (SELECT ag.*
-            FROM annotation_groups ag
-            LEFT JOIN annotation_notes an on ag.id=an.annotation_group_id AND ag.qa_approved_by IS NOT NULL AND an.id IS NULL) ang ON g.id=ang.group_id
-          LEFT JOIN annotations a ON ang.annotation_id=a.id
+          LEFT JOIN annotations a ON g.id=a.group_id AND a.qa_approved_by IS NOT NULL AND a.canon=TRUE
           ORDER BY g.document_id, g.id
         EOS
         flat_point_hash = ActiveRecord::Base.connection.exec_query(flattened_sql)
@@ -331,9 +322,7 @@ class Extraction
       SELECT g.id AS group_id, g.parent_id, g.document_id, g.name, a.title, a.content, a.id as anno_id
       FROM (SELECT g1.id, g1.parent_id, g1.document_id, g1.name
         FROM groups g1 WHERE g1.id IN (#{@backbone_id_string})) g
-      LEFT JOIN (SELECT a.*
-        FROM annotations a
-        LEFT JOIN annotation_notes an on a.id=an.annotation_id AND a.qa_approved_by IS NOT NULL AND an.id IS NULL) a ON g.id=a.group_id
+      LEFT JOIN annotations a on a.qa_approved_by IS NOT NULL AND a.canon=TRUE AND g.id=a.group_id
       ORDER BY g.document_id, g.id
     EOS
     bb_data_hash = ActiveRecord::Base.connection.exec_query(backbone_points_sql)
@@ -412,8 +401,7 @@ class Extraction
           WHERE status=8 AND repository_id#{repo_clause}) d1 #{sql_filters}) d
       INNER JOIN groups g on d.id=g.document_id AND g.qa_approved_by IS NOT NULL AND UPPER(g.name) IN (#{sql_endpoint})
       WHERE EXISTS (SELECT a.id FROM annotations a
-        LEFT JOIN annotation_notes an on a.id=an.annotation_id
-        WHERE a.group_id=g.id AND qa_approved_by IS NOT NULL AND an.id IS NULL)
+        WHERE a.group_id=g.id AND qa_approved_by IS NOT NULL AND canon=TRUE)
       ORDER BY g.document_id
     EOS
     endpoint_hashes = ActiveRecord::Base.connection.exec_query(first_run_sql).to_hash

@@ -220,6 +220,8 @@ class GroupsController < ApplicationController
         #Determine what filter (if any) for children to use
         if params[:de] == '1' && doc.iteration > 1
             includes = [:supp_qc_de1_children, :group_template]
+        elsif params[:de] == '2' && doc.iteration > 1
+            includes = [:supp_qc_de2_children, :group_template]
         elsif params[:qc] && doc.iteration > 1
             includes = [:supp_qc_children, :group_template]
         elsif doc.in_supp_qa?

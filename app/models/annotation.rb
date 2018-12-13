@@ -51,8 +51,10 @@ class Annotation < ActiveRecord::Base
       elsif de_num == "2"
         return self.where("iteration = #{doc.iteration} AND based_on IS NULL")
       else
-        return self.where("id NOT IN (SELECT annotation_id FROM annotation_notes WHERE document_id=#{doc.id} AND annotation_id IS NOT NULL) AND based_on IS NOT NULL")
+        return self.where("canon = TRUE")
       end
+    elsif doc.in_supp_qa?
+        return self.where({:canon=>true})
     end
   }
 
@@ -243,10 +245,15 @@ class Annotation < ActiveRecord::Base
                                   :addressed           => false,
                                   :iteration           => self.iteration
                               })
+        #And remove canon from rejected anno
+        self.update_attribute(:canon, false)
       end
     else
-      #If note exists, destroy it
-      annotation_note.destroy if !annotation_note.nil?
+      #If note exists, destroy it and restore canon
+       if !annotation_note.nil?
+         annotation_note.destroy
+         self.update_attribute(:canon, true)
+       end
     end
 
   end

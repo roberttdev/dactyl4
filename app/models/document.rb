@@ -325,7 +325,9 @@ class Document < ActiveRecord::Base
                     " AND (qa_approved_by IS NOT NULL OR iteration=#{self.iteration}))" \
                     " OR (graphs.group_id IN (SELECT id FROM groups WHERE document_id=#{self.id}" \
                     " AND (qa_approved_by IS NOT NULL OR iteration=#{self.iteration}))))"  if in_supp_de?
-    whereClause = "(annotations.qa_approved_by IS NOT NULL OR graphs.qa_approved_by IS NOT NULL)" if in_extraction?
+    whereClause = "(annotations.canon=TRUE OR graphs.group_id IN (SELECT id FROM groups" \
+                    " WHERE document_id=#{self.id} AND canon=TRUE))" if in_extraction? or in_supp_qa?
+    #whereClause = "(annotations.qa_approved_by IS NOT NULL OR graphs.qa_approved_by IS NOT NULL)" if in_extraction?
 
     self.highlights.joins(joinClause).includes(:annotations,:graphs).where(whereClause).order('page_number asc, location asc nulls first').distinct
   end
@@ -710,6 +712,8 @@ class Document < ActiveRecord::Base
         self.update({status: self.status - 1, qc_id: nil})
         Annotation.where({:document_id => self.id, :iteration => self.iteration}).update_all({approved_count: 0})
       when STATUS_IN_QA, STATUS_IN_SUPP_QA
+        #Set canon status back to true to anything rejected
+        annotation_notes.annotation.update_all({:canon => true})
         annotation_notes.where({:document_id => self.id}).destroy_all
         Annotation.where({:document_id => self.id, :iteration => self.iteration}).update_all({qa_approved_by: nil})
         Group.where({:document_id => self.id, :iteration => self.iteration}).update_all({qa_approved_by: nil})
@@ -888,8 +892,8 @@ class Document < ActiveRecord::Base
       when STATUS_IN_SUPP_QC
         #No need for previously rejected groups/annotations anymore -- delete
         self.groups.where("EXISTS (SELECT * FROM annotation_notes an WHERE an.group_id=groups.id)").destroy_all
-        self.annotation_groups.where("EXISTS (SELECT * FROM annotation_notes an WHERE an.annotation_group_id=annotation_groups.id)").destroy_all
-
+        self.annotations.where("EXISTS (SELECT * FROM annotation_notes an WHERE an.annotation_id=annotations.id)").destroy_all
+        self.annotation_notes.destroy_all
         self.update_attributes({:status => STATUS_READY_SUPP_QA, :qa_note => nil})
     end
 

@@ -57,6 +57,7 @@ class AnnotationsController < ApplicationController
     if doc.in_de? || doc.in_qc? || doc.in_supp_de? || doc.in_supp_qc? || doc.in_extraction?
         submitHash[:account_id] = current_account.id
         submitHash[:iteration] = doc.iteration
+        submitHash[:canon] = doc.in_qc? || doc.in_supp_qc?
         anno = Annotation.create(submitHash)
     end
 
@@ -162,8 +163,8 @@ class AnnotationsController < ApplicationController
   #Return top 10 unique annotation names that match search term
   def search
     searchTerm = params[:term] + '%'
-    json Annotation.uniq.joins(:annotation_groups)
-              .where("annotation_groups.qa_approved_by IS NOT NULL AND title ILIKE ?", searchTerm )
+    json Annotation.uniq
+              .where("annotations.qa_approved_by IS NOT NULL AND annotations.canon=TRUE AND title ILIKE ?", searchTerm )
               .order(:title).limit(10).pluck(:title)
   end
 
