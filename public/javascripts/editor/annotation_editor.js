@@ -42,37 +42,43 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
     open : function(highlight, groupId, showEdit, success, highlight_type) {
         //Request to hide existing annos; if succeeds, continue and call success function
         var _me = this;
-        this.hideActiveHighlights(function(){
-            //If highlight already has location, just show it
-            if( highlight.get('highlight_id') ){
+
+        //Don't allow if not in default zoom
+        if( currentDocument.api.relativeZoom() != 1 ){
+            alert('Highlighting is only allowed at the default zoom level.');
+        }else{
+            this.hideActiveHighlights(function(){
+                //If highlight already has location, just show it
+                if( highlight.get('highlight_id') ){
+                    success.call();
+                    var highlightInfo = {highlight_id: highlight.get('highlight_id')};
+                    (highlight_type == 'graph') ? highlightInfo['graph_id'] = highlight.get('id') : highlightInfo['anno_id'] = highlight.get('id');
+                    return _me.showHighlight(highlightInfo, showEdit, false);
+                }
+
+                if (highlight != null) { _me._active_highlight = highlight; }
+
+                _me._open = true;
+                _me.redactions = [];
+                _me._highlight_type = highlight_type == 'graph' ? 'graph' : 'annotation';
+                _me.page.css({cursor: 'crosshair'});
+                _me._inserts.filter('.visible').show().addClass('DV-public');
+
+                // Start drawing region when user mousedown
+                _me.page.unbind('mousedown', _me.drawHighlight);
+                _me.page.bind('mousedown', _me.drawHighlight);
+                $(document).unbind('keydown', _me.handleCloseRequest);
+                $(document).bind('keydown', _me.handleCloseRequest);
+
+                //Show notification that highlight mode is on
+                $('.highlight_notice').show();
+
+                $(document.body).setMode('public', 'editing');
+                _me._buttons['public'].addClass('open');
+                _me._guide.fadeIn('fast');
                 success.call();
-                var highlightInfo = {highlight_id: highlight.get('highlight_id')};
-                (highlight_type == 'graph') ? highlightInfo['graph_id'] = highlight.get('id') : highlightInfo['anno_id'] = highlight.get('id');
-                return _me.showHighlight(highlightInfo, showEdit, false);
-            }
-
-            if (highlight != null) { _me._active_highlight = highlight; }
-
-            _me._open = true;
-            _me.redactions = [];
-            _me._highlight_type = highlight_type == 'graph' ? 'graph' : 'annotation';
-            _me.page.css({cursor: 'crosshair'});
-            _me._inserts.filter('.visible').show().addClass('DV-public');
-
-            // Start drawing region when user mousedown
-            _me.page.unbind('mousedown', _me.drawHighlight);
-            _me.page.bind('mousedown', _me.drawHighlight);
-            $(document).unbind('keydown', _me.handleCloseRequest);
-            $(document).bind('keydown', _me.handleCloseRequest);
-
-            //Show notification that highlight mode is on
-            $('.highlight_notice').show();
-
-            $(document.body).setMode('public', 'editing');
-            _me._buttons['public'].addClass('open');
-            _me._guide.fadeIn('fast');
-            success.call();
-        });
+            });
+        }
     },
 
 
