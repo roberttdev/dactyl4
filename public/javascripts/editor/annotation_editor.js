@@ -65,10 +65,10 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
                 _me._inserts.filter('.visible').show().addClass('DV-public');
 
                 // Start drawing region when user mousedown
-                _me.page.unbind('mousedown', _me.drawHighlight);
-                _me.page.bind('mousedown', _me.drawHighlight);
-                $(document).unbind('keydown', _me.handleCloseRequest);
-                $(document).bind('keydown', _me.handleCloseRequest);
+                _me.page.off('mousedown', $.proxy(_me.drawHighlight, _me));
+                _me.page.on('mousedown', $.proxy(_me.drawHighlight, _me));
+                $(document).off('keydown', $.proxy(_me.handleCloseRequest, _me));
+                $(document).on('keydown', $.proxy(_me.handleCloseRequest, _me));
 
                 //Show notification that highlight mode is on
                 $('.highlight_notice').show();
@@ -139,9 +139,9 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
         // set the highlighted region's boundaries
         $(this.region).css(this.drawHighlight_coords(e));
         // and continue to update the region's boundaries when the mouse moves.
-        this.pages.on('mousemove', _.bind(this.drawHighlight_drag, this));
+        this.pages.on('mousemove', $.proxy(this.drawHighlight_drag, this));
         // when drag is finished..
-        this.pages.bind('mouseup', _.bind(this.drawHighlight_dragEnd, this));
+        this.pages.on('mouseup', $.proxy(this.drawHighlight_dragEnd, this));
     },
 
 
@@ -236,9 +236,10 @@ dc.ui.AnnotationEditor = Backbone.View.extend({
 
     //Stop drawing process
     stopSelectionEvents: function() {
-        $(document).unbind('keydown', this.handleCloseRequest);
-        this.pages.unbind('mouseup', this.drawHighlight_dragEnd).unbind('mousemove', this.drawHighlight_drag);
-        this.page.unbind('mousedown', this.drawHighlight);
+        $(document).off('keydown', $.proxy(this.handleCloseRequest));
+        this.pages.off('mouseup', $.proxy(this.drawHighlight_dragEnd));
+        this.pages.off('mousemove', $.proxy(this.drawHighlight_drag));
+        this.page.off('mousedown', $.proxy(this.drawHighlight));
         this.drawParams = {};
     },
 
